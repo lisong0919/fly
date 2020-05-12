@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+
+<generatorConfiguration> 
+<!--    <classPathEntry location="C:\devStore\maven\repo\mysql\mysql-connector-java\5.1.44\mysql-connector-java-5.1.44.jar" />-->
+   
+  <context id="mysqlTables" targetRuntime="MyBatis3">
+ <jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://192.168.1.28:3306/fly"
+      userId="lisong" password="oXCkXwcmKI3nXW6"/>
+    
+    <!-- 指定生成的类型为java类型，避免数据库中number等类型字段 -->
+    <javaTypeResolver>
+      <property name="forceBigDecimals" value="false"/>
+    </javaTypeResolver>
+
+      <!-- 生成model模型，对应的包，存放位置可以指定具体的路径,如/ProjectName/src，也可以使用MyWebservice/src/main/java来自动生成 -->
+      <javaModelGenerator targetPackage="com.wealth.fly.core.entity" targetProject="D:/code/fly/src/main/java">
+          <property name="enableSubPackages" value="true"/>
+      </javaModelGenerator>
+
+      <!--对应的xml mapper文件  -->
+      <sqlMapGenerator targetPackage="com.wealth.fly.core.dao" targetProject="D:/code/fly/src/main/java">
+          <property name="enableSubPackages" value="true"/>
+      </sqlMapGenerator>
+
+      <!-- 对应的dao接口 -->
+      <javaClientGenerator type="XMLMAPPER" targetPackage="com.wealth.fly.core.dao" targetProject="D:/code/fly/src/main/java">
+          <property name="enableSubPackages" value="true"/>
+      </javaClientGenerator>
+      <!-- tables 配置好表名和对应的实-->
+
+      <table tableName="kline" domainObjectName="KLine" mapperName="KLineDao"
+             enableCountByExample="false" enableUpdateByExample="false"
+             enableSelectByExample="false" enableDeleteByExample="false"
+             selectByExampleQueryId="false">
+          <property name="useActualColumnNames" value="false"/>
+      </table>
+  </context>
+</generatorConfiguration>
