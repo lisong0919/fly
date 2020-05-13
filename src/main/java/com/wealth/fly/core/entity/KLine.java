@@ -366,4 +366,21 @@ public class KLine {
     public void setCreateTime(Date createTime) {
         this.createTime = createTime;
     }
+
+    @Override
+    public String toString() {
+        return "KLine{" +
+                "id=" + id +
+                ", currencyId=" + currencyId +
+                ", dataTime=" + dataTime +
+                ", open=" + open +
+                ", close=" + close +
+                ", high=" + high +
+                ", low=" + low +
+                ", volume=" + volume +
+                ", currencyVolume=" + currencyVolume +
+                ", granularity='" + granularity + '\'' +
+                ", createTime=" + createTime +
+                '}';
+    }
 }

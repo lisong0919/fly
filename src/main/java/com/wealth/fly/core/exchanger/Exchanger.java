@@ -10,6 +10,6 @@ import java.util.List;
  */
 public interface Exchanger {
 
-    List<KLine> getKlineData(String currency, String startTime, String endTime, DataGranularity dataGranularity);
+    List<KLine> getKlineData(String currency, DataGranularity dataGranularity);
 
 }
