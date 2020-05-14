@@ -1,4 +1,4 @@
-package com.wealth.fly.api.common;
+package com.wealth.fly.common;
 
 
 import java.io.IOException;

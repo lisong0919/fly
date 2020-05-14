@@ -1,6 +1,10 @@
 package com.wealth.fly.core.dao;
 
+import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.entity.KLine;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface KLineDao {
     /**
@@ -50,4 +54,6 @@ public interface KLineDao {
      * @mbg.generated Tue May 12 22:36:03 CST 2020
      */
     int updateByPrimaryKey(KLine record);
+
+    KLine getLastKLineByGranularity(@Param("granularity") DataGranularity dataGranularity);
 }

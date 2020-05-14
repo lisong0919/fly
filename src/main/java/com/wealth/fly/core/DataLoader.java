@@ -24,21 +24,25 @@ public class DataLoader {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                //从数据库中取出最后一条数据，用当前时间-最大时间/时间粒度，如果大于零，
+
                 Date date = new Date();
 
                 for (DataGranularity dataGranularity : DataGranularity.values()) {
-                    List<KLine> kLineList = exchanger.getKlineData("BTC-USD-SWAP", dataGranularity);
-                    if (kLineList != null) {
-                        Collections.sort(kLineList, new Comparator<KLine>() {
-                            @Override
-                            public int compare(KLine o1, KLine o2) {
-                                return o2.getDataTime().compareTo(o1.getDataTime());
-                            }
-                        });
+                    KLine kLine = kLineDao.getLastKLineByGranularity(dataGranularity);
 
-                        // 根据数据库中最大值，和取回来的最大值做比较，找出需要存储的数据
+                    String fetchMinTime = null;
+                    String fetchMaxTime = null;
+
+                    if (kLine != null) {
 
                     }
+
+                    List<KLine> kLineList = exchanger.getKlineData("BTC-USD-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
+                    for (KLine kLine1 : kLineList) {
+                        kLineDao.insert(kLine);
+                    }
+
                 }
 
             }

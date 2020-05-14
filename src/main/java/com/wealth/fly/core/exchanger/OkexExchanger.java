@@ -2,12 +2,11 @@ package com.wealth.fly.core.exchanger;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.mysql.cj.xdevapi.JsonArray;
-import com.wealth.fly.api.common.HttpClientUtil;
-import com.wealth.fly.core.DataLoader;
+import com.wealth.fly.common.HttpClientUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.entity.KLine;
+import org.apache.http.client.utils.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +30,17 @@ public class OkexExchanger implements Exchanger {
 
     private final String KLINE_PATH = "/api/swap/v3/instruments";
 
-    public List<KLine> getKlineData(String currency,  DataGranularity dataGranularity) {
+    public List<KLine> getKlineData(String currency, String startTime, String endTime, DataGranularity dataGranularity) {
         try {
-            String url = host + KLINE_PATH + currency + "/candles?granularity="+dataGranularity.getSeconds();
-            String jsonResponse = HttpClientUtil.get(url);
+            String url = host + KLINE_PATH + currency + "/candles?granularity=" + dataGranularity.getSeconds();
+
+            if (startTime != null) {
+                url += "&start=" + transferTimeToOkexStandard(startTime);
+            }
+            if (endTime != null) {
+                url += "&end=" + transferTimeToOkexStandard(endTime);
+            }
+            String jsonResponse = com.wealth.fly.common.HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
                 throw new RuntimeException("获取k线数据失败");
             }
@@ -63,21 +69,15 @@ public class OkexExchanger implements Exchanger {
 
     }
 
-    private static String transferTimeToOkexStandard(String time) {
-        return transferTime(CommonConstants.SYSTEM_DATE_FORMAT, CommonConstants.OK_DATE_FORMAT, time);
-    }
-
     private static String transferTimeToSystemStandard(String time) {
-        return transferTime(CommonConstants.OK_DATE_FORMAT, CommonConstants.SYSTEM_DATE_FORMAT, time);
+        return null;
+//        return transferTime(CommonConstants.OK_DATE_FORMAT, CommonConstants.SYSTEM_DATE_FORMAT, time);
     }
 
-    private static String transferTime(String fromDateFormat, String toDateformat, String time) {
-        try {
-            Date date = new SimpleDateFormat(fromDateFormat).parse(time);
-            return new SimpleDateFormat(toDateformat).format(date);
-        } catch (ParseException e) {
-            LOGGER.info(e.getMessage(), e);
-            throw new RuntimeException("invalid date format " + time);
-        }
+    private static String transferTimeToOkexStandard(String time) {
+        return null;
+//        return transferTime(CommonConstants.SYSTEM_DATE_FORMAT, CommonConstants.OK_DATE_FORMAT, time);
     }
+
+
 }

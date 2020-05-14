@@ -28,6 +28,7 @@
     id, currency_id, data_time, open, close, high, low, volume, currency_volume, granularity, 
     create_time
   </sql>
+
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     <!--
       WARNING - @mbg.generated
@@ -201,4 +202,11 @@
       create_time = #{createTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="getLastKLineByGranularity" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from kline where granularity=${#granularity}
+  </select>
+
 </mapper>

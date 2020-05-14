@@ -1,8 +1,7 @@
 package com.wealth.fly.api.interceptor;
 
-import com.wealth.fly.api.common.HttpClientUtil;
+import com.wealth.fly.common.HttpClientUtil;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
