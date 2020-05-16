@@ -28,20 +28,20 @@ public class DataFetcherTest {
 
         now = DateUtils.parseDate("2020-05-16 14:25:00", "yyyy-MM-dd HH:mm:ss");
         result = dataFetcher.getDateFetchRang(lastLineTime, now, DataGranularity.FIVE_MINUTES);
-        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:20:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
+        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:15:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
         Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:20:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[1].getTime());
 
 
         now = DateUtils.parseDate("2020-05-16 14:38:00", "yyyy-MM-dd HH:mm:ss");
         result = dataFetcher.getDateFetchRang(lastLineTime, now, DataGranularity.FIVE_MINUTES);
-        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:20:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
+        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:15:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
         Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:30:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[1].getTime());
 
         //三分钟粒度
         lastLineTime = DateUtils.parseDate("2020-05-16 14:04:00", "yyyy-MM-dd HH:mm:ss");
         now = DateUtils.parseDate("2020-05-16 14:15:00", "yyyy-MM-dd HH:mm:ss");
         result = dataFetcher.getDateFetchRang(lastLineTime, now, DataGranularity.THREE_MINUTES);
-        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:07:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
+        Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:04:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
         Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:10:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[1].getTime());
 
 

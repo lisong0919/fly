@@ -93,7 +93,7 @@ public class DataFetcher {
         long timeDistance = now.getTime() - lastLineTime.getTime();
         Date[] result = new Date[2];
 
-        result[0] = DateUtils.addSeconds(lastLineTime, dataGranularity.getSeconds());
+        result[0] = lastLineTime;
 
         //余数，如5分钟时间粒度的情况下：lastLineTime=14:15，now：14:37,相差22分钟；那么余数就是2分钟，即：2*60*1000
         long remainder = timeDistance % (dataGranularity.getSeconds() * 1000);
@@ -101,7 +101,7 @@ public class DataFetcher {
         result[1] = DateUtils.addMilliseconds(now, -(int) (remainder + dataGranularity.getSeconds() * 1000));
 
         //不到最新数据的形成时间
-        if (result[1].getTime() - result[0].getTime() < 0) {
+        if (result[1].getTime() - result[0].getTime() <= 0) {
             return null;
         }
 
