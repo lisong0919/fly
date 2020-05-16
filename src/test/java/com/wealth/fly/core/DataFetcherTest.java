@@ -39,7 +39,7 @@ public class DataFetcherTest {
 
         //三分钟粒度
         lastLineTime = DateUtils.parseDate("2020-05-16 14:04:00", "yyyy-MM-dd HH:mm:ss");
-        now = DateUtils.parseDate("2020-05-16 14:15:00", "yyyy-MM-dd HH:mm:ss");
+        now = DateUtils.parseDate("2020-05-16 14:15:33", "yyyy-MM-dd HH:mm:ss");
         result = dataFetcher.getDateFetchRang(lastLineTime, now, DataGranularity.THREE_MINUTES);
         Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:04:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[0].getTime());
         Assertions.assertEquals(DateUtils.parseDate("2020-05-16 14:10:00", "yyyy-MM-dd HH:mm:ss").getTime(),result[1].getTime());
