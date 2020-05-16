@@ -8,9 +8,11 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.*;
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,10 +45,13 @@ public class DataFetcher {
                     if (lastKLine != null) {
                         Date now = Calendar.getInstance(Locale.CHINA).getTime();
                         Date lastLineDate = DateUtil.parseStandardTime(lastKLine.getDataTime());
+
+                        LOGGER.info("=====>lastLineDate:" + lastLineDate + ",now:" + now);
+                        Date[] timeRange = getDateFetchRang(lastLineDate, now, dataGranularity);
                         //最后一条数据的时间，距离当前时间，是否超过数据粒度对应的时间间隔
-                        if (now.getTime() - lastLineDate.getTime() >= dataGranularity.getSeconds() * 1000) {
-                            fetchMinTime = lastLineDate;
-                            fetchMaxTime = now;
+                        if (timeRange != null) {
+                            fetchMinTime = timeRange[0];
+                            fetchMaxTime = timeRange[1];
                         } else {
                             LOGGER.info("[{}] data is uptodate", dataGranularity);
                             continue;
@@ -61,7 +66,7 @@ public class DataFetcher {
 
                     LOGGER.info("[{}] fetch kline data from exchanger success.", dataGranularity);
                     for (KLine kLine : kLineList) {
-                        kLine.setCreateTime(new Date());
+                        kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
                         kLine.setCurrencyId(1);
                         kLineDao.insert(kLine);
                     }
@@ -74,8 +79,34 @@ public class DataFetcher {
         LOGGER.info("init data fetcher timer finished.");
     }
 
-    public static void main(String[] args) throws Exception {
 
-        System.out.println(new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS+08").format(new Date()));
+    /**
+     * 计算获取数据的时间范围
+     *
+     * @param lastLineTime
+     * @param now
+     * @param dataGranularity
+     * @return
+     */
+    protected Date[] getDateFetchRang(Date lastLineTime, Date now, DataGranularity dataGranularity) {
+
+        long timeDistance = now.getTime() - lastLineTime.getTime();
+        Date[] result = new Date[2];
+
+        result[0] = DateUtils.addSeconds(lastLineTime, dataGranularity.getSeconds());
+
+        //余数，如5分钟时间粒度的情况下：lastLineTime=14:15，now：14:37,相差22分钟；那么余数就是2分钟，即：2*60*1000
+        long remainder = timeDistance % (dataGranularity.getSeconds() * 1000);
+        //取数据的截止日期还要再往前推一个时间周期，只能是14:30，因为14:37分时，14:35的5分钟的k线数据还未完，要到14:40才能形成
+        result[1] = DateUtils.addMilliseconds(now, -(int) (remainder + dataGranularity.getSeconds() * 1000));
+
+        //不到最新数据的形成时间
+        if (result[1].getTime() - result[0].getTime() < 0) {
+            return null;
+        }
+
+        return result;
     }
+
+
 }
