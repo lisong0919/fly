@@ -1,11 +1,11 @@
 package com.wealth.fly.core.dao;
 
-import com.wealth.fly.core.constants.DataGranularity;
+
 import com.wealth.fly.core.entity.KLine;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public interface KLineDao {
@@ -57,5 +57,5 @@ public interface KLineDao {
      */
     int updateByPrimaryKey(KLine record);
 
-    KLine getLastKLineByGranularity(@Param("granularity") String dataGranularity);
+    List<KLine> getLastKLineByGranularity(@Param("granularity") String dataGranularity, @Param("limit") int limit);
 }

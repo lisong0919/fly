@@ -1,7 +1,7 @@
 package com.wealth.fly.core;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+
 
 /**
  * MA计算器，用来计算十日均线，三十日均线等
@@ -34,7 +34,7 @@ public class MACalculator {
      * @param value
      * @return 返回push后的MA数据，如果数量没达到capacity返回null
      */
-    public synchronized BigDecimal push(String tag, BigDecimal value) {
+    public synchronized BigDecimal push(Object tag, BigDecimal value) {
         Node<BigDecimal> newNode = new Node<>(tag, value);
 
         //第一次push进行初始化
@@ -118,10 +118,10 @@ public class MACalculator {
     public static class Node<T> {
         private Node next;
         private Node prev;
-        private String tag;
+        private Object tag;
         private T value;
 
-        public Node(String tag, T value) {
+        public Node(Object tag, T value) {
             this.tag = tag;
             this.value = value;
         }
@@ -134,7 +134,7 @@ public class MACalculator {
             return prev;
         }
 
-        public String getTag() {
+        public Object getTag() {
             return tag;
         }
 

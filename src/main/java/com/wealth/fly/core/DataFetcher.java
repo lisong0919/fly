@@ -3,6 +3,7 @@ package com.wealth.fly.core;
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
@@ -11,8 +12,11 @@ import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.*;
 import javax.annotation.PostConstruct;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.hibernate.Criteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +29,44 @@ public class DataFetcher {
     private KLineDao kLineDao;
     @Autowired
     private Exchanger exchanger;
+    @Autowired
+    private MAHandler maHandler;
+    @Autowired
+    private List<KLineListener> kLineListenerList = new ArrayList<>();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
+
 
     @PostConstruct
     public void init() {
+        starFetchTimer();
+        initMAData();
+    }
 
+    public void registerKLineListener(KLineListener listener){
+        kLineListenerList.add(listener);
+    }
+
+    private void notifyKLineListenerNewLine(KLine kLine){
+        for(KLineListener listener:kLineListenerList){
+            listener.onNewKLine(kLine);
+        }
+    }
+
+    private void initMAData() {
+        for (DataGranularity dataGranularity : DataGranularity.values()) {
+            List<KLine> kLineList = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 30);
+            for (KLine kLine : kLineList) {
+                maHandler.push(MAType.PRICE, kLine, 7);
+                maHandler.push(MAType.PRICE, kLine, 30);
+                maHandler.push(MAType.VOLUME, kLine, 5);
+                maHandler.push(MAType.VOLUME, kLine, 10);
+            }
+        }
+    }
+
+
+    private void starFetchTimer() {
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -37,14 +74,14 @@ public class DataFetcher {
 
                 for (DataGranularity dataGranularity : DataGranularity.values()) {
 
-                    KLine lastKLine = kLineDao.getLastKLineByGranularity(dataGranularity.name());
+                    List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
 
                     Date fetchMinTime = null;
                     Date fetchMaxTime = null;
 
-                    if (lastKLine != null) {
+                    if (lastKLines != null && lastKLines.size() > 0) {
                         Date now = Calendar.getInstance(Locale.CHINA).getTime();
-                        Date lastLineDate = DateUtil.parseStandardTime(lastKLine.getDataTime());
+                        Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
 
                         LOGGER.info("=====>lastLineDate:" + lastLineDate + ",now:" + now);
                         Date[] timeRange = getDateFetchRang(lastLineDate, now, dataGranularity);
@@ -68,7 +105,9 @@ public class DataFetcher {
                     for (KLine kLine : kLineList) {
                         kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
                         kLine.setCurrencyId(1);
-                        kLineDao.insert(kLine);
+                        if (kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                            kLineDao.insert(kLine);
+                        }
                     }
                     LOGGER.info("[{}] save kline data to db success,", dataGranularity);
                 }
@@ -108,5 +147,11 @@ public class DataFetcher {
         return result;
     }
 
+
+    public static void main(String[] args) {
+        CriteriaBuilder cb=null;
+        Predicate predicate= cb.and(null);
+        cb.or(null);
+    }
 
 }
