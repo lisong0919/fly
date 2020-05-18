@@ -28,14 +28,28 @@ public class Sector {
          * K线极端价格：开多时最高价，开空时最低价
          */
         KLINE_EXTREME_PRICE,
-        KLINE_CLOSE_PRICE,
+
+        /**
+         * 实时价格
+         */
         REALTIME_PRICE,
+        /**
+         * 价格MA
+         */
         KLINE_PRICE_MA,
         /**
          * K线MA的方向
          */
         KLINE_PRICE_MA_DIRECTION,
-        KLINE_VOLUME_MA;
+        /**
+         * 成交量MA
+         */
+        KLINE_VOLUME_MA,
+
+        /**
+         * 收益
+         */
+        PROFIT
 
     }
 }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class CompoundCriteria implements Criteria {
+public class CompoundCriteria extends AbstractCriteria implements Criteria {
 
     private Operator operator;
     private List<Criteria> criteriaList;
@@ -20,6 +20,11 @@ public class CompoundCriteria implements Criteria {
             criteriaList = new ArrayList<>();
         }
         criteriaList.add(criteria);
+    }
+
+    @Override
+    public CriteriaType getCriteriaType() {
+        return CriteriaType.COMPOUND;
     }
 
     public enum Operator {

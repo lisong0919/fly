@@ -1,22 +1,14 @@
 package com.wealth.fly.core;
 
 import com.wealth.fly.common.DateUtil;
-import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
-
-import java.text.SimpleDateFormat;
-import java.time.ZoneId;
 import java.util.*;
 import javax.annotation.PostConstruct;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Predicate;
-
 import org.apache.commons.lang3.time.DateUtils;
-import org.hibernate.Criteria;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,10 +140,6 @@ public class DataFetcher {
     }
 
 
-    public static void main(String[] args) {
-        CriteriaBuilder cb=null;
-        Predicate predicate= cb.and(null);
-        cb.or(null);
-    }
+
 
 }

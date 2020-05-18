@@ -37,7 +37,7 @@ public class Condition {
         /**
          * 顺势，如开多时，均线的顺势表示均线方向向上
          */
-        OBEY,
+        FOLLOW,
         /**
          * 背离，如开多时，均线的背离表示均线方向向下
          */
@@ -46,6 +46,11 @@ public class Condition {
         /**
          * 大于
          */
-        GREAT_THAN
+        GREAT_THAN,
+
+        /**
+         * 小于
+         */
+        LESS_THAN;
     }
 }
