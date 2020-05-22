@@ -15,6 +15,15 @@ public class CompoundCriteria extends AbstractCriteria implements Criteria {
         this.operator = operator;
     }
 
+    public CompoundCriteria(Operator operator, Criteria... criterias) {
+        this.operator = operator;
+        if (criterias != null) {
+            for (Criteria c : criterias) {
+                add(c);
+            }
+        }
+    }
+
     public void add(Criteria criteria) {
         if (criteriaList == null) {
             criteriaList = new ArrayList<>();

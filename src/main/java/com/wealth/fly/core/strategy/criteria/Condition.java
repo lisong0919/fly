@@ -26,14 +26,16 @@ public class Condition {
 
 
     public enum ConditionType {
+
         /**
-         * 突破，如价格突破均线，开多即大于，开空即小于
+         *超越
          */
-        BREAK_OUT,
+        BEYOND,
+
         /**
-         * 破位，如价格跌破均线，开多即小于，开空即大于
+         * 落后
          */
-        BREAK_DOWN,
+        BEHIND,
         /**
          * 顺势，如开多时，均线的顺势表示均线方向向上
          */

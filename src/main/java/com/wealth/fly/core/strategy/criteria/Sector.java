@@ -23,16 +23,31 @@ public class Sector {
         /**
          *  成交量
          */
-        VOLUME,
+        KLINE_VOLUME,
         /**
-         * K线极端价格：开多时最高价，开空时最低价
+         * K线阳性价格：开多时最高价，开空时最低价
          */
-        KLINE_EXTREME_PRICE,
+        KLINE_POSITIVE_PRICE,
+
+        /**
+         * K线阴性价格：开多时为最低价，开空时最高价
+         */
+        KLINE_NEGATIVE_PRICE,
+
+        /**
+         * 收盘价
+         */
+        KLINE_PRICE_CLOSE,
 
         /**
          * 实时价格
          */
         REALTIME_PRICE,
+
+        /**
+         * 实时均线价格
+         */
+        REALTIME_PRICE_MA,
         /**
          * 价格MA
          */
