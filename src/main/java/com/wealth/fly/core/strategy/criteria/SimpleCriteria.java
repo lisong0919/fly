@@ -1,5 +1,6 @@
 package com.wealth.fly.core.strategy.criteria;
 
+import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import lombok.Data;
 
 @Data

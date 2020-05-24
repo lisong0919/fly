@@ -1,6 +1,7 @@
 package com.wealth.fly.core.strategy;
 
 import com.alibaba.fastjson.JSONObject;
+import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import com.wealth.fly.core.strategy.criteria.*;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ public class StrategyDemo {
         //条件1：最后两个K线的成交量，任意一个大于成交量MA10的两倍
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();
         simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
-        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, 200));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
         simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
         LastNKlineCriteria criteria1 = new LastNKlineCriteria(2, simpleCriteria1, LastNKlineCriteria.MatchType.ONE_MATCH);
         criteria1.setDescription("条件1: 两个K线，任意一个成交量大于成交量MA10的两倍");
@@ -41,14 +42,14 @@ public class StrategyDemo {
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.BEYOND, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA,30));
-        LastNKlineCriteria criteria3=new LastNKlineCriteria(2,simpleCriteria4, LastNKlineCriteria.MatchType.ONE_MATCH);
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        LastNKlineCriteria criteria3 = new LastNKlineCriteria(2, simpleCriteria4, LastNKlineCriteria.MatchType.ONE_MATCH);
         criteria3.setDescription("条件3: 两个K线中，任意一个站上价格MA30");
 
         //条件4：均线方向顺势而行
         SimpleCriteria criteria4 = new SimpleCriteria();
         criteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION, 30));
-        criteria4.setCondition(new Condition(Condition.ConditionType.FOLLOW, null, null));
+        criteria4.setCondition(new Condition(Condition.ConditionType.FOLLOW, Condition.ConditionValueType.ANY, null));
 
         //条件5：两个K线涨幅不超过1%
 //        SimpleCriteria criteria5=new SimpleCriteria();
@@ -68,7 +69,7 @@ public class StrategyDemo {
         SimpleCriteria criteria1 = new SimpleCriteria();
         criteria1.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
         criteria1.setTarget(new Sector(Sector.SectorType.REALTIME_PRICE_MA, 30));
-        criteria1.setCondition(new Condition(Condition.ConditionType.BEHIND, Condition.ConditionValueType.PERCENT, new BigDecimal(0.5)));
+        criteria1.setCondition(new Condition(Condition.ConditionType.BEHIND, Condition.ConditionValueType.PERCENT, "0.5"));
         criteria1.setDescription("实时价格破价格MA30的千分之五");
 
         //连续三次破均线
@@ -82,13 +83,13 @@ public class StrategyDemo {
         //盈利百分之一
         SimpleCriteria criteria3 = new SimpleCriteria();
         criteria3.setSource(new Sector(Sector.SectorType.PROFIT));
-        criteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, new BigDecimal(1)));
+        criteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "1"));
         criteria3.setDescription("盈利百分之一");
 
         //亏损百分之一
         SimpleCriteria criteria4 = new SimpleCriteria();
         criteria4.setSource(new Sector(Sector.SectorType.PROFIT));
-        criteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.PERCENT, new BigDecimal(-1)));
+        criteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.PERCENT, "-1"));
         criteria4.setDescription("亏损百分之一");
 
         CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.OR);

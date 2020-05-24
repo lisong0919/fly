@@ -1,4 +1,4 @@
-package com.wealth.fly.core.strategy.criteria;
+package com.wealth.fly.core.strategy.criteria.condition;
 
 import lombok.Data;
 
@@ -7,12 +7,12 @@ public class Condition {
 
     private ConditionType type;
     private ConditionValueType valueType;
-    private Object value;
+    private String value;
 
     public Condition() {
     }
 
-    public Condition(ConditionType type, ConditionValueType valueType, Object value) {
+    public Condition(ConditionType type, ConditionValueType valueType, String value) {
         this.type = type;
         this.valueType = valueType;
         this.value = value;
@@ -28,31 +28,41 @@ public class Condition {
     public enum ConditionType {
 
         /**
-         *超越
+         * 超越
          */
-        BEYOND,
+        BEYOND(new BeyondConditionHandler()),
 
         /**
          * 落后
          */
-        BEHIND,
+        BEHIND(new BehindConditionHandler()),
         /**
          * 顺势，如开多时，均线的顺势表示均线方向向上
          */
-        FOLLOW,
+        FOLLOW(new FollowConditionHandler()),
         /**
          * 背离，如开多时，均线的背离表示均线方向向下
          */
-        AGAINST,
+//        AGAINST,
 
         /**
          * 大于
          */
-        GREAT_THAN,
+        GREAT_THAN(new GreatThanConditionHandler()),
 
         /**
          * 小于
          */
-        LESS_THAN;
+        LESS_THAN(new LessThanConditionHandler());
+
+        private ConditionHandler conditionHandler;
+
+        ConditionType(ConditionHandler handler) {
+            this.conditionHandler = handler;
+        }
+
+        public ConditionHandler getConditionHandler() {
+            return this.conditionHandler;
+        }
     }
 }
