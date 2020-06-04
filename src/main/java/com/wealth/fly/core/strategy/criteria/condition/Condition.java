@@ -43,7 +43,7 @@ public class Condition {
         /**
          * 背离，如开多时，均线的背离表示均线方向向下
          */
-//        AGAINST,
+        AGAINST(null),
 
         /**
          * 大于
