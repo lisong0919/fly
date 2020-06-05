@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface CriteriaHandler {
 
-    boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, Map<String, Object> extraParam, boolean goingLong);
+    boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, boolean goingLong);
 }

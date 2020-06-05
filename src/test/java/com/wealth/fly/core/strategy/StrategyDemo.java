@@ -6,6 +6,8 @@ import com.wealth.fly.core.strategy.criteria.*;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StrategyDemo {
 
@@ -36,7 +38,7 @@ public class StrategyDemo {
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
         simpleCriteria3.setDescription("正面价格超越MA30");
         LastNKlineCriteria criteria2 = new LastNKlineCriteria(2, new CompoundCriteria(CompoundCriteria.Operator.AND, simpleCriteria2, simpleCriteria3), LastNKlineCriteria.MatchType.ONE_MATCH);
-        criteria2.setDescription("条件2:两个K线中任意一个突破MA30");
+        criteria2.setDescription("条件2:两个K线中任意一个穿过MA30");
 
         //条件3: 两个K线中，任意一个站上价格MA30
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
@@ -59,7 +61,20 @@ public class StrategyDemo {
         finalCriteria.add(criteria3);
         finalCriteria.add(criteria4);
 
-        System.out.println(JSONObject.toJSONString(finalCriteria));
+        Strategy strategy1=new Strategy();
+        strategy1.setCriteria(finalCriteria);
+        strategy1.setGoingLong(true);
+
+
+        Strategy strategy2=new Strategy();
+        strategy2.setCriteria(finalCriteria);
+        strategy2.setGoingLong(false);
+
+        List<Strategy> strategyList=new ArrayList<>();
+        strategyList.add(strategy1);
+        strategyList.add(strategy2);
+
+        System.out.println(JSONObject.toJSONString(strategyList));
 
     }
 

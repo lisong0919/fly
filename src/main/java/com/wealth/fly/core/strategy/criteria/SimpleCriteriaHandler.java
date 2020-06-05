@@ -5,10 +5,10 @@ import com.wealth.fly.core.strategy.criteria.condition.ConditionHandler;
 import java.math.BigDecimal;
 import java.util.Map;
 
-public class SimpleCriteriaHandler implements CriteriaHandler{
+public class SimpleCriteriaHandler implements CriteriaHandler {
 
     @Override
-    public boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, Map<String, Object> extraParam, boolean goingLong) {
+    public boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, boolean goingLong) {
         SimpleCriteria simpleCriteria = (SimpleCriteria) criteria;
 
         ConditionHandler conditionHandler = simpleCriteria.getCondition().getType().getConditionHandler();

@@ -6,32 +6,32 @@ import java.util.Map;
 public class CompoundCriteriaHandler implements CriteriaHandler {
 
     @Override
-    public boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, Map<String, Object> extraParam, boolean goingLong) {
+    public boolean match(Criteria criteria, Map<String, BigDecimal> sectorValues, boolean goingLong) {
         CompoundCriteria compoundCriteria = (CompoundCriteria) criteria;
 
         if (CompoundCriteria.Operator.AND.equals(compoundCriteria.getOperator())) {
-            return executeAndOperatorResult(compoundCriteria, sectorValues, extraParam, goingLong);
+            return executeAndOperatorResult(compoundCriteria, sectorValues, goingLong);
         }
         if (CompoundCriteria.Operator.OR.equals(compoundCriteria.getOperator())) {
-            return executeOrOperatorResult(compoundCriteria, sectorValues, extraParam, goingLong);
+            return executeOrOperatorResult(compoundCriteria, sectorValues, goingLong);
         }
 
         throw new RuntimeException("unsupported operator " + compoundCriteria.getOperator());
     }
 
 
-    private boolean executeAndOperatorResult(CompoundCriteria compoundCriteria, Map<String, BigDecimal> sectorValues, Map<String, Object> extraParam, boolean goingLong) {
+    private boolean executeAndOperatorResult(CompoundCriteria compoundCriteria, Map<String, BigDecimal> sectorValues, boolean goingLong) {
         for (Criteria c : compoundCriteria.getCriteriaList()) {
-            if (!c.getCriteriaType().getCriteriaHandler().match(c, sectorValues, extraParam, goingLong)) {
+            if (!c.getCriteriaType().getCriteriaHandler().match(c, sectorValues, goingLong)) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean executeOrOperatorResult(CompoundCriteria compoundCriteria, Map<String, BigDecimal> sectorValues, Map<String, Object> extraParam, boolean goingLong) {
+    private boolean executeOrOperatorResult(CompoundCriteria compoundCriteria, Map<String, BigDecimal> sectorValues, boolean goingLong) {
         for (Criteria c : compoundCriteria.getCriteriaList()) {
-            if (c.getCriteriaType().getCriteriaHandler().match(c, sectorValues, extraParam, goingLong)) {
+            if (c.getCriteriaType().getCriteriaHandler().match(c, sectorValues, goingLong)) {
                 return true;
             }
         }
