@@ -14,23 +14,21 @@ public class LastNKlineCriteriaHandler implements CriteriaHandler {
 
         CriteriaHandler matcherHandler = lastNKlineCriteria.getMatcher().getCriteriaType().getCriteriaHandler();
 
-        LastNKlineCriteria.MatchType matchType = lastNKlineCriteria.getMatchType();
-
         boolean allMatch = true;
         boolean oneMatch = false;
-        if (LastNKlineCriteria.MatchType.ONE_MATCH.equals(matchType)) {
-            for (int i = 1; i <= lastNKlineCriteria.getN(); i++) {
-                Map<String, BigDecimal> nestValues = new HashMap<>();
-                for (Sector.SectorType sectorType : Sector.SectorType.values()) {
-                    BigDecimal value = sectorValues.get(CommonConstants.LAST_KLINE_PARAM + "_" + i + "_" + sectorType.name());
-                    nestValues.put(sectorType.name(), value);
-                }
-                boolean match = matcherHandler.match(lastNKlineCriteria.getMatcher(), nestValues, goingLong);
-                if (match) {
-                    oneMatch = true;
-                } else {
-                    allMatch = false;
-                }
+
+        for (int i = 1; i <= lastNKlineCriteria.getN(); i++) {
+            Map<String, BigDecimal> nestValues = new HashMap<>();
+            for (Sector.SectorType sectorType : Sector.SectorType.values()) {
+                BigDecimal value = sectorValues.get(CommonConstants.LAST_KLINE_PARAM + "_" + i + "_" + sectorType.name());
+                nestValues.put(sectorType.name(), value);
+            }
+//            System.out.println("======"+nestValues);
+            boolean match = matcherHandler.match(lastNKlineCriteria.getMatcher(), nestValues, goingLong);
+            if (match) {
+                oneMatch = true;
+            } else {
+                allMatch = false;
             }
         }
 

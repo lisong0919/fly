@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class StrategyDemo {
 
@@ -50,7 +52,8 @@ public class StrategyDemo {
 
         //条件4：均线方向顺势而行
         SimpleCriteria criteria4 = new SimpleCriteria();
-        criteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION, 30));
+        criteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN, 30));
+        criteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION_END, 30));
         criteria4.setCondition(new Condition(Condition.ConditionType.FOLLOW, Condition.ConditionValueType.ANY, null));
 
         //条件5：两个K线涨幅不超过1%
@@ -61,20 +64,65 @@ public class StrategyDemo {
         finalCriteria.add(criteria3);
         finalCriteria.add(criteria4);
 
-        Strategy strategy1=new Strategy();
+        Strategy strategy1 = new Strategy();
         strategy1.setCriteria(finalCriteria);
         strategy1.setGoingLong(true);
 
 
-        Strategy strategy2=new Strategy();
+        Strategy strategy2 = new Strategy();
         strategy2.setCriteria(finalCriteria);
         strategy2.setGoingLong(false);
 
-        List<Strategy> strategyList=new ArrayList<>();
+        List<Strategy> strategyList = new ArrayList<>();
         strategyList.add(strategy1);
         strategyList.add(strategy2);
 
         System.out.println(JSONObject.toJSONString(strategyList));
+
+
+        Map<String, BigDecimal> sectorValues = new HashMap<>();
+
+        sectorValues.put("KLINE_VOLUME_MA", new BigDecimal("8421.70"));
+        sectorValues.put("KLINE_PRICE_MA", new BigDecimal("9602.77"));
+        sectorValues.put("KLINE_VOLUME", new BigDecimal(5837));
+        sectorValues.put("KLINE_PRICE_MA_DIRECTION_BEGIN", new BigDecimal("1"));//均线拐头向上
+        sectorValues.put("KLINE_PRICE_MA_DIRECTION_END", new BigDecimal("2"));//均线拐头向上
+        sectorValues.put("KLINE_PRICE_CLOSE", new BigDecimal("9600.6"));
+        sectorValues.put("KLINE_NEGATIVE_PRICE", new BigDecimal("9595.5"));
+        sectorValues.put("KLINE_POSITIVE_PRICE", new BigDecimal("9602"));
+
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_VOLUME_MA", new BigDecimal("9768.70"));//成交量
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_VOLUME", new BigDecimal("19537.5"));//成交量是MA的2倍
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_PRICE_MA", new BigDecimal("9602.54"));
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_PRICE_CLOSE", new BigDecimal("9602.55"));//站上MA30
+
+
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_NEGATIVE_PRICE", new BigDecimal("9581.2"));
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_POSITIVE_PRICE", new BigDecimal("9602.54"));
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_PRICE_MA_DIRECTION_END", new BigDecimal("2"));
+        sectorValues.put("LAST_KLINE_PARAM_2_KLINE_PRICE_MA_DIRECTION_BEGIN", new BigDecimal("1"));
+
+
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_PRICE_MA", new BigDecimal("9602.77"));//均线
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_NEGATIVE_PRICE", new BigDecimal("9602.76"));//突破均线--下方
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_POSITIVE_PRICE", new BigDecimal("9602.78"));//突破均线--上方
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_VOLUME", new BigDecimal("5837"));
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_PRICE_CLOSE", new BigDecimal("9600.6"));
+
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_VOLUME_MA", new BigDecimal("8421.70"));
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_PRICE_MA_DIRECTION_BEGIN", new BigDecimal(1));
+        sectorValues.put("LAST_KLINE_PARAM_1_KLINE_PRICE_MA_DIRECTION_END", new BigDecimal("2"));
+
+
+        boolean res= strategy1.getCriteria().getCriteriaType().getCriteriaHandler().match(finalCriteria,sectorValues,true);
+
+//        boolean res = criteria1.getCriteriaType().getCriteriaHandler().match(criteria1, sectorValues, true);
+//        boolean res = criteria2.getCriteriaType().getCriteriaHandler().match(criteria2, sectorValues, true);
+//        boolean res = criteria3.getCriteriaType().getCriteriaHandler().match(criteria3, sectorValues, true);
+//        boolean res = criteria4.getCriteriaType().getCriteriaHandler().match(criteria4, sectorValues, true);
+
+        System.out.println(">>>>>>>>>>" + res);
+
 
     }
 

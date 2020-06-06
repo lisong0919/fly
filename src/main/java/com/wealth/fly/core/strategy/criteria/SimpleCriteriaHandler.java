@@ -12,8 +12,8 @@ public class SimpleCriteriaHandler implements CriteriaHandler {
         SimpleCriteria simpleCriteria = (SimpleCriteria) criteria;
 
         ConditionHandler conditionHandler = simpleCriteria.getCondition().getType().getConditionHandler();
-        BigDecimal sourceValue = sectorValues.get(simpleCriteria.getSource().getType());
-        BigDecimal targetValue = sectorValues.get(simpleCriteria.getTarget().getType());
+        BigDecimal sourceValue = sectorValues.get(simpleCriteria.getSource().getType().name());
+        BigDecimal targetValue = sectorValues.get(simpleCriteria.getTarget().getType().name());
         return conditionHandler.match(sourceValue, targetValue, simpleCriteria.getCondition(), goingLong);
     }
 }

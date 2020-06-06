@@ -55,7 +55,9 @@ public class Sector {
         /**
          * K线MA的方向
          */
-        KLINE_PRICE_MA_DIRECTION,
+        KLINE_PRICE_MA_DIRECTION_BEGIN,
+
+        KLINE_PRICE_MA_DIRECTION_END,
         /**
          * 成交量MA
          */

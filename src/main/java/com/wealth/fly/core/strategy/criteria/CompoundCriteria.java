@@ -1,11 +1,13 @@
 package com.wealth.fly.core.strategy.criteria;
 
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@ToString
 public class CompoundCriteria extends AbstractCriteria implements Criteria {
 
     private Operator operator;

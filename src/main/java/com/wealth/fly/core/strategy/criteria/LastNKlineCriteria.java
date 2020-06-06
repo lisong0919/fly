@@ -1,8 +1,10 @@
 package com.wealth.fly.core.strategy.criteria;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class LastNKlineCriteria extends AbstractCriteria implements Criteria{
 
     private int n;

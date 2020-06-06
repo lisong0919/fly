@@ -2,12 +2,14 @@ package com.wealth.fly.core;
 
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.DataGranularity;
-import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
+
+import java.io.IOException;
 import java.util.*;
 import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,28 +34,15 @@ public class DataFetcher {
     @PostConstruct
     public void init() {
         starFetchTimer();
-        initMAData();
     }
 
-    public void registerKLineListener(KLineListener listener){
+    public void registerKLineListener(KLineListener listener) {
         kLineListenerList.add(listener);
     }
 
-    private void notifyKLineListenerNewLine(KLine kLine){
-        for(KLineListener listener:kLineListenerList){
+    private void notifyKLineListenerNewLine(KLine kLine) {
+        for (KLineListener listener : kLineListenerList) {
             listener.onNewKLine(kLine);
-        }
-    }
-
-    private void initMAData() {
-        for (DataGranularity dataGranularity : DataGranularity.values()) {
-            List<KLine> kLineList = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 30);
-            for (KLine kLine : kLineList) {
-                maHandler.push(MAType.PRICE, kLine, 7);
-                maHandler.push(MAType.PRICE, kLine, 30);
-                maHandler.push(MAType.VOLUME, kLine, 5);
-                maHandler.push(MAType.VOLUME, kLine, 10);
-            }
         }
     }
 
@@ -65,49 +54,62 @@ public class DataFetcher {
             public void run() {
 
                 for (DataGranularity dataGranularity : DataGranularity.values()) {
-
-                    List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
-
-                    Date fetchMinTime = null;
-                    Date fetchMaxTime = null;
-
-                    if (lastKLines != null && lastKLines.size() > 0) {
-                        Date now = Calendar.getInstance(Locale.CHINA).getTime();
-                        Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
-
-                        LOGGER.info("=====>lastLineDate:" + lastLineDate + ",now:" + now);
-                        Date[] timeRange = getDateFetchRang(lastLineDate, now, dataGranularity);
-                        //最后一条数据的时间，距离当前时间，是否超过数据粒度对应的时间间隔
-                        if (timeRange != null) {
-                            fetchMinTime = timeRange[0];
-                            fetchMaxTime = timeRange[1];
-                        } else {
-                            LOGGER.info("[{}] data is uptodate", dataGranularity);
-                            continue;
-                        }
-                    } else {
-                        LOGGER.info("[{}] no data in db,fetch all.", dataGranularity);
+                    try {
+                        fetch(dataGranularity);
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage(), e);
+                        continue;
                     }
-
-                    //取数据的起始时间未设置的情况下，取回所有能取的数据
-                    List<KLine> kLineList = exchanger
-                            .getKlineData("BTC-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
-
-                    LOGGER.info("[{}] fetch kline data from exchanger success.", dataGranularity);
-                    for (KLine kLine : kLineList) {
-                        kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
-                        kLine.setCurrencyId(1);
-                        if (kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                            kLineDao.insert(kLine);
-                        }
-                    }
-                    LOGGER.info("[{}] save kline data to db success,", dataGranularity);
                 }
 
             }
         }, 10000L, 60000L);
 
         LOGGER.info("init data fetcher timer finished.");
+    }
+
+    private void fetch(DataGranularity dataGranularity) {
+        List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
+
+        Date fetchMinTime = null;
+        Date fetchMaxTime = null;
+
+        if (lastKLines != null && lastKLines.size() > 0) {
+            Date now = Calendar.getInstance(Locale.CHINA).getTime();
+            Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
+
+            Date[] timeRange = getDateFetchRang(lastLineDate, now, dataGranularity);
+            //最后一条数据的时间，距离当前时间，是否超过数据粒度对应的时间间隔
+            if (timeRange != null) {
+                fetchMinTime = timeRange[0];
+                fetchMaxTime = timeRange[1];
+            } else {
+                LOGGER.debug("[{}] data is uptodate", dataGranularity);
+                return;
+            }
+        } else {
+            LOGGER.info("[{}] no data in db,fetch all.", dataGranularity);
+        }
+
+        //取数据的起始时间未设置的情况下，取回所有能取的数据
+        List<KLine> kLineList = exchanger
+                .getKlineData("BTC-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
+
+        LOGGER.info("[{}] fetch kline data from exchanger success.", dataGranularity);
+        boolean isDBEmpty = lastKLines == null || lastKLines.isEmpty();
+        for (KLine kLine : kLineList) {
+            kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
+            kLine.setCurrencyId(1);
+
+            if(!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()){
+                notifyKLineListenerNewLine(kLine);
+            }
+
+            if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                kLineDao.insert(kLine);
+            }
+        }
+        LOGGER.info("[{}] save kline data to db success,", dataGranularity);
     }
 
 
@@ -138,8 +140,6 @@ public class DataFetcher {
 
         return result;
     }
-
-
 
 
 }

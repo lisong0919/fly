@@ -1,1 +1,113 @@
-[]
+[
+  {
+    "criteria": {
+      "criteriaList": [
+        {
+          "criteriaType": "LAST_N_KLINE",
+          "description": "条件1: 两个K线，任意一个成交量大于成交量MA10的两倍",
+          "matchType": "ONE_MATCH",
+          "matcher": {
+            "condition": {
+              "type": "GREAT_THAN",
+              "value": "100",
+              "valueType": "PERCENT"
+            },
+            "criteriaType": "SIMPLE",
+            "source": {
+              "type": "KLINE_VOLUME"
+            },
+            "target": {
+              "type": "KLINE_VOLUME_MA",
+              "value": 10
+            }
+          },
+          "n": 2
+        },
+        {
+          "criteriaType": "LAST_N_KLINE",
+          "description": "条件2:两个K线中任意一个穿过MA30",
+          "matchType": "ONE_MATCH",
+          "matcher": {
+            "criteriaList": [
+              {
+                "condition": {
+                  "type": "BEHIND",
+                  "valueType": "ANY"
+                },
+                "criteriaType": "SIMPLE",
+                "description": "负面价格落后于MA30",
+                "source": {
+                  "type": "KLINE_NEGATIVE_PRICE"
+                },
+                "target": {
+                  "type": "KLINE_PRICE_MA",
+                  "value": 30
+                }
+              },
+              {
+                "condition": {
+                  "type": "BEYOND",
+                  "valueType": "ANY"
+                },
+                "criteriaType": "SIMPLE",
+                "description": "正面价格超越MA30",
+                "source": {
+                  "type": "KLINE_POSITIVE_PRICE"
+                },
+                "target": {
+                  "type": "KLINE_PRICE_MA",
+                  "value": 30
+                }
+              }
+            ],
+            "criteriaType": "COMPOUND",
+            "operator": "AND"
+          },
+          "n": 2
+        },
+        {
+          "criteriaType": "LAST_N_KLINE",
+          "description": "条件3: 两个K线中，任意一个站上价格MA30",
+          "matchType": "ONE_MATCH",
+          "matcher": {
+            "condition": {
+              "type": "BEYOND",
+              "valueType": "ANY"
+            },
+            "criteriaType": "SIMPLE",
+            "source": {
+              "type": "KLINE_PRICE_CLOSE"
+            },
+            "target": {
+              "type": "KLINE_PRICE_MA",
+              "value": 30
+            }
+          },
+          "n": 2
+        },
+        {
+          "condition": {
+            "type": "FOLLOW",
+            "valueType": "ANY"
+          },
+          "criteriaType": "SIMPLE",
+          "source": {
+            "type": "KLINE_PRICE_MA_DIRECTION",
+            "value": 30
+          }
+        }
+      ],
+      "criteriaType": "COMPOUND",
+      "operator": "AND"
+    },
+    "currencyId": 0,
+    "goingLong": true
+  },
+  {
+    "criteria": {
+      "$ref": "$[0].criteria"
+    },
+    "currencyId": 0,
+    "goingLong": false
+  }
+]
