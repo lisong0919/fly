@@ -137,12 +137,14 @@ public class StrategyHandler implements KLineListener {
     private void setLastKLineSectorValues(KLine newKLine, Map<String, BigDecimal> originalSectorValues, boolean priceMaIncrease, boolean isGoingLong) {
         Map<String, BigDecimal> lastSectorValues = isGoingLong ? getLongSectorValues(newKLine, priceMaIncrease) : getShortSectorValues(newKLine, priceMaIncrease);
         for (String key : lastSectorValues.keySet()) {
-            originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 1 + "_" + key, lastSectorValues.get(key));
+            if(!key.startsWith(CommonConstants.LAST_KLINE_PARAM)){
+                originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 1 + "_" + key, lastSectorValues.get(key));
+            }
         }
 
         Map<String, BigDecimal> preSectorValues = isGoingLong ? preLongSectorValues : preShortSectorValues;
         for (String key : preSectorValues.keySet()) {
-            if (preSectorValues.containsKey(key)) {
+            if(!key.startsWith(CommonConstants.LAST_KLINE_PARAM)){
                 originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 2 + "_" + key, preSectorValues.get(key));
             }
         }
