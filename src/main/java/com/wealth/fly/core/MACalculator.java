@@ -59,7 +59,7 @@ public class MACalculator {
         last = newNode;
 
         if (count.intValue() == capacity) {
-            printAllElement();
+//            printAllElement();
             average = total.divide(count, scale, BigDecimal.ROUND_HALF_UP);
             return average;
         } else {

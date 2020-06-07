@@ -66,7 +66,13 @@ public class Sector {
         /**
          * 收益
          */
-        PROFIT
+        PROFIT,
+
+        LAST_KLINE_CLOSE_PRICE,
+
+        FIRST_KLINE_OPEN_PRICE,
+
+        KLINE_PRICE_OPEN
 
     }
 }

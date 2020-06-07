@@ -28,6 +28,7 @@ import javax.annotation.PostConstruct;
 
 import com.wealth.fly.core.strategy.criteria.SimpleCriteria;
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
+import com.wealth.fly.statistic.StatisticStrategyAction;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,8 @@ public class StrategyHandler implements KLineListener {
     private MAHandler maHandler;
     @Autowired
     private DataFetcher dataFetcher;
+    @Autowired
+    private StatisticStrategyAction strategyAction;
 
     private BigDecimal priceMA;
     private BigDecimal volumeMA;
@@ -125,13 +128,14 @@ public class StrategyHandler implements KLineListener {
 
             LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
-                //目前的短信参数不能有特殊符号
-                String priceStr= kLine.getClose().toPlainString();
-                if(priceStr.contains(".")){
-                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
-                }
-                SmsUtil.sendOpenStockSms(priceStr);
-                LOGGER.info("send sms success");
+                strategy.getAction().doAction(strategy, kLine, priceMA, sectorValues.get(SectorType.FIRST_KLINE_OPEN_PRICE.name()));
+//                //目前的短信参数不能有特殊符号
+//                String priceStr= kLine.getClose().toPlainString();
+//                if(priceStr.contains(".")){
+//                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
+//                }
+//                SmsUtil.sendOpenStockSms(priceStr);
+//                LOGGER.info("send sms success");
             }
         }
 
@@ -147,12 +151,15 @@ public class StrategyHandler implements KLineListener {
             }
         }
 
+        originalSectorValues.put(SectorType.LAST_KLINE_CLOSE_PRICE.name(), newKLine.getClose());
+
         Map<String, BigDecimal> preSectorValues = isGoingLong ? preLongSectorValues : preShortSectorValues;
         for (String key : preSectorValues.keySet()) {
             if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
                 originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 2 + "_" + key, preSectorValues.get(key));
             }
         }
+        originalSectorValues.put(SectorType.FIRST_KLINE_OPEN_PRICE.name(), preSectorValues.get(SectorType.KLINE_PRICE_OPEN.name()));
     }
 
     private Map<String, BigDecimal> getLongSectorValues(KLine kLine, boolean priceMaIncrease) {
@@ -176,6 +183,7 @@ public class StrategyHandler implements KLineListener {
     private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, boolean priceMaIncrease) {
         Map commonSectorValues = new HashMap();
         commonSectorValues.put(SectorType.KLINE_VOLUME.name(), new BigDecimal(kLine.getVolume()));
+        commonSectorValues.put(SectorType.KLINE_PRICE_OPEN.name(), kLine.getOpen());
         commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
         commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);
         commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
@@ -186,6 +194,38 @@ public class StrategyHandler implements KLineListener {
     }
 
     public void initStrategyList() {
+        CompoundCriteria longCriteria = getFinalCriteria();
+        // 防止方向开反了
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(SectorType.LAST_KLINE_CLOSE_PRICE));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria1.setTarget(new Sector(SectorType.FIRST_KLINE_OPEN_PRICE));
+        longCriteria.add(simpleCriteria1);
+
+        Strategy strategy1 = new Strategy();
+        strategy1.setCriteria(longCriteria);
+        strategy1.setGoingLong(true);
+        strategy1.setAction(strategyAction);
+
+        CompoundCriteria shortCriteria = getFinalCriteria();
+        // 防止方向开反了
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(SectorType.FIRST_KLINE_OPEN_PRICE));
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria2.setTarget(new Sector(SectorType.LAST_KLINE_CLOSE_PRICE));
+        shortCriteria.add(simpleCriteria2);
+
+        Strategy strategy2 = new Strategy();
+        strategy2.setCriteria(shortCriteria);
+        strategy2.setGoingLong(false);
+        strategy2.setAction(strategyAction);
+
+        strategyList = new ArrayList<>();
+        strategyList.add(strategy1);
+        strategyList.add(strategy2);
+    }
+
+    private CompoundCriteria getFinalCriteria() {
         //条件1：最后两个K线的成交量，任意一个大于成交量MA10的两倍
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();
         simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
@@ -224,26 +264,13 @@ public class StrategyHandler implements KLineListener {
         criteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION_END, 30));
         criteria4.setCondition(new Condition(Condition.ConditionType.FOLLOW, Condition.ConditionValueType.ANY, null));
 
-        //条件5：两个K线涨幅不超过1%
-//        SimpleCriteria criteria5=new SimpleCriteria();
         CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(criteria1);
         finalCriteria.add(criteria2);
         finalCriteria.add(criteria3);
         finalCriteria.add(criteria4);
 
-        Strategy strategy1 = new Strategy();
-        strategy1.setCriteria(finalCriteria);
-        strategy1.setGoingLong(true);
-
-
-        Strategy strategy2 = new Strategy();
-        strategy2.setCriteria(finalCriteria);
-        strategy2.setGoingLong(false);
-
-        strategyList = new ArrayList<>();
-        strategyList.add(strategy1);
-        strategyList.add(strategy2);
+        return finalCriteria;
     }
 
 }

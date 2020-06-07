@@ -209,4 +209,12 @@
     from kline where granularity=#{granularity} order by data_time desc limit #{limit}
   </select>
 
+
+  <select id="getLastKLineGTDataTime" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from kline where granularity=#{granularity} and data_time &gt; #{dataTime} order by data_time limit #{limit}
+  </select>
+
+
 </mapper>

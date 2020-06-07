@@ -58,4 +58,6 @@ public interface KLineDao {
     int updateByPrimaryKey(KLine record);
 
     List<KLine> getLastKLineByGranularity(@Param("granularity") String dataGranularity, @Param("limit") int limit);
+
+    List<KLine> getLastKLineGTDataTime(@Param("granularity") String dataGranularity,@Param("dataTime") Long dataTime , @Param("limit") int limit);
 }
