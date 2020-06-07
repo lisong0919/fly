@@ -125,7 +125,7 @@ public class StrategyHandler implements KLineListener {
 
             LOGGER.info("match result is " + match);
             if (match) {
-                SmsUtil.sendOpenStockSms(kLine.getDataTime()+":"+String.valueOf(kLine.getClose()));
+                SmsUtil.sendOpenStockSms(kLine.getDataTime() + ":" + String.valueOf(kLine.getClose()));
                 LOGGER.info("send sms success");
             }
         }
@@ -137,14 +137,14 @@ public class StrategyHandler implements KLineListener {
     private void setLastKLineSectorValues(KLine newKLine, Map<String, BigDecimal> originalSectorValues, boolean priceMaIncrease, boolean isGoingLong) {
         Map<String, BigDecimal> lastSectorValues = isGoingLong ? getLongSectorValues(newKLine, priceMaIncrease) : getShortSectorValues(newKLine, priceMaIncrease);
         for (String key : lastSectorValues.keySet()) {
-            if(!key.startsWith(CommonConstants.LAST_KLINE_PARAM)){
+            if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
                 originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 1 + "_" + key, lastSectorValues.get(key));
             }
         }
 
         Map<String, BigDecimal> preSectorValues = isGoingLong ? preLongSectorValues : preShortSectorValues;
         for (String key : preSectorValues.keySet()) {
-            if(!key.startsWith(CommonConstants.LAST_KLINE_PARAM)){
+            if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
                 originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 2 + "_" + key, preSectorValues.get(key));
             }
         }
@@ -152,33 +152,30 @@ public class StrategyHandler implements KLineListener {
 
     private Map<String, BigDecimal> getLongSectorValues(KLine kLine, boolean priceMaIncrease) {
         Map longSectorValues = new HashMap();
-        longSectorValues.putAll(getCommonSectorValues(kLine));
+        longSectorValues.putAll(getCommonSectorValues(kLine, priceMaIncrease));
         longSectorValues.put(SectorType.KLINE_POSITIVE_PRICE.name(), kLine.getHigh());
         longSectorValues.put(SectorType.KLINE_NEGATIVE_PRICE.name(), kLine.getLow());
-        longSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN.name(), priceMaIncrease ? new BigDecimal(1) : new BigDecimal(2));
-        longSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_END.name(), priceMaIncrease ? new BigDecimal(2) : new BigDecimal(1));
 
         return longSectorValues;
     }
 
     private Map<String, BigDecimal> getShortSectorValues(KLine kLine, boolean priceMaIncrease) {
         Map shortSectorValues = new HashMap();
-        shortSectorValues.putAll(getCommonSectorValues(kLine));
+        shortSectorValues.putAll(getCommonSectorValues(kLine, priceMaIncrease));
         shortSectorValues.put(SectorType.KLINE_POSITIVE_PRICE.name(), kLine.getLow());
         shortSectorValues.put(SectorType.KLINE_NEGATIVE_PRICE.name(), kLine.getHigh());
-
-        shortSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN.name(), priceMaIncrease ? new BigDecimal(2) : new BigDecimal(1));
-        shortSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_END.name(), priceMaIncrease ? new BigDecimal(1) : new BigDecimal(2));
 
         return shortSectorValues;
     }
 
-    private Map<String, BigDecimal> getCommonSectorValues(KLine kLine) {
+    private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, boolean priceMaIncrease) {
         Map commonSectorValues = new HashMap();
         commonSectorValues.put(SectorType.KLINE_VOLUME.name(), new BigDecimal(kLine.getVolume()));
         commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
         commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);
         commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
+        commonSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN.name(), priceMaIncrease ? new BigDecimal(1) : new BigDecimal(2));
+        commonSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_END.name(), priceMaIncrease ? new BigDecimal(2) : new BigDecimal(1));
 
         return commonSectorValues;
     }
