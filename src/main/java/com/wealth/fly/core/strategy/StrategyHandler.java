@@ -120,10 +120,10 @@ public class StrategyHandler implements KLineListener {
         for (Strategy strategy : strategyList) {
             Map<String, BigDecimal> sectorValues = strategy.isGoingLong() ? longSectorValues : shortSectorValues;
             setLastKLineSectorValues(kLine, sectorValues, priceMaIncrease, strategy.isGoingLong());
-            LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong(), sectorValues});
+            LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", sectorValues});
             boolean match = strategy.getCriteria().getCriteriaType().getCriteriaHandler().match(strategy.getCriteria(), sectorValues, strategy.isGoingLong());
 
-            LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong(), match});
+            LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
                 SmsUtil.sendOpenStockSms(String.valueOf(kLine.getClose()));
                 LOGGER.info("send sms success");
