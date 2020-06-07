@@ -6,6 +6,17 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 
 public class MACalculatorTest {
+
+
+    public static void main(String[] args) {
+        MACalculator maCalculator = new MACalculator("测试", 30);
+        String[] closePirces = new String[]{"9687.5", "9683.0", "9701.6", "9693.5", "9690.3", "9695.7", "9696.3", "9700.1", "9705.7", "9688.5", "9687.0", "9687.3", "9692.9", "9689.1", "9683.7", "9690.2", "9682.6", "9681.2", "9683.0", "9676.3", "9676.8", "9679.4", "9680.4", "9680.7", "9682.9", "9682.0", "9679.5", "9680.1", "9687.0", "9694.9"};
+        for (int i = closePirces.length; i >= 1; i--) {
+            System.out.println(maCalculator.push(i, new BigDecimal(closePirces[i - 1])));
+        }
+
+    }
+
     @Test
     public void pushTest() {
         //push前两个元素，并校验平均值是null
