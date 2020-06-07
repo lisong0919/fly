@@ -125,7 +125,7 @@ public class StrategyHandler implements KLineListener {
 
             LOGGER.info("match result is " + match);
             if (match) {
-                SmsUtil.sendOpenStockSms(kLine.getDataTime() + ":" + String.valueOf(kLine.getClose()));
+                SmsUtil.sendOpenStockSms(String.valueOf(kLine.getClose()));
                 LOGGER.info("send sms success");
             }
         }
