@@ -102,7 +102,7 @@ public class RestTest {
 			String token = "94a282b83325dc612114e4ff2264178f";
 			String appid = "36c2c513a615444b9e9f1ec9e5175819";
 			String templateid = "67283";
-			String param = "20200606134500:9653.2";
+			String param = "9619";
 			String mobile = "15501162595";
 			String uid = "";
 			testSendSms(sid, token, appid, templateid, param, mobile, uid);

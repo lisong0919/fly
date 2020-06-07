@@ -125,7 +125,12 @@ public class StrategyHandler implements KLineListener {
 
             LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
-                SmsUtil.sendOpenStockSms(String.valueOf(kLine.getClose()));
+                //目前的短信参数不能有特殊符号
+                String priceStr= kLine.getClose().toPlainString();
+                if(priceStr.contains(".")){
+                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
+                }
+                SmsUtil.sendOpenStockSms(priceStr);
                 LOGGER.info("send sms success");
             }
         }
