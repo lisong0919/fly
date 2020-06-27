@@ -20,4 +20,22 @@ public class MathUtil {
 
         return distance.divide(compareTo, 5, BigDecimal.ROUND_DOWN);
     }
+
+    public static double caculateMACD(double DIF, double DEA) {
+        return 2 * (DIF - DEA);
+    }
+
+    public static double caculateDIF(double EMA12, double EMA26) {
+
+        return EMA12 - EMA26;
+    }
+
+    public static double caculateDEA(double DEAYesterday, double DIFToday) {
+        return DEAYesterday * 8 / 10 + DIFToday * 2 / 10;
+    }
+
+    public static double calculateEMA(double todaysPrice, double numberOfDays, double EMAYesterday) {
+        double k = 2 / (numberOfDays + 1);
+        return todaysPrice * k + EMAYesterday * (1 - k);
+    }
 }

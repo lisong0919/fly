@@ -8,8 +8,7 @@ public interface ConditionHandler {
      * @param sourceValue
      * @param targetValue
      * @param condition
-     * @param goingLong
      * @return
      */
-    boolean match(BigDecimal sourceValue, BigDecimal targetValue, Condition condition, boolean goingLong);
+    boolean match(BigDecimal sourceValue, BigDecimal targetValue, Condition condition);
 }

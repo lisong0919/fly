@@ -1,35 +1,24 @@
 package com.wealth.fly.core.strategy;
 
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.JSONPObject;
-import com.ucpaas.restDemo.client.JsonReqClient;
+import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.DataFetcher;
 import com.wealth.fly.core.KLineListener;
 import com.wealth.fly.core.MAHandler;
-import com.wealth.fly.core.SmsUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.strategy.criteria.CompoundCriteria;
-import com.wealth.fly.core.strategy.criteria.LastNKlineCriteria;
-import com.wealth.fly.core.strategy.criteria.Sector;
+import com.wealth.fly.core.strategy.criteria.*;
 import com.wealth.fly.core.strategy.criteria.Sector.SectorType;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import javax.annotation.PostConstruct;
 
-import com.wealth.fly.core.strategy.criteria.SimpleCriteria;
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import com.wealth.fly.statistic.StatisticStrategyAction;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,8 +38,12 @@ public class StrategyHandler implements KLineListener {
 
     private BigDecimal priceMA;
     private BigDecimal volumeMA;
-    private Map<String, BigDecimal> preLongSectorValues;
-    private Map<String, BigDecimal> preShortSectorValues;
+    private BigDecimal prevMACD;
+    private KLine prevKLine;
+    private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();
+
+    public static final int MAX_KLINE_SIZE = 4;
+
     private List<Strategy> strategyList;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StrategyHandler.class);
@@ -96,39 +89,48 @@ public class StrategyHandler implements KLineListener {
         if (!DataGranularity.FIVE_MINUTES.name().equals(kLine.getGranularity())) {
             return;
         }
-        BigDecimal prePriceMA = priceMA;
+
         //更新ma信息
         volumeMA = maHandler.push(MAType.VOLUME, kLine, 10);
         priceMA = maHandler.push(MAType.PRICE, kLine, 30);
 
         if (volumeMA == null || priceMA == null) {
+            setSomePrevValues(kLine);
             LOGGER.info("ma is not ready.");
             return;
         }
 
-        boolean priceMaIncrease = priceMA.compareTo(prePriceMA) > 0;
-
-        Map<String, BigDecimal> longSectorValues = getLongSectorValues(kLine, priceMaIncrease);
-        Map<String, BigDecimal> shortSectorValues = getShortSectorValues(kLine, priceMaIncrease);
-
-        boolean isFirstNewLineEvent = preLongSectorValues == null || preShortSectorValues == null;
-
-
-        if (isFirstNewLineEvent) {
-            preLongSectorValues = longSectorValues;
-            preShortSectorValues = shortSectorValues;
+        if (prevMACD == null || prevKLine == null) {
+            LOGGER.info("pre values not ready.");
+            setSomePrevValues(kLine);
             return;
         }
 
+
+        Map<String, BigDecimal> sectorValues = getCommonSectorValues(kLine, prevKLine);
+
+        synchronized (lastKlineSectorValuesList) {
+            if (lastKlineSectorValuesList.size() == MAX_KLINE_SIZE) {
+                lastKlineSectorValuesList.removeFirst();
+            }
+            lastKlineSectorValuesList.add(sectorValues);
+            if (lastKlineSectorValuesList.size() < MAX_KLINE_SIZE) {
+                setSomePrevValues(kLine);
+                LOGGER.info("lastKlineSectorValuesList not ready.");
+                return;
+            }
+        }
+
+        setLastKLineSectorValues(sectorValues, kLine);
+
         for (Strategy strategy : strategyList) {
-            Map<String, BigDecimal> sectorValues = strategy.isGoingLong() ? longSectorValues : shortSectorValues;
-            setLastKLineSectorValues(kLine, sectorValues, priceMaIncrease, strategy.isGoingLong());
-            LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", sectorValues});
-            boolean match = strategy.getCriteria().getCriteriaType().getCriteriaHandler().match(strategy.getCriteria(), sectorValues, strategy.isGoingLong());
+
+            LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", JSONObject.toJSONString(sectorValues)});
+            boolean match = strategy.getCriteria().getCriteriaType().getCriteriaHandler().match(strategy.getCriteria(), sectorValues);
 
             LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
-                strategy.getAction().doAction(strategy, kLine, priceMA, sectorValues.get(SectorType.FIRST_KLINE_OPEN_PRICE.name()));
+                strategy.getAction().doAction(strategy, kLine, priceMA, null);
 //                //目前的短信参数不能有特殊符号
 //                String priceStr= kLine.getClose().toPlainString();
 //                if(priceStr.contains(".")){
@@ -139,138 +141,143 @@ public class StrategyHandler implements KLineListener {
             }
         }
 
-        preLongSectorValues = longSectorValues;
-        preShortSectorValues = shortSectorValues;
+        setSomePrevValues(kLine);
     }
 
-    private void setLastKLineSectorValues(KLine newKLine, Map<String, BigDecimal> originalSectorValues, boolean priceMaIncrease, boolean isGoingLong) {
-        Map<String, BigDecimal> lastSectorValues = isGoingLong ? getLongSectorValues(newKLine, priceMaIncrease) : getShortSectorValues(newKLine, priceMaIncrease);
+    /**
+     * 本方法在一个K线处理结束的时候，将本次K线数据设置为prev值
+     *
+     * @param kLine
+     */
+    private void setSomePrevValues(KLine kLine) {
+        if (prevKLine != null) {
+            double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
+            double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
+            double diff = MathUtil.caculateDIF(ema12, ema26);
+            double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
+
+            prevMACD = new BigDecimal(MathUtil.caculateMACD(diff, dea9));
+        }
+        prevKLine = kLine;
+    }
+
+    private void setLastKLineSectorValues(Map<String, BigDecimal> orignalSectorValues, KLine kLine) {
+
+        // 最后一个K线不能边遍历边修改，所以要通过kLine创建一个新的sectorValues
+        for (int i = 0; i < lastKlineSectorValuesList.size() - 1; i++) {
+            Map<String, BigDecimal> lastSectorValues = lastKlineSectorValuesList.get(i);
+
+            for (String key : lastSectorValues.keySet()) {
+                if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
+                    orignalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + (i + 1) + "_" + key, lastSectorValues.get(key));
+                }
+            }
+        }
+
+        Map<String, BigDecimal> lastSectorValues = getCommonSectorValues(kLine, prevKLine);
+
         for (String key : lastSectorValues.keySet()) {
             if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
-                originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 1 + "_" + key, lastSectorValues.get(key));
+                orignalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + lastKlineSectorValuesList.size() + "_" + key, lastSectorValues.get(key));
             }
         }
-
-        originalSectorValues.put(SectorType.LAST_KLINE_CLOSE_PRICE.name(), newKLine.getClose());
-
-        Map<String, BigDecimal> preSectorValues = isGoingLong ? preLongSectorValues : preShortSectorValues;
-        for (String key : preSectorValues.keySet()) {
-            if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
-                originalSectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + 2 + "_" + key, preSectorValues.get(key));
-            }
-        }
-        originalSectorValues.put(SectorType.FIRST_KLINE_OPEN_PRICE.name(), preSectorValues.get(SectorType.KLINE_PRICE_OPEN.name()));
     }
 
-    private Map<String, BigDecimal> getLongSectorValues(KLine kLine, boolean priceMaIncrease) {
-        Map longSectorValues = new HashMap();
-        longSectorValues.putAll(getCommonSectorValues(kLine, priceMaIncrease));
-        longSectorValues.put(SectorType.KLINE_POSITIVE_PRICE.name(), kLine.getHigh());
-        longSectorValues.put(SectorType.KLINE_NEGATIVE_PRICE.name(), kLine.getLow());
 
-        return longSectorValues;
-    }
-
-    private Map<String, BigDecimal> getShortSectorValues(KLine kLine, boolean priceMaIncrease) {
-        Map shortSectorValues = new HashMap();
-        shortSectorValues.putAll(getCommonSectorValues(kLine, priceMaIncrease));
-        shortSectorValues.put(SectorType.KLINE_POSITIVE_PRICE.name(), kLine.getLow());
-        shortSectorValues.put(SectorType.KLINE_NEGATIVE_PRICE.name(), kLine.getHigh());
-
-        return shortSectorValues;
-    }
-
-    private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, boolean priceMaIncrease) {
+    private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, KLine prevKLine) {
         Map commonSectorValues = new HashMap();
         commonSectorValues.put(SectorType.KLINE_VOLUME.name(), new BigDecimal(kLine.getVolume()));
         commonSectorValues.put(SectorType.KLINE_PRICE_OPEN.name(), kLine.getOpen());
         commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
         commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);
         commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
-        commonSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN.name(), priceMaIncrease ? new BigDecimal(1) : new BigDecimal(2));
-        commonSectorValues.put(SectorType.KLINE_PRICE_MA_DIRECTION_END.name(), priceMaIncrease ? new BigDecimal(2) : new BigDecimal(1));
+
+        double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
+        double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
+        double diff = MathUtil.caculateDIF(ema12, ema26);
+        double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
+
+        commonSectorValues.put(SectorType.DIF.name(), new BigDecimal(diff));
+        commonSectorValues.put(SectorType.DEA.name(), new BigDecimal(dea9));
+        commonSectorValues.put(SectorType.MACD.name(), new BigDecimal(MathUtil.caculateMACD(diff, dea9)));
+        commonSectorValues.put(SectorType.PREV_KLINE_CLOSE_PRICE.name(), prevKLine.getClose());
+        commonSectorValues.put(SectorType.PREV_KLINE_MACD.name(), prevMACD);
 
         return commonSectorValues;
     }
 
     public void initStrategyList() {
-        CompoundCriteria longCriteria = getFinalCriteria();
-        // 防止方向开反了
-        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
-        simpleCriteria1.setSource(new Sector(SectorType.LAST_KLINE_CLOSE_PRICE));
-        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria1.setTarget(new Sector(SectorType.FIRST_KLINE_OPEN_PRICE));
-        longCriteria.add(simpleCriteria1);
-
-        Strategy strategy1 = new Strategy();
-        strategy1.setCriteria(longCriteria);
-        strategy1.setGoingLong(true);
-        strategy1.setAction(strategyAction);
-
-        CompoundCriteria shortCriteria = getFinalCriteria();
-        // 防止方向开反了
-        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
-        simpleCriteria2.setSource(new Sector(SectorType.FIRST_KLINE_OPEN_PRICE));
-        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria2.setTarget(new Sector(SectorType.LAST_KLINE_CLOSE_PRICE));
-        shortCriteria.add(simpleCriteria2);
 
         Strategy strategy2 = new Strategy();
-        strategy2.setCriteria(shortCriteria);
+        strategy2.setCriteria(getShortCriteria());
         strategy2.setGoingLong(false);
         strategy2.setAction(strategyAction);
 
         strategyList = new ArrayList<>();
-        strategyList.add(strategy1);
         strategyList.add(strategy2);
     }
 
-    private CompoundCriteria getFinalCriteria() {
-        //条件1：最后两个K线的成交量，任意一个大于成交量MA10的两倍
+
+    private Criteria getShortCriteria() {
+        //条件1： 死叉出现
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();
-        simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
-        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
-        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
-        LastNKlineCriteria criteria1 = new LastNKlineCriteria(2, simpleCriteria1, LastNKlineCriteria.MatchType.ONE_MATCH);
-        criteria1.setDescription("条件1: 两个K线，任意一个成交量大于成交量MA10的两倍");
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.DIF));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.DEA));
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(4, simpleCriteria1, LastNKlineCriteria.MatchType.FIRST_MATCH);
 
-
-        //条件2：2个K线中任意一个突破MA30
         SimpleCriteria simpleCriteria2 = new SimpleCriteria();
-        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_NEGATIVE_PRICE));
-        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.BEHIND, Condition.ConditionValueType.ANY, null));
-        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria2.setDescription("负面价格落后于MA30");
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.DIF));
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.DEA));
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(4, simpleCriteria2, LastNKlineCriteria.MatchType.SECOND_MATCH);
 
+        CompoundCriteria criteria1 = new CompoundCriteria(CompoundCriteria.Operator.AND);
+        criteria1.add(lc1);
+        criteria1.add(lc2);
+        criteria1.setDescription("死叉出现");
+
+        //条件2：任意一个大于成交量MA10的两倍
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
-        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_POSITIVE_PRICE));
-        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.BEYOND, Condition.ConditionValueType.ANY, null));
-        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria3.setDescription("正面价格超越MA30");
-        LastNKlineCriteria criteria2 = new LastNKlineCriteria(2, new CompoundCriteria(CompoundCriteria.Operator.AND, simpleCriteria2, simpleCriteria3), LastNKlineCriteria.MatchType.ONE_MATCH);
-        criteria2.setDescription("条件2:两个K线中任意一个穿过MA30");
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
+        LastNKlineCriteria criteria2 = new LastNKlineCriteria(3, simpleCriteria3, LastNKlineCriteria.MatchType.ONE_MATCH);
+        criteria2.setDescription("任意一个大于成交量MA10的两倍");
 
-        //条件3: 两个K线中，任意一个站上价格MA30
+        //条件3：收盘价依次递减
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
-        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.BEYOND, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
-        LastNKlineCriteria criteria3 = new LastNKlineCriteria(2, simpleCriteria4, LastNKlineCriteria.MatchType.ONE_MATCH);
-        criteria3.setDescription("条件3: 两个K线中，任意一个站上价格MA30");
+        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.PREV_KLINE_CLOSE_PRICE));
+        LastNKlineCriteria criteria3 = new LastNKlineCriteria(3, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
+        criteria3.setDescription("收盘价依次递减");
 
-        //条件4：均线方向顺势而行
-        SimpleCriteria criteria4 = new SimpleCriteria();
-        criteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION_BEGIN, 30));
-        criteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA_DIRECTION_END, 30));
-        criteria4.setCondition(new Condition(Condition.ConditionType.FOLLOW, Condition.ConditionValueType.ANY, null));
+        //条件4：MACD红柱放出
+        SimpleCriteria simpleCriteria5 = new SimpleCriteria();
+        simpleCriteria5.setSource(new Sector(Sector.SectorType.MACD));
+        simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.PREV_KLINE_MACD));
+        LastNKlineCriteria criteria4 = new LastNKlineCriteria(3, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
+        criteria4.setDescription("MACD红柱放出");
+
+        //条件5：K线全部下跌
+        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
+        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+        LastNKlineCriteria criteria5 = new LastNKlineCriteria(4, simpleCriteria6, LastNKlineCriteria.MatchType.ALL_MATCH);
+        criteria4.setDescription("K线全部下跌");
 
         CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(criteria1);
         finalCriteria.add(criteria2);
         finalCriteria.add(criteria3);
         finalCriteria.add(criteria4);
+        finalCriteria.add(criteria5);
 
         return finalCriteria;
     }
+
 
 }

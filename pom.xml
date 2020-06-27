@@ -100,11 +100,21 @@
 				<includes>
 					<include>**/*.properties</include>
 					<include>**/*.xml</include>
+					<include>**/*.json</include>
 				</includes>
 				<filtering>false</filtering>
 			</resource>
 			<resource>
 				<directory>src/main/resources</directory>
+				<includes>
+					<include>**/*.properties</include>
+					<include>**/*.json</include>
+					<include>**/*.xml</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/test/resources</directory>
 				<includes>
 					<include>**/*.properties</include>
 					<include>**/*.json</include>

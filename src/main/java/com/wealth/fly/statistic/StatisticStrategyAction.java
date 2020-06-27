@@ -29,7 +29,7 @@ public class StatisticStrategyAction implements Action {
         item.setStartPrice(kLine.getClose());
         item.setStartDataTime(kLine.getDataTime());
         item.setAmplitudeFromMAPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), priceMA));
-        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
+//        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
 
 
         Long nextDataTime = kLine.getDataTime();

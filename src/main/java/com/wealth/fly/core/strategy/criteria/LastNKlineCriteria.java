@@ -5,13 +5,13 @@ import lombok.ToString;
 
 @Data
 @ToString
-public class LastNKlineCriteria extends AbstractCriteria implements Criteria{
+public class LastNKlineCriteria extends AbstractCriteria implements Criteria {
 
     private int n;
     private Criteria matcher;
     private MatchType matchType;
 
-    public LastNKlineCriteria(){
+    public LastNKlineCriteria() {
     }
 
     public LastNKlineCriteria(int n, Criteria matcher, MatchType matchType) {
@@ -25,8 +25,10 @@ public class LastNKlineCriteria extends AbstractCriteria implements Criteria{
         return CriteriaType.LAST_N_KLINE;
     }
 
-    public enum MatchType{
+    public enum MatchType {
         ONE_MATCH,
+        FIRST_MATCH,
+        SECOND_MATCH,
         ALL_MATCH
     }
 }
