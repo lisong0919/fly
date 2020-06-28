@@ -1,11 +1,13 @@
 package com.wealth.fly;
 
 import com.wealth.fly.common.MathUtil;
+import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.StatisticStrategyAction;
+import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +30,15 @@ class FlyApplicationTests {
     @Autowired
     private KLineDao kLineDao;
 
+//    @Autowired
+//    private StatisticVolumeStrategyAction action;
+
     @Autowired
     private StatisticStrategyAction action;
 
     @Test
     public void statistics() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(DataGranularity.FIVE_MINUTES.name(), 100000);
+        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
 
         for (int i = kLineList.size(); i >= 1; i--) {
             KLine kLine = kLineList.get(i - 1);
@@ -41,9 +46,9 @@ class FlyApplicationTests {
         }
 
         Map<String, StatisticStrategyAction.StatisticItem> kLineMap = action.getTargetKlineMap();
-        System.out.println("startTime,win,endTime,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice");
+        System.out.println("startTime,win,endTime,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
         for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
-            System.out.println("`" + item.getStartDataTime() + "," + item.getIsWin() + ",`" + item.getEndDataTime() + "," + item.getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice() + "," + item.getAmplitudeFromOpenPrice());
+            System.out.println("`" + item.getStartDataTime() + "," + item.getIsWin() + ",`" + item.getEndDataTime() + "," + item.getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice() + "," + item.getAmplitudeFromOpenPrice() + "," + item.getProfitPercent());
         }
     }
 

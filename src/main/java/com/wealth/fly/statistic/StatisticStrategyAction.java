@@ -1,6 +1,7 @@
 package com.wealth.fly.statistic;
 
 import com.wealth.fly.common.MathUtil;
+import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
@@ -34,7 +35,7 @@ public class StatisticStrategyAction implements Action {
 
         Long nextDataTime = kLine.getDataTime();
         while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(DataGranularity.FIVE_MINUTES.name(), nextDataTime, 10);
+            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), nextDataTime, 10);
             if (kLineList == null || kLineList.isEmpty()) {
                 return;
             }

@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
 
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import com.wealth.fly.statistic.StatisticStrategyAction;
+import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,13 @@ public class StrategyHandler implements KLineListener {
     private MAHandler maHandler;
     @Autowired
     private DataFetcher dataFetcher;
+
+//    @Autowired
+//    private StatisticVolumeStrategyAction strategyAction;
+
     @Autowired
     private StatisticStrategyAction strategyAction;
+
 
     private BigDecimal priceMA;
     private BigDecimal volumeMA;
@@ -42,7 +48,7 @@ public class StrategyHandler implements KLineListener {
     private KLine prevKLine;
     private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();
 
-    public static final int MAX_KLINE_SIZE = 4;
+    public static final int MAX_KLINE_SIZE = 3;
 
     private List<Strategy> strategyList;
 
@@ -50,7 +56,7 @@ public class StrategyHandler implements KLineListener {
 
     @PostConstruct
     public void init() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(DataGranularity.FIVE_MINUTES.toString(), 30);
+        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.toString(), 30);
 
         if (kLineList == null || kLineList.isEmpty()) {
             return;
@@ -86,7 +92,7 @@ public class StrategyHandler implements KLineListener {
 
     @Override
     public void onNewKLine(KLine kLine) {
-        if (!DataGranularity.FIVE_MINUTES.name().equals(kLine.getGranularity())) {
+        if (!CommonConstants.DEFAULT_DATA_GRANULARITY.name().equals(kLine.getGranularity())) {
             return;
         }
 
@@ -209,7 +215,7 @@ public class StrategyHandler implements KLineListener {
     public void initStrategyList() {
 
         Strategy strategy2 = new Strategy();
-        strategy2.setCriteria(getShortCriteria());
+        strategy2.setCriteria(getShortCriteria2());
         strategy2.setGoingLong(false);
         strategy2.setAction(strategyAction);
 
@@ -217,6 +223,25 @@ public class StrategyHandler implements KLineListener {
         strategyList.add(strategy2);
     }
 
+    private Criteria getShortCriteria2() {
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "400"));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(2, simpleCriteria3, LastNKlineCriteria.MatchType.FIRST_MATCH);
+
+
+        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
+        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(2, simpleCriteria6, LastNKlineCriteria.MatchType.ALL_MATCH);
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        compoundCriteria.add(lc1);
+        compoundCriteria.add(lc2);
+        return compoundCriteria;
+    }
 
     private Criteria getShortCriteria() {
         //条件1： 死叉出现

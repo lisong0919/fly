@@ -27,6 +27,30 @@ public class StrategyDemo {
     }
 
     @Test
+    public void volumeTest() throws IOException {
+        Map<String, BigDecimal> sectorValues =getTestSectorValues();
+
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "400"));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
+
+
+        System.out.println(simpleCriteria3.getCriteriaType().getCriteriaHandler().match(simpleCriteria3,sectorValues));
+
+        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
+        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        compoundCriteria.add(simpleCriteria3);
+        compoundCriteria.add(simpleCriteria6);
+
+        System.out.println(simpleCriteria6.getCriteriaType().getCriteriaHandler().match(simpleCriteria6,sectorValues));
+    }
+
+    @Test
     public void newOpenShortStockTest() throws IOException {
         Map<String, BigDecimal> sectorValues =getTestSectorValues();
 
