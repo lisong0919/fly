@@ -6,5 +6,5 @@ public class CommonConstants {
 
     public static final String LAST_KLINE_PARAM = "LAST_KLINE_PARAM";
 
-    public static final DataGranularity DEFAULT_DATA_GRANULARITY=DataGranularity.THREE_MINUTES;
+    public static final DataGranularity DEFAULT_DATA_GRANULARITY=DataGranularity.THIRTY_MINUTES;
 }

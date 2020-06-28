@@ -33,7 +33,7 @@ public class DataFetcher {
 
     @PostConstruct
     public void init() {
-        starFetchTimer();
+//        starFetchTimer();
     }
 
     public void registerKLineListener(KLineListener listener) {

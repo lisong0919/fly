@@ -41,11 +41,12 @@ public class StatisticStrategyAction implements Action {
             }
 
             for (KLine nextKline : kLineList) {
+                nextDataTime = nextKline.getDataTime();
+
                 if (lossOrGain(item, nextKline, strategy.isGoingLong())) {
                     targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
                     return;
                 }
-                nextDataTime = nextKline.getDataTime();
             }
         }
 
@@ -54,8 +55,8 @@ public class StatisticStrategyAction implements Action {
 
 
     private boolean lossOrGain(StatisticItem item, KLine nextKline, boolean goingLong) {
-        BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.003");
-        BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.003");
+        BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.015");
+        BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.015");
 
         if (goingLong) {
             //是否止损
