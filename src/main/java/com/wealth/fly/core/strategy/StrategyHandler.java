@@ -330,7 +330,8 @@ public class StrategyHandler implements KLineListener {
         cc2.add(simpleCriteria3);
         cc2.add(simpleCriteria4);
 
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.FIRST_MATCH);
+        lc2.setDescription("条件2:突破均线");
 
 
 
