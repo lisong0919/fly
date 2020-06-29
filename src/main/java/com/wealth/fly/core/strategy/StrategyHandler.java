@@ -5,6 +5,7 @@ import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.DataFetcher;
 import com.wealth.fly.core.KLineListener;
 import com.wealth.fly.core.MAHandler;
+import com.wealth.fly.core.SmsUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.MAType;
@@ -47,8 +48,6 @@ public class StrategyHandler implements KLineListener {
     private BigDecimal prevMACD;
     private KLine prevKLine;
     private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();
-
-    public static final int MAX_KLINE_SIZE = 3;
 
     private List<Strategy> strategyList;
 
@@ -116,11 +115,11 @@ public class StrategyHandler implements KLineListener {
         Map<String, BigDecimal> sectorValues = getCommonSectorValues(kLine, prevKLine);
 
         synchronized (lastKlineSectorValuesList) {
-            if (lastKlineSectorValuesList.size() == MAX_KLINE_SIZE) {
+            if (lastKlineSectorValuesList.size() == CommonConstants.DEFAULT_LAST_LINE_SIZE) {
                 lastKlineSectorValuesList.removeFirst();
             }
             lastKlineSectorValuesList.add(sectorValues);
-            if (lastKlineSectorValuesList.size() < MAX_KLINE_SIZE) {
+            if (lastKlineSectorValuesList.size() < CommonConstants.DEFAULT_LAST_LINE_SIZE) {
                 setSomePrevValues(kLine);
                 LOGGER.info("lastKlineSectorValuesList not ready.");
                 return;
@@ -137,13 +136,13 @@ public class StrategyHandler implements KLineListener {
             LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
                 strategy.getAction().doAction(strategy, kLine, priceMA, null);
-//                //目前的短信参数不能有特殊符号
-//                String priceStr= kLine.getClose().toPlainString();
-//                if(priceStr.contains(".")){
-//                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
-//                }
-//                SmsUtil.sendOpenStockSms(priceStr);
-//                LOGGER.info("send sms success");
+                //目前的短信参数不能有特殊符号
+                String priceStr= kLine.getClose().toPlainString();
+                if(priceStr.contains(".")){
+                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
+                }
+                SmsUtil.sendOpenStockSms(priceStr);
+                LOGGER.info("send sms success");
             }
         }
 
@@ -227,6 +226,13 @@ public class StrategyHandler implements KLineListener {
         strategyList = new ArrayList<>();
         strategyList.add(strategy1);
         strategyList.add(strategy2);
+
+        System.out.println(JSONObject.toJSONString(strategyList));
+    }
+
+    public static void main(String[] args) {
+        new StrategyHandler().initStrategyList();
+
     }
 
     private Criteria getClassicMALongCriteria() {
@@ -245,40 +251,40 @@ public class StrategyHandler implements KLineListener {
         cc1.add(simpleCriteria1);
         cc1.add(simpleCriteria2);
 
-        LastNKlineCriteria lc1 = new LastNKlineCriteria(3, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
         lc1.setDescription("条件1：放量上涨");
 
 
-        //条件2：2个K线中任意一个突破MA30
+        //条件2：突破MA30
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
         simpleCriteria3.setSource(new Sector(SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria3.setDescription("负面价格落后于MA30");
+
 
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(SectorType.KLINE_PRICE_OPEN));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria4.setDescription("负面价格落后于MA30");
+
 
         CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
         cc2.add(simpleCriteria3);
         cc2.add(simpleCriteria4);
 
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(3, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.FIRST_MATCH);
         lc2.setDescription("条件2：突破均线");
 
 
-        //条件3: 两个K线中，任意一个站上价格MA30
+        //条件3: 站稳均线
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
-        LastNKlineCriteria lc3 = new LastNKlineCriteria(3, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
+        LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
 
-        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(lc1);
         finalCriteria.add(lc2);
         finalCriteria.add(lc3);
@@ -303,7 +309,7 @@ public class StrategyHandler implements KLineListener {
         cc1.add(simpleCriteria1);
         cc1.add(simpleCriteria2);
 
-        LastNKlineCriteria lc1 = new LastNKlineCriteria(3, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
         lc1.setDescription("条件1：放量下跌");
 
 
@@ -312,31 +318,30 @@ public class StrategyHandler implements KLineListener {
         simpleCriteria3.setSource(new Sector(SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria3.setDescription("负面价格落后于MA30");
+
 
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(SectorType.KLINE_PRICE_OPEN));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
-        simpleCriteria4.setDescription("负面价格落后于MA30");
+
 
         CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
         cc2.add(simpleCriteria3);
         cc2.add(simpleCriteria4);
 
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(3, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
-        lc2.setDescription("条件2：突破均线");
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
 
 
-        //条件3: 两个K线中，任意一个站上价格MA30
+
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
-        LastNKlineCriteria lc3 = new LastNKlineCriteria(3, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
+        LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
 
-        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(lc1);
         finalCriteria.add(lc2);
         finalCriteria.add(lc3);

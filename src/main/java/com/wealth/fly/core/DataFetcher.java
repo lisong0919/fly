@@ -7,6 +7,7 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.PostConstruct;
 
@@ -33,7 +34,7 @@ public class DataFetcher {
 
     @PostConstruct
     public void init() {
-//        starFetchTimer();
+        starFetchTimer();
     }
 
     public void registerKLineListener(KLineListener listener) {
@@ -106,6 +107,10 @@ public class DataFetcher {
             }
 
             if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                kLine.setDea9(new BigDecimal(1));
+                kLine.setEma12(new BigDecimal(1));
+                kLine.setEma26(new BigDecimal(1));
+
                 kLineDao.insert(kLine);
             }
         }

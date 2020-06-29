@@ -1,6 +1,7 @@
 package com.wealth.fly.core.strategy;
 
 import com.alibaba.fastjson.JSONObject;
+import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import com.wealth.fly.core.strategy.criteria.*;
 import org.apache.commons.io.IOUtils;
@@ -27,6 +28,66 @@ public class StrategyDemo {
     }
 
     @Test
+    public void testClassicMAShortCriteria() throws IOException {
+        //条件1：最后两个K线的成交量，任意一个大于成交量MA10的两倍
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
+
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+
+        CompoundCriteria cc1 = new CompoundCriteria(CompoundCriteria.Operator.AND);
+        cc1.add(simpleCriteria1);
+        cc1.add(simpleCriteria2);
+
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
+        lc1.setDescription("条件1：放量下跌");
+
+
+        //条件2：2个K线中任意一个突破MA30
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+
+
+        SimpleCriteria simpleCriteria4 = new SimpleCriteria();
+        simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+
+
+        CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
+        cc2.add(simpleCriteria3);
+        cc2.add(simpleCriteria4);
+
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
+
+
+
+        SimpleCriteria simpleCriteria5 = new SimpleCriteria();
+        simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+        simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
+        lc3.setDescription("条件3: 站稳均线");
+
+        System.out.println(lc3.getCriteriaType().getCriteriaHandler().match(lc3,getTestSectorValues()));
+
+
+        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
+        finalCriteria.add(lc1);
+        finalCriteria.add(lc2);
+        finalCriteria.add(lc3);
+
+
+    }
+
+    @Test
     public void volumeTest() throws IOException {
         Map<String, BigDecimal> sectorValues =getTestSectorValues();
 
@@ -36,7 +97,6 @@ public class StrategyDemo {
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
 
 
-        System.out.println(simpleCriteria3.getCriteriaType().getCriteriaHandler().match(simpleCriteria3,sectorValues));
 
         SimpleCriteria simpleCriteria6 = new SimpleCriteria();
         simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));

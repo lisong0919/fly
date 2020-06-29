@@ -47,8 +47,13 @@ class FlyApplicationTests {
 
         Map<String, StatisticStrategyAction.StatisticItem> kLineMap = action.getTargetKlineMap();
         System.out.println("startTime,win,endTime,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
+        long maxDataTime = 0L;
         for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
+            if (item.getStartDataTime() < maxDataTime) {
+                continue;
+            }
             System.out.println("`" + item.getStartDataTime() + "," + item.getIsWin() + ",`" + item.getEndDataTime() + "," + item.getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice() + "," + item.getAmplitudeFromOpenPrice() + "," + item.getProfitPercent());
+            maxDataTime = item.getEndDataTime();
         }
     }
 
