@@ -55,14 +55,14 @@ public class StrategyHandler implements KLineListener {
 
     @PostConstruct
     public void init() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.toString(), 30);
+        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.toString(), CommonConstants.DEFAULT_MA_PRICE_NUM);
 
         if (kLineList == null || kLineList.isEmpty()) {
             return;
         }
 
-        for (int i = 30; i >= 1; i--) {
-            priceMA = maHandler.push(MAType.PRICE, kLineList.get(i - 1), 30);
+        for (int i = CommonConstants.DEFAULT_MA_PRICE_NUM; i >= 1; i--) {
+            priceMA = maHandler.push(MAType.PRICE, kLineList.get(i - 1), CommonConstants.DEFAULT_MA_PRICE_NUM);
         }
 
 
@@ -97,7 +97,7 @@ public class StrategyHandler implements KLineListener {
 
         //更新ma信息
         volumeMA = maHandler.push(MAType.VOLUME, kLine, 10);
-        priceMA = maHandler.push(MAType.PRICE, kLine, 30);
+        priceMA = maHandler.push(MAType.PRICE, kLine, CommonConstants.DEFAULT_MA_PRICE_NUM);
 
         if (volumeMA == null || priceMA == null) {
             setSomePrevValues(kLine);
@@ -141,7 +141,7 @@ public class StrategyHandler implements KLineListener {
                 if(priceStr.contains(".")){
                     priceStr=priceStr.substring(0,priceStr.indexOf("."));
                 }
-                SmsUtil.sendOpenStockSms(priceStr);
+//                SmsUtil.sendOpenStockSms(priceStr);
                 LOGGER.info("send sms success");
             }
         }
@@ -259,13 +259,13 @@ public class StrategyHandler implements KLineListener {
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
         simpleCriteria3.setSource(new Sector(SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(SectorType.KLINE_PRICE_OPEN));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
@@ -280,7 +280,7 @@ public class StrategyHandler implements KLineListener {
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
 
@@ -317,13 +317,13 @@ public class StrategyHandler implements KLineListener {
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
         simpleCriteria3.setSource(new Sector(SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria3.setTarget(new Sector(SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(SectorType.KLINE_PRICE_OPEN));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria4.setTarget(new Sector(SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
@@ -337,7 +337,7 @@ public class StrategyHandler implements KLineListener {
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
 
@@ -345,87 +345,6 @@ public class StrategyHandler implements KLineListener {
         finalCriteria.add(lc1);
         finalCriteria.add(lc2);
         finalCriteria.add(lc3);
-
-        return finalCriteria;
-    }
-
-    private Criteria getShortCriteria2() {
-        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
-        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
-        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "400"));
-        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
-        LastNKlineCriteria lc1 = new LastNKlineCriteria(2, simpleCriteria3, LastNKlineCriteria.MatchType.FIRST_MATCH);
-
-
-        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
-        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
-        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(2, simpleCriteria6, LastNKlineCriteria.MatchType.ALL_MATCH);
-
-        CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
-        compoundCriteria.add(lc1);
-        compoundCriteria.add(lc2);
-        return compoundCriteria;
-    }
-
-    private Criteria getShortCriteria() {
-        //条件1： 死叉出现
-        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
-        simpleCriteria1.setSource(new Sector(Sector.SectorType.DIF));
-        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria1.setTarget(new Sector(Sector.SectorType.DEA));
-        LastNKlineCriteria lc1 = new LastNKlineCriteria(4, simpleCriteria1, LastNKlineCriteria.MatchType.FIRST_MATCH);
-
-        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
-        simpleCriteria2.setSource(new Sector(Sector.SectorType.DIF));
-        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria2.setTarget(new Sector(Sector.SectorType.DEA));
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(4, simpleCriteria2, LastNKlineCriteria.MatchType.SECOND_MATCH);
-
-        CompoundCriteria criteria1 = new CompoundCriteria(CompoundCriteria.Operator.AND);
-        criteria1.add(lc1);
-        criteria1.add(lc2);
-        criteria1.setDescription("死叉出现");
-
-        //条件2：任意一个大于成交量MA10的两倍
-        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
-        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_VOLUME));
-        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
-        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
-        LastNKlineCriteria criteria2 = new LastNKlineCriteria(3, simpleCriteria3, LastNKlineCriteria.MatchType.ONE_MATCH);
-        criteria2.setDescription("任意一个大于成交量MA10的两倍");
-
-        //条件3：收盘价依次递减
-        SimpleCriteria simpleCriteria4 = new SimpleCriteria();
-        simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
-        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(Sector.SectorType.PREV_KLINE_CLOSE_PRICE));
-        LastNKlineCriteria criteria3 = new LastNKlineCriteria(3, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
-        criteria3.setDescription("收盘价依次递减");
-
-        //条件4：MACD红柱放出
-        SimpleCriteria simpleCriteria5 = new SimpleCriteria();
-        simpleCriteria5.setSource(new Sector(Sector.SectorType.MACD));
-        simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria5.setTarget(new Sector(Sector.SectorType.PREV_KLINE_MACD));
-        LastNKlineCriteria criteria4 = new LastNKlineCriteria(3, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
-        criteria4.setDescription("MACD红柱放出");
-
-        //条件5：K线全部下跌
-        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
-        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
-        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
-        LastNKlineCriteria criteria5 = new LastNKlineCriteria(4, simpleCriteria6, LastNKlineCriteria.MatchType.ALL_MATCH);
-        criteria4.setDescription("K线全部下跌");
-
-        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
-        finalCriteria.add(criteria1);
-        finalCriteria.add(criteria2);
-        finalCriteria.add(criteria3);
-        finalCriteria.add(criteria4);
-        finalCriteria.add(criteria5);
 
         return finalCriteria;
     }

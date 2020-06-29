@@ -9,4 +9,5 @@ public class CommonConstants {
     public static final DataGranularity DEFAULT_DATA_GRANULARITY = DataGranularity.THIRTY_MINUTES;
 
     public static final int DEFAULT_LAST_LINE_SIZE = 3;
+    public static final int DEFAULT_MA_PRICE_NUM=60;
 }
