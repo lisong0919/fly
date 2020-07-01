@@ -29,4 +29,10 @@ public class DateUtil {
         }
     }
 
+    public static String formatToStandardTime(long timestamp) {
+        Date date = new Date(timestamp);
+        return new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(date);
+    }
+
+
 }

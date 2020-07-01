@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.PostConstruct;
 
+import com.wealth.fly.core.exchanger.OkexExchanger;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ public class DataFetcher {
     @Autowired
     private KLineDao kLineDao;
     @Autowired
-    private Exchanger exchanger;
+    private OkexExchanger exchanger;
     @Autowired
     private MAHandler maHandler;
     @Autowired
@@ -34,7 +35,7 @@ public class DataFetcher {
 
     @PostConstruct
     public void init() {
-        starFetchTimer();
+//        starFetchTimer();
     }
 
     public void registerKLineListener(KLineListener listener) {

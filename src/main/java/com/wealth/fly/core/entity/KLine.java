@@ -74,7 +74,7 @@ public class KLine {
      *
      * @mbg.generated Sat Jun 27 11:48:12 CST 2020
      */
-    private Long volume;
+    private BigDecimal volume;
 
     /**
      *
@@ -306,7 +306,7 @@ public class KLine {
      *
      * @mbg.generated Sat Jun 27 11:48:12 CST 2020
      */
-    public Long getVolume() {
+    public BigDecimal getVolume() {
         return volume;
     }
 
@@ -318,7 +318,7 @@ public class KLine {
      *
      * @mbg.generated Sat Jun 27 11:48:12 CST 2020
      */
-    public void setVolume(Long volume) {
+    public void setVolume(BigDecimal volume) {
         this.volume = volume;
     }
 

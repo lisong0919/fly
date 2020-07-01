@@ -30,6 +30,7 @@ public class StatisticStrategyAction implements Action {
         item.setStartPrice(kLine.getClose());
         item.setStartDataTime(kLine.getDataTime());
         item.setAmplitudeFromMAPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), priceMA));
+        item.setGoingLong(strategy.isGoingLong());
 //        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
 
 
@@ -142,5 +143,7 @@ public class StatisticStrategyAction implements Action {
          * 是否盈利
          */
         private Boolean isWin;
+
+        private Boolean goingLong;
     }
 }

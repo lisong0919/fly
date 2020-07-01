@@ -191,7 +191,7 @@ public class StrategyHandler implements KLineListener {
 
     private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, KLine prevKLine) {
         Map commonSectorValues = new HashMap();
-        commonSectorValues.put(SectorType.KLINE_VOLUME.name(), new BigDecimal(kLine.getVolume()));
+        commonSectorValues.put(SectorType.KLINE_VOLUME.name(), kLine.getVolume());
         commonSectorValues.put(SectorType.KLINE_PRICE_OPEN.name(), kLine.getOpen());
         commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
         commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);

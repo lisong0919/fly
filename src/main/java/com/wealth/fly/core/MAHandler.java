@@ -20,7 +20,7 @@ public class MAHandler {
         if (maType == MAType.PRICE) {
             pushValue = kLine.getClose();
         } else {
-            pushValue = new BigDecimal(kLine.getVolume());
+            pushValue = kLine.getVolume();
         }
         return getMACalculator(maType, kLine.getCurrencyId(), kLine.getGranularity(), maLevel).push(kLine.getDataTime(), pushValue);
     }
