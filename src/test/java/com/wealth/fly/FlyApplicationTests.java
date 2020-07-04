@@ -9,12 +9,12 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.CryptoCompareExchanger;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.StatisticStrategyAction;
-import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
+
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import sun.security.krb5.internal.tools.Klist;
+
 
 
 import java.math.BigDecimal;
@@ -53,9 +53,9 @@ class FlyApplicationTests {
         System.out.println("startTime,win,direct,endTime,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
         long maxDataTime = 0L;
         for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
-            if (item.getStartDataTime() < maxDataTime) {
-                continue;
-            }
+//            if (item.getStartDataTime() < maxDataTime) {
+//                continue;
+//            }
             System.out.println("`" + item.getStartDataTime() + "," + item.getIsWin() + "," + (item.getGoingLong() ? "long" : "short") + ",`" + item.getEndDataTime() + "," + item.getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice() + "," + item.getAmplitudeFromOpenPrice() + "," + item.getProfitPercent());
             maxDataTime = item.getEndDataTime();
         }
@@ -63,7 +63,7 @@ class FlyApplicationTests {
 
     @Test
     public void aggregate() {
-        int period = 4;
+        int period = 3;
         long min = 20140203000000L;
 
         while (true) {
@@ -88,7 +88,7 @@ class FlyApplicationTests {
         newLine.setClose(kLineList.get(kLineList.size() - 1).getClose());
         newLine.setDataTime(kLineList.get(0).getDataTime());
 
-        newLine.setGranularity(DataGranularity.FOUR_HOUR.name());
+        newLine.setGranularity(DataGranularity.THREE_HOUR.name());
         newLine.setEma26(new BigDecimal(1));
         newLine.setEma12(new BigDecimal(1));
         newLine.setDea9(new BigDecimal(1));

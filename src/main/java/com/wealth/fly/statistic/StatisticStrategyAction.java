@@ -56,17 +56,19 @@ public class StatisticStrategyAction implements Action {
 
 
     private boolean lossOrGain(StatisticItem item, KLine nextKline, boolean goingLong) {
-        BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.04");
-        BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.04");
+
 
         if (goingLong) {
+            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.04");
+            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.02");
+
             //是否止损
             boolean loss = nextKline.getLow().compareTo(declinePrice) < 0;
             if (loss) {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(declinePrice);
                 item.setIsWin(false);
-                item.setProfitPercent(new BigDecimal("-0.003"));
+                item.setProfitPercent(new BigDecimal("-0.04"));
                 return true;
             }
             //是否止盈
@@ -75,17 +77,20 @@ public class StatisticStrategyAction implements Action {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(increasePrice);
                 item.setIsWin(true);
-                item.setProfitPercent(new BigDecimal("0.003"));
+                item.setProfitPercent(new BigDecimal("0.04"));
                 return true;
             }
         } else {
+            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.02");
+            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.04");
+
             //是否止损
             boolean loss = nextKline.getHigh().compareTo(increasePrice) > 0;
             if (loss) {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(increasePrice);
                 item.setIsWin(false);
-                item.setProfitPercent(new BigDecimal("-0.003"));
+                item.setProfitPercent(new BigDecimal("-0.04"));
                 return true;
             }
             //是否止盈
@@ -94,7 +99,7 @@ public class StatisticStrategyAction implements Action {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(declinePrice);
                 item.setIsWin(true);
-                item.setProfitPercent(new BigDecimal("0.003"));
+                item.setProfitPercent(new BigDecimal("0.04"));
                 return true;
             }
         }

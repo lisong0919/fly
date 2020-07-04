@@ -8,6 +8,7 @@ public enum DataGranularity {
     THIRTY_MINUTES(1800),
     ONE_HOUR(3600),
     TWO_HOUR(7200),
+    THREE_HOUR(10800),
     FOUR_HOUR(14400),
     SIX_HOUR(21600),
     TWELVE_HOUR(43200),
