@@ -249,7 +249,7 @@
   <select id="getLastKLineGTDataTime" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
-    from kline where granularity=#{granularity} and data_time &gt; #{dataTime} order by data_time limit #{limit}
+    from kline where granularity=#{granularity} and data_time &gt;= #{dataTime} order by data_time limit #{limit}
   </select>
 
   <select id="getKlineByDataTime" resultMap="BaseResultMap">
@@ -257,4 +257,12 @@
     <include refid="Base_Column_List" />
     from kline where granularity=#{granularity} and data_time=#{dataTime}
   </select>
+
+  <select id="getLastKLineByDataTimeRange" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from kline where granularity=#{granularity} and data_time &gt; #{dataTimeBegin} and data_time &lt; #{dataTimeEnd} order by data_time
+  </select>
+
+
 </mapper>

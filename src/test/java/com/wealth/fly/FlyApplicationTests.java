@@ -8,6 +8,7 @@ import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.CryptoCompareExchanger;
 import com.wealth.fly.core.strategy.StrategyHandler;
+import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
 import com.wealth.fly.statistic.StatisticStrategyAction;
 
 import org.apache.commons.lang3.time.DateUtils;
@@ -38,7 +39,7 @@ class FlyApplicationTests {
 //    private StatisticVolumeStrategyAction action;
 
     @Autowired
-    private StatisticStrategyAction action;
+    private SimpleStatisticStrategyAction action;
 
     @Test
     public void statistics() {
@@ -63,7 +64,7 @@ class FlyApplicationTests {
 
     @Test
     public void aggregate() {
-        int period = 3;
+        int period = 2;
         long min = 20140203000000L;
 
         while (true) {
@@ -88,7 +89,7 @@ class FlyApplicationTests {
         newLine.setClose(kLineList.get(kLineList.size() - 1).getClose());
         newLine.setDataTime(kLineList.get(0).getDataTime());
 
-        newLine.setGranularity(DataGranularity.THREE_HOUR.name());
+        newLine.setGranularity(DataGranularity.TWO_HOUR.name());
         newLine.setEma26(new BigDecimal(1));
         newLine.setEma12(new BigDecimal(1));
         newLine.setDea9(new BigDecimal(1));

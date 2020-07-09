@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 
 public class MathUtil {
 
+    public static BigDecimal addPercent(BigDecimal source, BigDecimal percentInDecimal) {
+        BigDecimal addValue = source.multiply(percentInDecimal);
+        return source.add(addValue);
+    }
 
     /**
      * @param source
@@ -11,8 +15,7 @@ public class MathUtil {
      * @return
      */
     public static BigDecimal addPercent(BigDecimal source, String percentInDecimal) {
-        BigDecimal addValue = source.multiply(new BigDecimal(percentInDecimal));
-        return source.add(addValue);
+        return  addPercent(source,new BigDecimal(percentInDecimal));
     }
 
     public static BigDecimal distancePercentInDecimal(BigDecimal one, BigDecimal compareTo) {

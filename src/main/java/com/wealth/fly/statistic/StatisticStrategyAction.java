@@ -25,7 +25,7 @@ public class StatisticStrategyAction implements Action {
     private KLineDao kLineDao;
 
     @Override
-    public void doAction(Strategy strategy, KLine kLine, BigDecimal priceMA, BigDecimal firstOpenPrice) {
+    public void doAction(Strategy strategy, KLine kLine, KLine closeKline, BigDecimal priceMA) {
         StatisticItem item = new StatisticItem();
         item.setStartPrice(kLine.getClose());
         item.setStartDataTime(kLine.getDataTime());
@@ -45,13 +45,36 @@ public class StatisticStrategyAction implements Action {
                 nextDataTime = nextKline.getDataTime();
 
                 if (lossOrGain(item, nextKline, strategy.isGoingLong())) {
-                    targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
+//                    if (isFloatOpenSuccess(item, strategy)) {
+                        targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
+//                    }
                     return;
                 }
             }
         }
+    }
 
-
+    private boolean isFloatOpenSuccess(StatisticItem item, Strategy strategy) {
+        List<KLine> kLineList = kLineDao.getLastKLineByDataTimeRange(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), item.getStartDataTime(), item.getEndDataTime());
+        for (KLine kLine : kLineList) {
+            if (strategy.isGoingLong()) {
+                //期望回调后的价格
+                BigDecimal floatPrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.FLOAT_PERCENT.multiply(new BigDecimal(-1)));
+                if (kLine.getLow().compareTo(floatPrice) < 0) {
+                    item.setStartPrice(floatPrice);
+                    item.setStartDataTime(kLine.getDataTime());
+                    return true;
+                }
+            } else {
+                BigDecimal floatPrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.FLOAT_PERCENT);
+                if (kLine.getHigh().compareTo(floatPrice) > 0) {
+                    item.setStartPrice(floatPrice);
+                    item.setStartDataTime(kLine.getDataTime());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 
@@ -59,8 +82,13 @@ public class StatisticStrategyAction implements Action {
 
 
         if (goingLong) {
+
+//            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.PROFIT_PERCENT.add(CommonConstants.FLOAT_PERCENT).multiply(new BigDecimal("-1")));
+//            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.PROFIT_PERCENT.subtract(CommonConstants.FLOAT_PERCENT));
+
+
             BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.04");
-            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.02");
+            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.04");
 
             //是否止损
             boolean loss = nextKline.getLow().compareTo(declinePrice) < 0;
@@ -77,11 +105,14 @@ public class StatisticStrategyAction implements Action {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(increasePrice);
                 item.setIsWin(true);
-                item.setProfitPercent(new BigDecimal("0.04"));
+                item.setProfitPercent(new BigDecimal("0.03"));
                 return true;
             }
         } else {
-            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.02");
+//            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.PROFIT_PERCENT.subtract(CommonConstants.FLOAT_PERCENT).multiply(new BigDecimal("-1")));
+//            BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), CommonConstants.PROFIT_PERCENT.add(CommonConstants.FLOAT_PERCENT));
+
+            BigDecimal declinePrice = MathUtil.addPercent(item.getStartPrice(), "-0.04");
             BigDecimal increasePrice = MathUtil.addPercent(item.getStartPrice(), "0.04");
 
             //是否止损
@@ -99,13 +130,15 @@ public class StatisticStrategyAction implements Action {
                 item.setEndDataTime(nextKline.getDataTime());
                 item.setEndPrice(declinePrice);
                 item.setIsWin(true);
-                item.setProfitPercent(new BigDecimal("0.04"));
+                item.setProfitPercent(new BigDecimal("0.03"));
                 return true;
             }
         }
 
         return false;
     }
+
+
 
     public Map<String, StatisticItem> getTargetKlineMap() {
         return targetKlineMap;

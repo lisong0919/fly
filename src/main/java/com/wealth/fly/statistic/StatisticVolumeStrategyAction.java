@@ -24,7 +24,7 @@ public class StatisticVolumeStrategyAction implements Action {
 
 
     @Override
-    public void doAction(Strategy strategy, KLine kLine, BigDecimal priceMA, BigDecimal firstOpenPrice) {
+    public void doAction(Strategy strategy, KLine kLine, KLine closeKline, BigDecimal priceMA) {
         StatisticStrategyAction.StatisticItem item = new StatisticStrategyAction.StatisticItem();
         item.setStartPrice(kLine.getClose());
         item.setStartDataTime(kLine.getDataTime());
