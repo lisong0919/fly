@@ -31,8 +31,13 @@ public class Sector {
 
         PREV_KLINE_MACD,
 
+        STOCK_PRICE_OPEN,
 
         KLINE_PRICE_OPEN,
+
+        KLINE_MAX_PRICE_CHANGE_PERCENT,
+
+        KLINE_PRICE_CHANGE_PERCENT,
 
         /**
          *  成交量
@@ -44,6 +49,10 @@ public class Sector {
          * 收盘价
          */
         KLINE_PRICE_CLOSE,
+
+        KLINE_PRICE_HIGH,
+
+        KLINE_PRICE_LOW,
 
         /**
          * 实时价格

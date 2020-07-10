@@ -1,6 +1,7 @@
 package com.wealth.fly.statistic;
 
 import com.wealth.fly.common.MathUtil;
+import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.strategy.Action;
 import com.wealth.fly.core.strategy.Strategy;
@@ -15,15 +16,26 @@ public class SimpleStatisticStrategyAction implements Action {
 
     private Map<String, StatisticStrategyAction.StatisticItem> targetKlineMap = new LinkedHashMap<>();
 
+
+    public Map<String, StatisticStrategyAction.StatisticItem> getTargetKlineMap() {
+        return targetKlineMap;
+    }
+
+
     @Override
-    public void doAction(Strategy strategy, KLine openKLine, KLine closeKline, BigDecimal priceMA) {
+    public void onOpenStock(Strategy strategy, KLine openKLine) {
+
+    }
+
+    @Override
+    public void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice, long closeDataTime) {
         StatisticStrategyAction.StatisticItem item = new StatisticStrategyAction.StatisticItem();
         item.setStartPrice(openKLine.getClose());
         item.setStartDataTime(openKLine.getDataTime());
-        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(closeKline.getClose(), openKLine.getClose()));
-        item.setGoingLong(strategy.isGoingLong());
-        item.setEndPrice(closeKline.getClose());
-        item.setEndDataTime(closeKline.getDataTime());
+        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(openKLine.getClose(), openKLine.getOpen()));
+        item.setGoingLong(openStrategy.isGoingLong());
+        item.setEndPrice(closePrice);
+        item.setEndDataTime(closeDataTime);
         item.setProfitPercent(MathUtil.distancePercentInDecimal(item.getEndPrice(), item.getStartPrice()));
 
         boolean increase = item.getEndPrice().compareTo(item.getStartPrice()) > 0;
@@ -35,10 +47,4 @@ public class SimpleStatisticStrategyAction implements Action {
 
         targetKlineMap.put("" + item.getStartDataTime(), item);
     }
-
-    public Map<String, StatisticStrategyAction.StatisticItem> getTargetKlineMap() {
-        return targetKlineMap;
-    }
-
-
 }

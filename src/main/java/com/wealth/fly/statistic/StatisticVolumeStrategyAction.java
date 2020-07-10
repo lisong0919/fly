@@ -23,34 +23,6 @@ public class StatisticVolumeStrategyAction implements Action {
     private KLineDao kLineDao;
 
 
-    @Override
-    public void doAction(Strategy strategy, KLine kLine, KLine closeKline, BigDecimal priceMA) {
-        StatisticStrategyAction.StatisticItem item = new StatisticStrategyAction.StatisticItem();
-        item.setStartPrice(kLine.getClose());
-        item.setStartDataTime(kLine.getDataTime());
-        item.setAmplitudeFromMAPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), priceMA));
-//        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
-
-
-        Long nextDataTime = kLine.getDataTime();
-        while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(DataGranularity.ONE_MINUTE.name(), nextDataTime, 10);
-            if (kLineList == null || kLineList.isEmpty()) {
-                return;
-            }
-
-            for (KLine nextKline : kLineList) {
-                nextDataTime = nextKline.getDataTime();
-
-                if (lossOrGain(item, nextKline, strategy.isGoingLong())) {
-                    targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
-                    return;
-                }
-
-            }
-        }
-    }
-
     private boolean lossOrGain(StatisticStrategyAction.StatisticItem item, KLine nextKline, boolean goingLong) {
         if (goingLong && nextKline.getClose().compareTo(nextKline.getOpen()) < 0) {
             item.setIsWin(nextKline.getClose().compareTo(item.getStartPrice()) > 0);
@@ -73,5 +45,38 @@ public class StatisticVolumeStrategyAction implements Action {
 
     public Map<String, StatisticStrategyAction.StatisticItem> getTargetKlineMap() {
         return targetKlineMap;
+    }
+
+    @Override
+    public void onOpenStock(Strategy strategy, KLine kLine) {
+        StatisticStrategyAction.StatisticItem item = new StatisticStrategyAction.StatisticItem();
+        item.setStartPrice(kLine.getClose());
+        item.setStartDataTime(kLine.getDataTime());
+//        item.setAmplitudeFromMAPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), priceMA));
+//        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
+
+
+        Long nextDataTime = kLine.getDataTime();
+        while (true) {
+            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(DataGranularity.ONE_MINUTE.name(), nextDataTime, 10);
+            if (kLineList == null || kLineList.isEmpty()) {
+                return;
+            }
+
+            for (KLine nextKline : kLineList) {
+                nextDataTime = nextKline.getDataTime();
+
+                if (lossOrGain(item, nextKline, strategy.isGoingLong())) {
+                    targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
+                    return;
+                }
+
+            }
+        }
+    }
+
+    @Override
+    public void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice, long closeDataTime) {
+
     }
 }

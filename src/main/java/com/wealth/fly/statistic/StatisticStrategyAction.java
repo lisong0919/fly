@@ -25,11 +25,10 @@ public class StatisticStrategyAction implements Action {
     private KLineDao kLineDao;
 
     @Override
-    public void doAction(Strategy strategy, KLine kLine, KLine closeKline, BigDecimal priceMA) {
+    public void onOpenStock(Strategy strategy, KLine kLine) {
         StatisticItem item = new StatisticItem();
         item.setStartPrice(kLine.getClose());
         item.setStartDataTime(kLine.getDataTime());
-        item.setAmplitudeFromMAPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), priceMA));
         item.setGoingLong(strategy.isGoingLong());
 //        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(kLine.getClose(), firstOpenPrice));
 
@@ -46,13 +45,14 @@ public class StatisticStrategyAction implements Action {
 
                 if (lossOrGain(item, nextKline, strategy.isGoingLong())) {
 //                    if (isFloatOpenSuccess(item, strategy)) {
-                        targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
+                    targetKlineMap.put(String.valueOf(kLine.getDataTime()), item);
 //                    }
                     return;
                 }
             }
         }
     }
+
 
     private boolean isFloatOpenSuccess(StatisticItem item, Strategy strategy) {
         List<KLine> kLineList = kLineDao.getLastKLineByDataTimeRange(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), item.getStartDataTime(), item.getEndDataTime());
@@ -142,6 +142,13 @@ public class StatisticStrategyAction implements Action {
 
     public Map<String, StatisticItem> getTargetKlineMap() {
         return targetKlineMap;
+    }
+
+
+
+    @Override
+    public void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice,long closeDataTime) {
+
     }
 
     @Data

@@ -5,5 +5,9 @@ import com.wealth.fly.core.entity.KLine;
 import java.math.BigDecimal;
 
 public interface Action {
-    void doAction(Strategy strategy, KLine kLine, KLine closeKline, BigDecimal priceMA);
+
+    void onOpenStock(Strategy strategy, KLine kLine);
+
+    void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice, long closeDataTime);
+
 }

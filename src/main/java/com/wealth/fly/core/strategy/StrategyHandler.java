@@ -9,6 +9,7 @@ import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.strategy.criteria.Sector;
 import com.wealth.fly.core.strategy.criteria.Sector.SectorType;
 
 import java.math.BigDecimal;
@@ -16,7 +17,6 @@ import java.util.*;
 import javax.annotation.PostConstruct;
 
 import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
-import com.wealth.fly.statistic.StatisticStrategyAction;
 import lombok.Data;
 import lombok.ToString;
 import org.slf4j.Logger;
@@ -84,6 +84,30 @@ public class StrategyHandler implements KLineListener {
         dataFetcher.registerKLineListener(this);
     }
 
+
+    public void onRealTime(long dataTime, BigDecimal realTimePrice) {
+        for (Strategy strategy : strategyList) {
+            if (strategy.isOpenStock()) {
+                continue;
+            }
+
+            if (!holdingStockMap.containsKey(strategy.getCloseStrategyId())) {
+                LOGGER.info("target strategy {} for strategy {} not exists", strategy.getCloseStrategyId(), strategy.getId());
+                continue;
+            }
+
+            BigDecimal openStockPrice = holdingStockMap.get(strategy.getCloseStrategyId()).getOpenKline().getClose();
+            Map<String, BigDecimal> sectorValues = getRealTimeSectorValues(realTimePrice, openStockPrice);
+            LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{dataTime, strategy.isGoingLong() ? "long" : "short", JSONObject.toJSONString(sectorValues)});
+            boolean match = strategy.getCriteria().getCriteriaType().getCriteriaHandler().match(strategy.getCriteria(), sectorValues);
+
+            if (match) {
+                HoldingStock holdingStock = holdingStockMap.remove(strategy.getCloseStrategyId());
+                strategy.getAction().onCloseStock(holdingStock.getOpenStrategy(), holdingStock.getOpenKline(), strategy, realTimePrice, dataTime);
+            }
+        }
+    }
+
     @Override
     public void onNewKLine(KLine kLine) {
         if (!CommonConstants.DEFAULT_DATA_GRANULARITY.name().equals(kLine.getGranularity())) {
@@ -124,12 +148,11 @@ public class StrategyHandler implements KLineListener {
         setLastKLineSectorValues(sectorValues, kLine);
 
         for (Strategy strategy : strategyList) {
-            if (holdingStockMap.containsKey(strategy.getId())) {
-                LOGGER.info("exists holding stock for strategy {}, holding time {}", new Object[]{strategy.getId(), holdingStockMap.get(strategy.getId()).getOpenKline().getDataTime()});
+            if (!strategy.isOpenStock()) {
                 continue;
             }
-            if (!strategy.isOpenStock() && !holdingStockMap.containsKey(strategy.getCloseStrategyId())) {
-                LOGGER.info("target strategy {} for strategy {} not exists", strategy.getCloseStrategyId(), strategy.getId());
+            if (holdingStockMap.containsKey(strategy.getId())) {
+                LOGGER.info("exists holding stock for strategy {}, holding time {}", new Object[]{strategy.getId(), holdingStockMap.get(strategy.getId()).getOpenKline().getDataTime()});
                 continue;
             }
 
@@ -138,16 +161,12 @@ public class StrategyHandler implements KLineListener {
 
             LOGGER.info("[{}] [{}] match result is {}", new Object[]{kLine.getDataTime(), strategy.isGoingLong() ? "long" : "short", match});
             if (match) {
-                if (strategy.isOpenStock()) {
-                    HoldingStock holdingStock = new HoldingStock();
-                    holdingStock.setOpenKline(kLine);
-                    holdingStock.setOpenStrategy(strategy);
-                    holdingStockMap.put(strategy.getId(), holdingStock);
-                }
-                if (!strategy.isOpenStock() && holdingStockMap.containsKey(strategy.getCloseStrategyId())) {
-                    HoldingStock holdingStock = holdingStockMap.remove(strategy.getCloseStrategyId());
-                    strategy.getAction().doAction(holdingStock.getOpenStrategy(), holdingStock.getOpenKline(), kLine, priceMA);
-                }
+                HoldingStock holdingStock = new HoldingStock();
+                holdingStock.setOpenKline(kLine);
+                holdingStock.setOpenStrategy(strategy);
+                holdingStockMap.put(strategy.getId(), holdingStock);
+
+                strategy.getAction().onOpenStock(strategy, kLine);
 
                 //目前的短信参数不能有特殊符号
                 String priceStr = kLine.getClose().toPlainString();
@@ -202,6 +221,15 @@ public class StrategyHandler implements KLineListener {
     }
 
 
+    private Map<String, BigDecimal> getRealTimeSectorValues(BigDecimal realTimePrice, BigDecimal stockOpenPrice) {
+        Map sectorValues = new HashMap();
+        sectorValues.put(SectorType.REALTIME_PRICE.name(), realTimePrice);
+        sectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
+        sectorValues.put(SectorType.STOCK_PRICE_OPEN.name(), stockOpenPrice);
+
+        return sectorValues;
+    }
+
     private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, KLine prevKLine) {
         Map commonSectorValues = new HashMap();
         commonSectorValues.put(SectorType.KLINE_VOLUME.name(), kLine.getVolume());
@@ -209,6 +237,14 @@ public class StrategyHandler implements KLineListener {
         commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
         commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);
         commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
+        commonSectorValues.put(SectorType.KLINE_PRICE_HIGH.name(), kLine.getHigh());
+        commonSectorValues.put(SectorType.KLINE_PRICE_LOW.name(), kLine.getLow());
+        commonSectorValues.put(SectorType.KLINE_MAX_PRICE_CHANGE_PERCENT.name(), CommonConstants.MAX_AMPLITUDE);
+        commonSectorValues.put(SectorType.KLINE_PRICE_CHANGE_PERCENT.name(), MathUtil.distancePercentInDecimal(kLine.getClose(), kLine.getOpen()));
+
+        for (HoldingStock holdingStock : holdingStockMap.values()) {
+            commonSectorValues.put(SectorType.STOCK_PRICE_OPEN.name(), holdingStock.getOpenKline().getClose());
+        }
 
         double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
         double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
@@ -266,6 +302,14 @@ public class StrategyHandler implements KLineListener {
         System.out.println(JSONObject.toJSONString(strategyList));
     }
 
+
+    public Map<String, HoldingStock> getHoldingStockMap() {
+        return holdingStockMap;
+    }
+
+    public BigDecimal getPriceMA() {
+        return priceMA;
+    }
 
     @Data
     @ToString
