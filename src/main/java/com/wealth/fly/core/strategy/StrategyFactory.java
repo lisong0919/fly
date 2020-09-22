@@ -2,6 +2,7 @@ package com.wealth.fly.core.strategy;
 
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.strategy.criteria.*;
+import com.wealth.fly.core.strategy.criteria.LastNKlineCriteria.MatchType;
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 
 import java.math.BigDecimal;

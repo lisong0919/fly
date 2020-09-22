@@ -25,212 +25,226 @@ import java.util.*;
 @SpringBootTest
 class FlyApplicationTests {
 
-    @Autowired
-    private StrategyHandler strategyHandler;
+  @Autowired
+  private StrategyHandler strategyHandler;
 
-    @Autowired
-    private KLineDao kLineDao;
+  @Autowired
+  private KLineDao kLineDao;
 
-    @Autowired
-    private CryptoCompareExchanger exchanger;
+  @Autowired
+  private CryptoCompareExchanger exchanger;
 
 //    @Autowired
 //    private StatisticVolumeStrategyAction action;
 
-    @Autowired
-    private SimpleStatisticStrategyAction action;
+  @Autowired
+  private SimpleStatisticStrategyAction action;
 
-    @Test
-    public void statistics() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
+  @Test
+  public void statistics() {
+    List<KLine> kLineList = kLineDao
+        .getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
 
-        for (int i = kLineList.size(); i >= 1; i--) {
-            KLine kLine = kLineList.get(i - 1);
-            strategyHandler.onNewKLine(kLine);
+    for (int i = kLineList.size(); i >= 1; i--) {
+      KLine kLine = kLineList.get(i - 1);
+      strategyHandler.onNewKLine(kLine);
 
-            BigDecimal mockRealTimePrice = triggerRealTimeIfPossiable(kLine);
-            if (mockRealTimePrice != null) {
-                strategyHandler.onRealTime(kLine.getDataTime(), mockRealTimePrice);
-            }
-        }
+      BigDecimal mockRealTimePrice = triggerRealTimeIfPossiable(kLine);
+      if (mockRealTimePrice != null) {
+        strategyHandler.onRealTime(kLine.getDataTime(), mockRealTimePrice);
+      }
+    }
 
-        Map<String, StatisticStrategyAction.StatisticItem> kLineMap = action.getTargetKlineMap();
-        System.out.println("startTime,win,direct,endTime,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
-        long maxDataTime = 0L;
-        for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
+    Map<String, StatisticStrategyAction.StatisticItem> kLineMap = action.getTargetKlineMap();
+    System.out.println(
+        "startTime,win,direct,endTime,spendDays,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
+    long maxDataTime = 0L;
+    for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
 //            if (item.getStartDataTime() < maxDataTime) {
 //                continue;
 //            }
-            System.out.println("`" + item.getStartDataTime() + "," + item.getIsWin() + "," + (item.getGoingLong() ? "long" : "short") + ",`" + item.getEndDataTime() + "," + item.getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice() + "," + item.getAmplitudeFromOpenPrice() + "," + item.getProfitPercent());
-            maxDataTime = item.getEndDataTime();
-        }
+      double spendDays = DateUtil.getDistanceDays(item.getStartDataTime(), item.getEndDataTime());
+      System.out.println(
+          "`" + item.getStartDataTime() + "," + item.getIsWin() + "," + (item.getGoingLong()
+              ? "long" : "short") + ",`" + item.getEndDataTime() + "," + spendDays + "," + item
+              .getStartPrice() + "," + item.getEndPrice() + "," + item.getAmplitudeFromMAPrice()
+              + "," + item.getAmplitudeFromOpenPrice() + "," + item.getProfitPercent());
+      maxDataTime = item.getEndDataTime();
     }
+  }
 
 
-    private BigDecimal triggerRealTimeIfPossiable(KLine kLine) {
+  private BigDecimal triggerRealTimeIfPossiable(KLine kLine) {
 
-        if (!strategyHandler.getHoldingStockMap().isEmpty()) {
-            for (StrategyHandler.HoldingStock holdingStock : strategyHandler.getHoldingStockMap().values()) {
+    if (!strategyHandler.getHoldingStockMap().isEmpty()) {
+      for (StrategyHandler.HoldingStock holdingStock : strategyHandler.getHoldingStockMap()
+          .values()) {
 
-                if (kLine.getDataTime().longValue() == holdingStock.getOpenKline().getDataTime().longValue()) {
-                    continue;
-                }
+        if (kLine.getDataTime().longValue() == holdingStock.getOpenKline().getDataTime()
+            .longValue()) {
+          continue;
+        }
 
-                BigDecimal openStockPrice = holdingStock.getOpenKline().getClose();
-                BigDecimal priceMA = strategyHandler.getPriceMA();
+        BigDecimal openStockPrice = holdingStock.getOpenKline().getClose();
+        BigDecimal priceMA = strategyHandler.getPriceMA();
 
-                if ("ClassicMALongOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
-                    BigDecimal missPrice = MathUtil.addPercent(priceMA, new BigDecimal(CommonConstants.MISS_PERCENT).multiply(new BigDecimal(-1)));
-                    if (kLine.getLow().compareTo(missPrice) < 0) {
-                        return missPrice.subtract(new BigDecimal(2));
-                    }
+        if ("ClassicMALongOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
+          BigDecimal missPrice = MathUtil.addPercent(priceMA,
+              new BigDecimal(CommonConstants.MISS_PERCENT).multiply(new BigDecimal(-1)));
+          if (kLine.getLow().compareTo(missPrice) < 0) {
+            return missPrice.subtract(new BigDecimal(2));
+          }
 
 //                    BigDecimal missPriceOpen = MathUtil.addPercent(openStockPrice, new BigDecimal(CommonConstants.WIN_PERCENT).multiply(new BigDecimal(-1)));
 //                    if (kLine.getLow().compareTo(missPriceOpen) < 0) {
 //                        return missPriceOpen.subtract(new BigDecimal(2));
 //                    }
 
-                    BigDecimal winPrice = MathUtil.addPercent(openStockPrice, CommonConstants.WIN_PERCENT);
-                    if (kLine.getHigh().compareTo(winPrice) > 0) {
-                        return winPrice.add(new BigDecimal(2));
-                    }
+          BigDecimal winPrice = MathUtil.addPercent(openStockPrice, CommonConstants.WIN_PERCENT);
+          if (kLine.getHigh().compareTo(winPrice) > 0) {
+            return winPrice.add(new BigDecimal(2));
+          }
 
-                }
-                if ("ClassicMAShortOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
-                    BigDecimal missPrice = MathUtil.addPercent(priceMA, CommonConstants.MISS_PERCENT);
-                    if (kLine.getHigh().compareTo(missPrice) > 0) {
-                        return missPrice.add(new BigDecimal(2));
-                    }
-
+        }
+        if ("ClassicMAShortOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
+          BigDecimal missPrice = MathUtil.addPercent(priceMA, CommonConstants.MISS_PERCENT);
+          if (kLine.getHigh().compareTo(missPrice) > 0) {
+            return missPrice.add(new BigDecimal(2));
+          }
 
 //                    BigDecimal missPriceOpen = MathUtil.addPercent(openStockPrice, CommonConstants.WIN_PERCENT);
 //                    if (kLine.getHigh().compareTo(missPriceOpen) > 0) {
 //                        return missPriceOpen.add(new BigDecimal(2));
 //                    }
 
-                    BigDecimal winPrice = MathUtil.addPercent(openStockPrice, new BigDecimal(CommonConstants.WIN_PERCENT).multiply(new BigDecimal(-1)));
-                    if (kLine.getLow().compareTo(winPrice) < 0) {
-                        return winPrice.subtract(new BigDecimal(2));
-                    }
-                }
-            }
+          BigDecimal winPrice = MathUtil.addPercent(openStockPrice,
+              new BigDecimal(CommonConstants.WIN_PERCENT).multiply(new BigDecimal(-1)));
+          if (kLine.getLow().compareTo(winPrice) < 0) {
+            return winPrice.subtract(new BigDecimal(2));
+          }
         }
-
-        return null;
+      }
     }
 
-    @Test
-    public void aggregate() {
-        int period = 2;
-        long min = 20140203000000L;
+    return null;
+  }
 
-        while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(DataGranularity.ONE_HOUR.name(), min, period);
-            if (kLineList == null || kLineList.size() < period) {
-                System.out.println(">>>>>>>>> no more data");
-                break;
-            }
+  @Test
+  public void aggregate() {
+    int period = 2;
+    long min = 20140203000000L;
 
-            aggregateNewLine(kLineList);
+    while (true) {
+      List<KLine> kLineList = kLineDao
+          .getLastKLineGTDataTime(DataGranularity.ONE_HOUR.name(), min, period);
+      if (kLineList == null || kLineList.size() < period) {
+        System.out.println(">>>>>>>>> no more data");
+        break;
+      }
 
-            Date date = DateUtils.addHours(DateUtil.parseStandardTime(min), period);
-            min = Long.parseLong(DateUtil.formatToStandardTime(date.getTime()));
+      aggregateNewLine(kLineList);
+
+      Date date = DateUtils.addHours(DateUtil.parseStandardTime(min), period);
+      min = Long.parseLong(DateUtil.formatToStandardTime(date.getTime()));
+    }
+    System.out.println("all finished.....");
+
+  }
+
+  private void aggregateNewLine(List<KLine> kLineList) {
+    KLine newLine = new KLine();
+    newLine.setOpen(kLineList.get(0).getOpen());
+    newLine.setClose(kLineList.get(kLineList.size() - 1).getClose());
+    newLine.setDataTime(kLineList.get(0).getDataTime());
+
+    newLine.setGranularity(DataGranularity.TWO_HOUR.name());
+    newLine.setEma26(new BigDecimal(1));
+    newLine.setEma12(new BigDecimal(1));
+    newLine.setDea9(new BigDecimal(1));
+    newLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
+    newLine.setCurrencyId(1);
+
+    newLine.setHigh(new BigDecimal(0));
+    newLine.setLow(kLineList.get(0).getLow());
+    newLine.setVolume(new BigDecimal(0));
+    newLine.setCurrencyVolume(new BigDecimal(0));
+
+    for (KLine line : kLineList) {
+      newLine.setVolume(newLine.getVolume().add(line.getVolume()));
+      newLine.setCurrencyVolume(newLine.getCurrencyVolume().add(line.getCurrencyVolume()));
+
+      if (line.getHigh().compareTo(newLine.getHigh()) > 0) {
+        newLine.setHigh(line.getHigh());
+      }
+      if (line.getLow().compareTo(newLine.getLow()) < 0) {
+        newLine.setLow(line.getLow());
+      }
+    }
+    kLineDao.insert(newLine);
+  }
+
+  @Test
+  public void fillKline() throws ParseException {
+    Date endtime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2020-07-01 16:00:00");
+
+    while (true) {
+      List<KLine> kLines = exchanger.getKlineData(endtime, 2000);
+      if (kLines == null || kLines.isEmpty()) {
+        System.out.println("all finished......");
+        break;
+      }
+      long maxDataTime = 0;
+      for (KLine kLine : kLines) {
+        kLineDao.insert(kLine);
+        if (kLine.getDataTime() > maxDataTime) {
+          maxDataTime = kLine.getDataTime();
         }
-        System.out.println("all finished.....");
+      }
 
+      endtime = DateUtil.parseStandardTime(maxDataTime);
+      endtime = DateUtils.addHours(endtime, -kLines.size());
     }
 
-    private void aggregateNewLine(List<KLine> kLineList) {
-        KLine newLine = new KLine();
-        newLine.setOpen(kLineList.get(0).getOpen());
-        newLine.setClose(kLineList.get(kLineList.size() - 1).getClose());
-        newLine.setDataTime(kLineList.get(0).getDataTime());
+  }
 
-        newLine.setGranularity(DataGranularity.TWO_HOUR.name());
-        newLine.setEma26(new BigDecimal(1));
-        newLine.setEma12(new BigDecimal(1));
-        newLine.setDea9(new BigDecimal(1));
-        newLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
-        newLine.setCurrencyId(1);
 
-        newLine.setHigh(new BigDecimal(0));
-        newLine.setLow(kLineList.get(0).getLow());
-        newLine.setVolume(new BigDecimal(0));
-        newLine.setCurrencyVolume(new BigDecimal(0));
+  @Test
+  public void fillMACD() throws ParseException {
 
-        for (KLine line : kLineList) {
-            newLine.setVolume(newLine.getVolume().add(line.getVolume()));
-            newLine.setCurrencyVolume(newLine.getCurrencyVolume().add(line.getCurrencyVolume()));
+    String min = "20200530234000";
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-            if (line.getHigh().compareTo(newLine.getHigh()) > 0) {
-                newLine.setHigh(line.getHigh());
-            }
-            if (line.getLow().compareTo(newLine.getLow()) < 0) {
-                newLine.setLow(line.getLow());
-            }
-        }
-        kLineDao.insert(newLine);
+    KLine prevKLine = kLineDao
+        .getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), 20200530233500L);
+    KLine kLine = kLineDao
+        .getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
+
+    while (true) {
+      //计算macd并设置
+      double ema12 = MathUtil
+          .calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
+      double ema26 = MathUtil
+          .calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
+      double diff = MathUtil.caculateDIF(ema12, ema26);
+      double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
+
+      kLine.setEma12(new BigDecimal(ema12));
+      kLine.setEma26(new BigDecimal(ema26));
+      kLine.setDea9(new BigDecimal(dea9));
+      kLineDao.updateByPrimaryKey(kLine);
+
+      prevKLine = kLine;
+      Date date = DateUtils.addMinutes(simpleDateFormat.parse(min), 5);
+      min = simpleDateFormat.format(date);
+      kLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
+      System.out.println(">>>>>>>>>" + min);
+      if (kLine == null) {
+        System.out.println("not found" + min);
+        break;
+      }
     }
 
-    @Test
-    public void fillKline() throws ParseException {
-        Date endtime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2020-07-01 16:00:00");
-
-        while (true) {
-            List<KLine> kLines = exchanger.getKlineData(endtime, 2000);
-            if (kLines == null || kLines.isEmpty()) {
-                System.out.println("all finished......");
-                break;
-            }
-            long maxDataTime = 0;
-            for (KLine kLine : kLines) {
-                kLineDao.insert(kLine);
-                if (kLine.getDataTime() > maxDataTime) {
-                    maxDataTime = kLine.getDataTime();
-                }
-            }
-
-            endtime = DateUtil.parseStandardTime(maxDataTime);
-            endtime = DateUtils.addHours(endtime, -kLines.size());
-        }
-
-    }
-
-
-    @Test
-    public void fillMACD() throws ParseException {
-
-        String min = "20200530234000";
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-
-        KLine prevKLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), 20200530233500L);
-        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
-
-        while (true) {
-            //计算macd并设置
-            double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
-            double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
-            double diff = MathUtil.caculateDIF(ema12, ema26);
-            double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
-
-            kLine.setEma12(new BigDecimal(ema12));
-            kLine.setEma26(new BigDecimal(ema26));
-            kLine.setDea9(new BigDecimal(dea9));
-            kLineDao.updateByPrimaryKey(kLine);
-
-
-            prevKLine = kLine;
-            Date date = DateUtils.addMinutes(simpleDateFormat.parse(min), 5);
-            min = simpleDateFormat.format(date);
-            kLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
-            System.out.println(">>>>>>>>>" + min);
-            if (kLine == null) {
-                System.out.println("not found" + min);
-                break;
-            }
-        }
-
-    }
+  }
 
 
 }
