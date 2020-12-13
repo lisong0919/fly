@@ -37,10 +37,12 @@ public class StrategyHandler implements KLineListener {
     @Autowired
     private SimpleStatisticStrategyAction strategyAction;
 
+    //当前持仓列表
     private Map<String, HoldingStock> holdingStockMap = new HashMap<>();
 
     private BigDecimal priceMA;
     private BigDecimal volumeMA;
+    private BigDecimal macdMA;
     private BigDecimal prevMACD;
     private KLine prevKLine;
     private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();
@@ -67,7 +69,7 @@ public class StrategyHandler implements KLineListener {
             volumeMA = maHandler.push(MAType.VOLUME, kLineList.get(i - 1), CommonConstants.DEFAULT_MA_VOLUME_NUM);
         }
 
-        LOGGER.info("init priceMA finished, volumeMA-{} is {}", kLineList.get(0).getDataTime(), volumeMA);
+        LOGGER.info("init volumeMA finished, volumeMA-{} is {}", kLineList.get(0).getDataTime(), volumeMA);
 
 //        try {
 //            InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("strategy.json");
@@ -232,14 +234,15 @@ public class StrategyHandler implements KLineListener {
 
     private Map<String, BigDecimal> getCommonSectorValues(KLine kLine, KLine prevKLine) {
         Map commonSectorValues = new HashMap();
-        commonSectorValues.put(SectorType.KLINE_VOLUME.name(), kLine.getVolume());
-        commonSectorValues.put(SectorType.KLINE_PRICE_OPEN.name(), kLine.getOpen());
-        commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());
-        commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);
-        commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);
-        commonSectorValues.put(SectorType.KLINE_PRICE_HIGH.name(), kLine.getHigh());
-        commonSectorValues.put(SectorType.KLINE_PRICE_LOW.name(), kLine.getLow());
-        commonSectorValues.put(SectorType.KLINE_MAX_PRICE_CHANGE_PERCENT.name(), CommonConstants.MAX_AMPLITUDE);
+        commonSectorValues.put(SectorType.KLINE_VOLUME.name(), kLine.getVolume());//成交量
+        commonSectorValues.put(SectorType.KLINE_PRICE_OPEN.name(), kLine.getOpen());//开盘价
+        commonSectorValues.put(SectorType.KLINE_PRICE_CLOSE.name(), kLine.getClose());//收盘价
+        commonSectorValues.put(SectorType.KLINE_VOLUME_MA.name(), volumeMA);//成交量MA
+        commonSectorValues.put(SectorType.KLINE_PRICE_MA.name(), priceMA);//价格MA
+        commonSectorValues.put(SectorType.KLINE_PRICE_HIGH.name(), kLine.getHigh());//最高价
+        commonSectorValues.put(SectorType.KLINE_PRICE_LOW.name(), kLine.getLow());//最低价
+        commonSectorValues.put(SectorType.KLINE_MAX_PRICE_CHANGE_PERCENT.name(), CommonConstants.MAX_AMPLITUDE);//K线涨跌幅可接受的最大值
+        //涨跌幅(开盘与收盘价之间价格浮动百分比)
         commonSectorValues.put(SectorType.KLINE_PRICE_CHANGE_PERCENT.name(), MathUtil.distancePercentInDecimal(kLine.getClose(), kLine.getOpen()));
 
         for (HoldingStock holdingStock : holdingStockMap.values()) {
@@ -255,7 +258,7 @@ public class StrategyHandler implements KLineListener {
         commonSectorValues.put(SectorType.DEA.name(), new BigDecimal(dea9));
         commonSectorValues.put(SectorType.MACD.name(), new BigDecimal(MathUtil.caculateMACD(diff, dea9)));
         commonSectorValues.put(SectorType.PREV_KLINE_CLOSE_PRICE.name(), prevKLine.getClose());
-        commonSectorValues.put(SectorType.PREV_KLINE_MACD.name(), prevMACD);
+        commonSectorValues.put(SectorType.PREV_KLINE_MACD.name(), prevMACD);//上一根K线的MACD
 
         return commonSectorValues;
     }

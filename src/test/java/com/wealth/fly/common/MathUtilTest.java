@@ -24,21 +24,26 @@ public class MathUtilTest {
     }
 
     public static void main(String[] args) {
-//        List<Double> list = new ArrayList<>();
-//        list.add(9232.6D);
-//        list.add(9231.4D);
-//        list.add(9221.4D);
-//        list.add(9212.2D);
-//        list.add(9220D);
-//        list.add(9224.7D);
-//        list.add(9227.2D);
-//        System.out.println">>>>>>>" + getEXPMA(list, 7));
-        // 6-25
-        System.out.println(">>>>>>" + MathUtil.calculateEMA(9249.7D, 12, 9460.8D));
-        System.out.println(">>>>>>" + MathUtil.calculateEMA(9249.7D, 26, 9443.2D));
+//        double ema12 = MathUtil.calculateEMA(6767.6, 12, 6863D);
+//        double ema26 = MathUtil.calculateEMA(6767.6, 26, 6933.2D);
+//        double diff = MathUtil.caculateDIF(ema12, ema26);
+//        double dea9 = MathUtil.caculateDEA(-59.2, diff);
+//        BigDecimal macd= new BigDecimal(MathUtil.caculateMACD(diff, dea9));
 
-//        System.out.println(caculateMACD(-0.5D, 35));
-        System.out.println(MathUtil.caculateDIF(9428.323076923076D,9428.866666666667D));
+        BigDecimal ema12 = MathUtil.calculateEMANew(new BigDecimal("6767.6"), new BigDecimal("12"), new BigDecimal("6863"));
+        BigDecimal ema26 = MathUtil.calculateEMANew(new BigDecimal("6767.6"), new BigDecimal("26"), new BigDecimal("6933.2"));
+        BigDecimal diff = MathUtil.caculateDIFNew(ema12, ema26);
+        BigDecimal dea9 = MathUtil.caculateDEANew(new BigDecimal("-59.2"), diff);
+        BigDecimal macd= MathUtil.caculateMACDNew(diff, dea9);
+
+
+        System.out.println(">>>>>>ema12" + ema12);
+        System.out.println(">>>>>>ema26" + ema26);
+        System.out.println(">>>>>>diff" + diff);
+        System.out.println(">>>>>>macd" + macd);
+
+
+
 //        System.out.println(caculateDEA(43.8D,-0.5D));
     }
 

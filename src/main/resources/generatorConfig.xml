@@ -7,8 +7,8 @@
 <!--    <classPathEntry location="C:\devStore\maven\repo\mysql\mysql-connector-java\5.1.44\mysql-connector-java-5.1.44.jar" />-->
    
   <context id="mysqlTables" targetRuntime="MyBatis3">
- <jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://212.64.60.136:3306/fly"
-      userId="lisong" password="x*NbULWU"/>
+ <jdbcConnection driverClass="com.mysql.jdbc.Driver" connectionURL="jdbc:mysql://212.64.60.136:3322/fly"
+      userId="root" password="N^sIsIBj*%OqVK9x#ArJcQw2pgXG8R%&amp;"/>
     
     <!-- 指定生成的类型为java类型，避免数据库中number等类型字段 -->
     <javaTypeResolver>
@@ -16,17 +16,17 @@
     </javaTypeResolver>
 
       <!-- 生成model模型，对应的包，存放位置可以指定具体的路径,如/ProjectName/src，也可以使用MyWebservice/src/main/java来自动生成 -->
-      <javaModelGenerator targetPackage="com.wealth.fly.core.entity" targetProject="D:/code/fly/src/main/java">
+      <javaModelGenerator targetPackage="com.wealth.fly.core.entity" targetProject="/Users/lisong/workspace/fly/src/main/java">
           <property name="enableSubPackages" value="true"/>
       </javaModelGenerator>
 
       <!--对应的xml mapper文件  -->
-      <sqlMapGenerator targetPackage="com.wealth.fly.core.dao" targetProject="D:/code/fly/src/main/java">
+      <sqlMapGenerator targetPackage="com.wealth.fly.core.dao" targetProject="/Users/lisong/workspace/fly/src/main/java">
           <property name="enableSubPackages" value="true"/>
       </sqlMapGenerator>
 
       <!-- 对应的dao接口 -->
-      <javaClientGenerator type="XMLMAPPER" targetPackage="com.wealth.fly.core.dao" targetProject="D:/code/fly/src/main/java">
+      <javaClientGenerator type="XMLMAPPER" targetPackage="com.wealth.fly.core.dao" targetProject="/Users/lisong/workspace/fly/src/main/java">
           <property name="enableSubPackages" value="true"/>
       </javaClientGenerator>
       <!-- tables 配置好表名和对应的实-->

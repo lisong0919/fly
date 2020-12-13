@@ -42,4 +42,12 @@ public class DateUtil {
     return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 / 24;
   }
 
+  public static float getDistanceHours(long start, long end) {
+
+    Date startDate = DateUtil.parseStandardTime(start);
+    Date endDate = DateUtil.parseStandardTime(end);
+
+    return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 ;
+  }
+
 }
