@@ -1,6 +1,7 @@
 package com.wealth.fly.core;
 
 import com.wealth.fly.common.DateUtil;
+import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
@@ -102,22 +103,37 @@ public class DataFetcher {
         for (KLine kLine : kLineList) {
             kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
             kLine.setCurrencyId(1);
+            setMacdRelatedInfo(dataGranularity,kLine);
 
+            //非第一次初始化数据库（获取的是实时数据）
             if(!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()){
                 notifyKLineListenerNewLine(kLine);
             }
 
+            //不存在的数据入库
             if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                kLine.setDea9(new BigDecimal(1));
-                kLine.setEma12(new BigDecimal(1));
-                kLine.setEma26(new BigDecimal(1));
-
                 kLineDao.insert(kLine);
             }
         }
         LOGGER.info("[{}] save kline data to db success,", dataGranularity);
     }
 
+    private void setMacdRelatedInfo(DataGranularity dataGranularity,KLine kLine){
+        KLine prevKLine= kLineDao.getKlineByDataTime(dataGranularity.name(),DateUtil.getPreDateTime(kLine.getDataTime(),dataGranularity));
+        if(prevKLine==null){
+            LOGGER.error("prev kline not found for [{}] [{}]",dataGranularity.name(),kLine.getDataTime());
+        }else {
+            double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
+            double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
+            double diff = MathUtil.caculateDIF(ema12, ema26);
+            double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
+
+            kLine.setDea9(new BigDecimal(dea9));
+            kLine.setEma12(new BigDecimal(ema12));
+            kLine.setEma26(new BigDecimal(ema26));
+            kLine.setMacd(new BigDecimal(MathUtil.caculateMACD(diff, dea9)));
+        }
+    }
 
     /**
      * 计算获取数据的时间范围

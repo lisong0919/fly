@@ -2,10 +2,9 @@ package com.wealth.fly.statistic;
 
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
-import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.strategy.Action;
+import com.wealth.fly.core.strategy.StrategyAction;
 import com.wealth.fly.core.strategy.Strategy;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class StatisticStrategyAction implements Action {
+public class StatisticStrategyAction implements StrategyAction {
 
     private Map<String, StatisticItem> targetKlineMap = new LinkedHashMap<>();
 

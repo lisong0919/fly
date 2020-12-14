@@ -12,7 +12,6 @@ public class Strategy {
     private Criteria criteria;
     private int currencyId;
     private DataGranularity dataGranularity;
-    private Action action;
     private boolean goingLong;
     private boolean openStock;
     private String closeStrategyId;

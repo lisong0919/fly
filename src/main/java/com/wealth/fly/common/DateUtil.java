@@ -44,10 +44,22 @@ public class DateUtil {
 
   public static float getDistanceHours(long start, long end) {
 
-    Date startDate = DateUtil.parseStandardTime(start);
-    Date endDate = DateUtil.parseStandardTime(end);
+    Date startDate = parseStandardTime(start);
+    Date endDate = parseStandardTime(end);
 
     return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 ;
   }
 
+  public static long getPreDateTime(long standardDateTime,DataGranularity dataGranularity){
+    Date date= parseStandardTime(standardDateTime);
+
+    Date resDate=DateUtils.addSeconds(date,-dataGranularity.getSeconds());
+
+    return Long.valueOf(new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(resDate));
+  }
+
+  public static void main(String[] args) {
+
+    System.out.println(getPreDateTime(20201211120000L,DataGranularity.FOUR_HOUR));
+  }
 }

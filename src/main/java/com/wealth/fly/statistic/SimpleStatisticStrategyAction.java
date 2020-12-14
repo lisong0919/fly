@@ -1,18 +1,17 @@
 package com.wealth.fly.statistic;
 
 import com.wealth.fly.common.MathUtil;
-import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.strategy.Action;
+import com.wealth.fly.core.strategy.StrategyAction;
 import com.wealth.fly.core.strategy.Strategy;
-import org.springframework.stereotype.Component;
+
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Component
-public class SimpleStatisticStrategyAction implements Action {
+
+public class SimpleStatisticStrategyAction implements StrategyAction {
 
     private Map<String, StatisticStrategyAction.StatisticItem> targetKlineMap = new LinkedHashMap<>();
 

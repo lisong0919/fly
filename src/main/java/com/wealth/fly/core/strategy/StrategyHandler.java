@@ -27,6 +27,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class StrategyHandler implements KLineListener {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StrategyHandler.class);
+
     @Autowired
     private KLineDao kLineDao;
     @Autowired
@@ -34,22 +36,29 @@ public class StrategyHandler implements KLineListener {
     @Autowired
     private DataFetcher dataFetcher;
 
-    @Autowired
-    private SimpleStatisticStrategyAction strategyAction;
+    //策略
+    private List<Strategy> strategyList;
+    private List<StrategyAction> strategyActionList=new ArrayList<>();
 
     //当前持仓列表
     private Map<String, HoldingStock> holdingStockMap = new HashMap<>();
 
+    //策略执行中需要用到的数据
     private BigDecimal priceMA;
     private BigDecimal volumeMA;
     private BigDecimal macdMA;
-    private BigDecimal prevMACD;
     private KLine prevKLine;
     private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();
 
-    private List<Strategy> strategyList;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StrategyHandler.class);
+
+    public void setStrategyList(List<Strategy> strategyList) {
+        this.strategyList = strategyList;
+    }
+
+    public void addStrategyAction(StrategyAction strategyAction){
+        this.strategyActionList.add(strategyAction);
+    }
 
     @PostConstruct
     public void init() {
@@ -62,26 +71,17 @@ public class StrategyHandler implements KLineListener {
         for (int i = CommonConstants.DEFAULT_MA_PRICE_NUM; i >= 1; i--) {
             priceMA = maHandler.push(MAType.PRICE, kLineList.get(i - 1), CommonConstants.DEFAULT_MA_PRICE_NUM);
         }
-
         LOGGER.info("init priceMA finished, priceMA-{} is {}", kLineList.get(0).getDataTime(), priceMA);
 
         for (int i = CommonConstants.DEFAULT_MA_VOLUME_NUM; i >= 1; i--) {
             volumeMA = maHandler.push(MAType.VOLUME, kLineList.get(i - 1), CommonConstants.DEFAULT_MA_VOLUME_NUM);
         }
-
         LOGGER.info("init volumeMA finished, volumeMA-{} is {}", kLineList.get(0).getDataTime(), volumeMA);
 
-//        try {
-//            InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("strategy.json");
-//            String config = IOUtils.toString(inputStream);
-//            strategyList = JSONObject.parseArray(config, Strategy.class);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            LOGGER.error(e.getMessage(), e);
-//        }
-        initStrategyList();
-
-        LOGGER.info("init strategy from strategy.json finished, strategy list is {}", strategyList);
+        for (int i = CommonConstants.DEFAULT_MA_MACD_NUM; i >= 1; i--) {
+            macdMA = maHandler.push(MAType.MACD, kLineList.get(i - 1), CommonConstants.DEFAULT_MA_MACD_NUM);
+        }
+        LOGGER.info("init macdMA finished, macdMA-{} is {}", kLineList.get(0).getDataTime(), macdMA);
 
         dataFetcher.registerKLineListener(this);
     }
@@ -105,7 +105,12 @@ public class StrategyHandler implements KLineListener {
 
             if (match) {
                 HoldingStock holdingStock = holdingStockMap.remove(strategy.getCloseStrategyId());
-                strategy.getAction().onCloseStock(holdingStock.getOpenStrategy(), holdingStock.getOpenKline(), strategy, realTimePrice, dataTime);
+                if(strategyActionList!=null && !strategyActionList.isEmpty()){
+                    for(StrategyAction action:strategyActionList){
+                        action.onCloseStock(holdingStock.getOpenStrategy(), holdingStock.getOpenKline(), strategy, realTimePrice, dataTime);
+                    }
+                }
+
             }
         }
     }
@@ -119,19 +124,13 @@ public class StrategyHandler implements KLineListener {
         //更新ma信息
         volumeMA = maHandler.push(MAType.VOLUME, kLine, CommonConstants.DEFAULT_MA_VOLUME_NUM);
         priceMA = maHandler.push(MAType.PRICE, kLine, CommonConstants.DEFAULT_MA_PRICE_NUM);
+        macdMA= maHandler.push(MAType.MACD, kLine, CommonConstants.DEFAULT_MA_MACD_NUM);
 
-        if (volumeMA == null || priceMA == null) {
-            setSomePrevValues(kLine);
-            LOGGER.info("ma is not ready.");
-            return;
-        }
-
-        if (prevMACD == null || prevKLine == null) {
+        if (prevKLine == null) {
             LOGGER.info("pre values not ready.");
-            setSomePrevValues(kLine);
+            prevKLine = kLine;
             return;
         }
-
 
         Map<String, BigDecimal> sectorValues = getCommonSectorValues(kLine, prevKLine);
 
@@ -141,8 +140,8 @@ public class StrategyHandler implements KLineListener {
             }
             lastKlineSectorValuesList.add(sectorValues);
             if (lastKlineSectorValuesList.size() < CommonConstants.DEFAULT_LAST_LINE_SIZE) {
-                setSomePrevValues(kLine);
                 LOGGER.info("lastKlineSectorValuesList not ready.");
+                prevKLine = kLine;
                 return;
             }
         }
@@ -168,7 +167,11 @@ public class StrategyHandler implements KLineListener {
                 holdingStock.setOpenStrategy(strategy);
                 holdingStockMap.put(strategy.getId(), holdingStock);
 
-                strategy.getAction().onOpenStock(strategy, kLine);
+                if(strategyActionList!=null && !strategyActionList.isEmpty()){
+                    for(StrategyAction action:strategyActionList){
+                        action.onOpenStock(strategy, kLine);
+                    }
+                }
 
                 //目前的短信参数不能有特殊符号
                 String priceStr = kLine.getClose().toPlainString();
@@ -180,25 +183,10 @@ public class StrategyHandler implements KLineListener {
             }
         }
 
-        setSomePrevValues(kLine);
-    }
-
-    /**
-     * 本方法在一个K线处理结束的时候，将本次K线数据设置为prev值
-     *
-     * @param kLine
-     */
-    private void setSomePrevValues(KLine kLine) {
-        if (prevKLine != null) {
-            double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
-            double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
-            double diff = MathUtil.caculateDIF(ema12, ema26);
-            double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
-
-            prevMACD = new BigDecimal(MathUtil.caculateMACD(diff, dea9));
-        }
         prevKLine = kLine;
     }
+
+
 
     private void setLastKLineSectorValues(Map<String, BigDecimal> orignalSectorValues, KLine kLine) {
 
@@ -249,60 +237,14 @@ public class StrategyHandler implements KLineListener {
             commonSectorValues.put(SectorType.STOCK_PRICE_OPEN.name(), holdingStock.getOpenKline().getClose());
         }
 
-        double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
-        double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());
-        double diff = MathUtil.caculateDIF(ema12, ema26);
-        double dea9 = MathUtil.caculateDEA(prevKLine.getDea9().doubleValue(), diff);
-
+        double diff = MathUtil.caculateDIF(kLine.getEma12().doubleValue(), kLine.getEma26().doubleValue());
         commonSectorValues.put(SectorType.DIF.name(), new BigDecimal(diff));
-        commonSectorValues.put(SectorType.DEA.name(), new BigDecimal(dea9));
-        commonSectorValues.put(SectorType.MACD.name(), new BigDecimal(MathUtil.caculateMACD(diff, dea9)));
+        commonSectorValues.put(SectorType.DEA.name(), kLine.getDea9());
+        commonSectorValues.put(SectorType.MACD.name(), kLine.getMacd());
         commonSectorValues.put(SectorType.PREV_KLINE_CLOSE_PRICE.name(), prevKLine.getClose());
-        commonSectorValues.put(SectorType.PREV_KLINE_MACD.name(), prevMACD);//上一根K线的MACD
+        commonSectorValues.put(SectorType.PREV_KLINE_MACD.name(), prevKLine.getMacd());//上一根K线的MACD
 
         return commonSectorValues;
-    }
-
-    public void initStrategyList() {
-        strategyList = new ArrayList<>();
-
-        Strategy strategy1 = new Strategy();
-        strategy1.setId("ClassicMALongOpenStrategy");
-        strategy1.setCriteria(StrategyFactory.getClassicMALongCriteria());
-        strategy1.setGoingLong(true);
-        strategy1.setOpenStock(true);
-        strategy1.setAction(strategyAction);
-        strategyList.add(strategy1);
-
-        Strategy strategy2 = new Strategy();
-        strategy2.setId("ClassicMAShortOpenStrategy");
-        strategy2.setCriteria(StrategyFactory.getClassicMAShortCriteria());
-        strategy2.setGoingLong(false);
-        strategy2.setOpenStock(true);
-        strategy2.setAction(strategyAction);
-        strategyList.add(strategy2);
-
-
-        Strategy strategy3 = new Strategy();
-        strategy3.setId("ClassicMALongCloseStrategy");
-        strategy3.setCriteria(StrategyFactory.getClassicMALongCloseCriteria());
-        strategy3.setGoingLong(true);
-        strategy3.setOpenStock(false);
-        strategy3.setAction(strategyAction);
-        strategy3.setCloseStrategyId(strategy1.getId());
-        strategyList.add(strategy3);
-
-
-        Strategy strategy4 = new Strategy();
-        strategy4.setId("ClassicMAShortCloseStrategy");
-        strategy4.setCriteria(StrategyFactory.getClassicMAShortCloseCriteria());
-        strategy4.setGoingLong(false);
-        strategy4.setOpenStock(false);
-        strategy4.setAction(strategyAction);
-        strategy4.setCloseStrategyId(strategy2.getId());
-        strategyList.add(strategy4);
-
-        System.out.println(JSONObject.toJSONString(strategyList));
     }
 
 

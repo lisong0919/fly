@@ -4,7 +4,7 @@ import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.strategy.Action;
+import com.wealth.fly.core.strategy.StrategyAction;
 import com.wealth.fly.core.strategy.Strategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class StatisticVolumeStrategyAction implements Action {
+public class StatisticVolumeStrategyAction implements StrategyAction {
 
     private Map<String, StatisticStrategyAction.StatisticItem> targetKlineMap = new LinkedHashMap<>();
 

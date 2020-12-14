@@ -4,7 +4,7 @@ import com.wealth.fly.core.entity.KLine;
 
 import java.math.BigDecimal;
 
-public interface Action {
+public interface StrategyAction {
 
     void onOpenStock(Strategy strategy, KLine kLine);
 

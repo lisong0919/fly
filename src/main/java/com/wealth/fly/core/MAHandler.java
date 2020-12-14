@@ -19,8 +19,12 @@ public class MAHandler {
         BigDecimal pushValue = null;
         if (maType == MAType.PRICE) {
             pushValue = kLine.getClose();
-        } else {
+        } else if(maType==MAType.VOLUME){
             pushValue = kLine.getVolume();
+        }else if(maType==MAType.MACD){
+            pushValue = kLine.getMacd();
+        }else{
+            throw new IllegalArgumentException("maType not support");
         }
         return getMACalculator(maType, kLine.getCurrencyId(), kLine.getGranularity(), maLevel).push(kLine.getDataTime(), pushValue);
     }

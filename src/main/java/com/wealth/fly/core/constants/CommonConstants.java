@@ -13,6 +13,7 @@ public class CommonConstants {
     public static final int DEFAULT_LAST_LINE_SIZE = 2;
     public static final int DEFAULT_MA_PRICE_NUM = 60;
     public static final int DEFAULT_MA_VOLUME_NUM = 10;
+    public static final int DEFAULT_MA_MACD_NUM=10;
 
 
     public static final String WIN_PERCENT = "0.025";
