@@ -9,6 +9,26 @@ import java.math.BigDecimal;
 
 public class StrategyFactory {
 
+//    public static Criteria getClassicMACDLongOpenCriteria(){
+//        //条件1：最后两个K线的，任意一个大于成交量MA10的两倍
+//        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+//        simpleCriteria1.setSource(new Sector(Sector.SectorType.MACD));
+//        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
+//        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
+//
+//        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+//        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
+//        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+//        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
+//
+//        CompoundCriteria cc1 = new CompoundCriteria(CompoundCriteria.Operator.AND);
+//        cc1.add(simpleCriteria1);
+//        cc1.add(simpleCriteria2);
+//
+//        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc1, LastNKlineCriteria.MatchType.ONE_MATCH);
+//        lc1.setDescription("条件1：放量上涨");
+//
+//    }
 
     public static Criteria getClassicMALongCloseCriteria() {
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();

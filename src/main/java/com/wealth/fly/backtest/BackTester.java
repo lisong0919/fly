@@ -3,14 +3,18 @@ package com.wealth.fly.backtest;
 
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.CommonConstants;
+import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.entity.RealTimePrice;
+import com.wealth.fly.core.strategy.Strategy;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
 import com.wealth.fly.statistic.StatisticItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 import java.util.List;
 import java.util.Map;
@@ -18,21 +22,28 @@ import java.util.Map;
 public abstract class BackTester {
     private static final Logger LOGGER = LoggerFactory.getLogger(BackTester.class);
 
+    @Autowired
+    private KLineDao kLineDao;
+
+    @Autowired
+    protected StrategyHandler strategyHandler;
 
 
     //数据分析的执行器
     private SimpleStatisticStrategyAction simpleStatisticStrategyAction =new SimpleStatisticStrategyAction();
 
     //抽象方法
-    public abstract StrategyHandler getStrategyHandler();
+    public abstract List<Strategy> getStrategyList();
     public abstract List<RealTimePrice> generateRealTimePrice(KLine kLine);
     public abstract Long getStartTime();
     public abstract Long getEndTime();
-    public abstract KLineDao getKLineDao();
+    public abstract DataGranularity getDataGranularity();
+
 
 
     public void run(){
-        getStrategyHandler().addStrategyAction(simpleStatisticStrategyAction);//简单的数据分析执行器
+        strategyHandler.addStrategyAction(simpleStatisticStrategyAction);//简单的数据分析执行器
+        strategyHandler.setStrategyList(getStrategyList());
 
         LOGGER.info("start to run back test from {} to {}",getStartTime(),getEndTime());
 
@@ -47,13 +58,13 @@ public abstract class BackTester {
             lastKline=kLineList.get(kLineList.size()-1);
 
             for(KLine kLine:kLineList){
-                getStrategyHandler().onNewKLine(kLine);
+                strategyHandler.onNewKLine(kLine);
                List<RealTimePrice> realTimePriceList= generateRealTimePrice(kLine);
                 if(realTimePriceList==null || realTimePriceList.isEmpty()){
                    continue;
                 }
                 for(RealTimePrice realTimePrice:realTimePriceList){
-                    getStrategyHandler().onRealTime(realTimePrice.getDataTime(), realTimePrice.getPrice());
+                    strategyHandler.onRealTime(realTimePrice.getDataTime(), realTimePrice.getPrice());
                 }
             }
         }
@@ -68,7 +79,7 @@ public abstract class BackTester {
         if(lastKLine!=null){
             startTime=lastKLine.getDataTime();
         }
-        return getKLineDao().getLastKLineByDataTime(CommonConstants.DEFAULT_DATA_GRANULARITY.name(),startTime,getEndTime(),200);
+        return kLineDao.getLastKLineByDataTime(getDataGranularity().name(),startTime,getEndTime(),200);
     }
 
     private void statisticResult(){

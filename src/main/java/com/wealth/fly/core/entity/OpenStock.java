@@ -7,8 +7,7 @@ import java.math.BigDecimal;
 
 @Data
 @ToString
-public class RealTimePrice {
-    private Long dataTime;
-    private BigDecimal price;
-    private BigDecimal maPrice;
+public class OpenStock {
+    private BigDecimal openPrice;
+
 }

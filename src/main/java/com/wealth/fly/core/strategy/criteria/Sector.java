@@ -74,6 +74,7 @@ public class Sector {
         KLINE_VOLUME_MA,
 
 
+        KLINE_MACD_MA
 
 
     }

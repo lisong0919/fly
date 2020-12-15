@@ -23,23 +23,12 @@ import java.util.List;
 @Component
 public class MABreakBackTester extends BackTester {
 
-    @Autowired
-    private StrategyHandler strategyHandler;
-    @Autowired
-    private KLineDao kLineDao;
+
+
 
     private Long startTime;
     private Long endTime;
 
-    @PostConstruct
-    public void init(){
-        strategyHandler.setStrategyList(getStrategyList());
-    }
-
-    @Override
-    public StrategyHandler getStrategyHandler() {
-        return strategyHandler;
-    }
 
 
     @Override
@@ -65,9 +54,10 @@ public class MABreakBackTester extends BackTester {
         return this.endTime;
     }
 
+
     @Override
-    public KLineDao getKLineDao() {
-        return kLineDao;
+    public DataGranularity getDataGranularity() {
+        return CommonConstants.DEFAULT_DATA_GRANULARITY;
     }
 
     public void setStartTime(Long startTime) {

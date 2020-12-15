@@ -9,6 +9,7 @@ import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.reinforce.DataReinforce;
 import com.wealth.fly.core.strategy.criteria.Sector;
 import com.wealth.fly.core.strategy.criteria.Sector.SectorType;
 
@@ -25,7 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StrategyHandler implements KLineListener {
+public class StrategyHandler implements KLineListener, DataReinforce<KLine> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StrategyHandler.class);
 
@@ -247,6 +248,18 @@ public class StrategyHandler implements KLineListener {
 
     public BigDecimal getPriceMA() {
         return priceMA;
+    }
+
+    @Override
+    public List<SectorType> getDependency() {
+        return null;
+    }
+
+    @Override
+    public void reinfore(KLine data, Map<String, BigDecimal> sectorValues) {
+        for (HoldingStock holdingStock : holdingStockMap.values()) {
+            sectorValues.put(SectorType.STOCK_PRICE_OPEN.name(), holdingStock.getOpenKline().getClose());
+        }
     }
 
     @Data
