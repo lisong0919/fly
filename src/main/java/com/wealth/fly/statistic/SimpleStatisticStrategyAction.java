@@ -13,10 +13,10 @@ import java.util.Map;
 
 public class SimpleStatisticStrategyAction implements StrategyAction {
 
-    private Map<String, StatisticStrategyAction.StatisticItem> targetKlineMap = new LinkedHashMap<>();
+    private Map<String, StatisticItem> targetKlineMap = new LinkedHashMap<>();
 
 
-    public Map<String, StatisticStrategyAction.StatisticItem> getTargetKlineMap() {
+    public Map<String, StatisticItem> getTargetKlineMap() {
         return targetKlineMap;
     }
 
@@ -28,7 +28,7 @@ public class SimpleStatisticStrategyAction implements StrategyAction {
 
     @Override
     public void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice, long closeDataTime) {
-        StatisticStrategyAction.StatisticItem item = new StatisticStrategyAction.StatisticItem();
+        StatisticItem item = new StatisticItem();
         item.setStartPrice(openKLine.getClose());
         item.setStartDataTime(openKLine.getDataTime());
         item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(openKLine.getClose(), openKLine.getOpen()));

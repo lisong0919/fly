@@ -3,6 +3,8 @@ package com.wealth.fly.backtest;
 import com.alibaba.fastjson.JSONObject;
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
+import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.entity.RealTimePrice;
 import com.wealth.fly.core.strategy.Strategy;
@@ -23,11 +25,11 @@ public class MABreakBackTester extends BackTester {
 
     @Autowired
     private StrategyHandler strategyHandler;
+    @Autowired
+    private KLineDao kLineDao;
 
-
-    public MABreakBackTester(Long startTime, Long endTime) {
-        super(startTime, endTime);
-    }
+    private Long startTime;
+    private Long endTime;
 
     @PostConstruct
     public void init(){
@@ -39,10 +41,6 @@ public class MABreakBackTester extends BackTester {
         return strategyHandler;
     }
 
-    @Override
-    public List<KLine> generateKline(KLine lastKLine) {
-        return null;
-    }
 
     @Override
     public List<RealTimePrice> generateRealTimePrice(KLine kLine) {
@@ -57,6 +55,28 @@ public class MABreakBackTester extends BackTester {
         return Arrays.asList(new RealTimePrice[]{realTimePrice});
     }
 
+    @Override
+    public Long getStartTime() {
+        return this.startTime;
+    }
+
+    @Override
+    public Long getEndTime() {
+        return this.endTime;
+    }
+
+    @Override
+    public KLineDao getKLineDao() {
+        return kLineDao;
+    }
+
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
+    }
+
+    public void setEndTime(Long endTime) {
+        this.endTime = endTime;
+    }
 
     private BigDecimal triggerRealTimeIfPossiable(KLine kLine) {
 

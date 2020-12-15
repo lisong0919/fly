@@ -167,19 +167,12 @@ public class StrategyHandler implements KLineListener {
                 holdingStock.setOpenStrategy(strategy);
                 holdingStockMap.put(strategy.getId(), holdingStock);
 
+                //通知已注册action
                 if(strategyActionList!=null && !strategyActionList.isEmpty()){
                     for(StrategyAction action:strategyActionList){
                         action.onOpenStock(strategy, kLine);
                     }
                 }
-
-                //目前的短信参数不能有特殊符号
-                String priceStr = kLine.getClose().toPlainString();
-                if (priceStr.contains(".")) {
-                    priceStr = priceStr.substring(0, priceStr.indexOf("."));
-                }
-//                SmsUtil.sendOpenStockSms(priceStr);
-                LOGGER.info("send sms success");
             }
         }
 

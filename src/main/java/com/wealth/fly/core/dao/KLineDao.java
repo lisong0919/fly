@@ -57,6 +57,8 @@ public interface KLineDao {
 
     List<KLine> getLastKLineGTDataTime(@Param("granularity") String dataGranularity, @Param("dataTime") Long dataTime, @Param("limit") int limit);
 
+    List<KLine> getLastKLineByDataTime(@Param("granularity") String dataGranularity, @Param("startTime") Long startTime,@Param("endTime") Long endTime, @Param("limit") int limit);
+
     KLine getKlineByDataTime(@Param("granularity") String dataGranularity, @Param("dataTime") Long dataTime);
 
     List<KLine> getLastKLineByDataTimeRange(@Param("granularity") String dataGranularity, @Param("dataTimeBegin") Long dataTimeBegin, @Param("dataTimeEnd") Long dataTimeEnd);

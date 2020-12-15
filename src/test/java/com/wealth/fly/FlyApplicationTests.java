@@ -9,7 +9,8 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.CryptoCompareExchanger;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
-import com.wealth.fly.statistic.StatisticStrategyAction;
+import com.wealth.fly.statistic.StatisticItem;
+
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
@@ -55,11 +56,11 @@ class FlyApplicationTests {
       }
     }
 
-    Map<String, StatisticStrategyAction.StatisticItem> kLineMap = action.getTargetKlineMap();
+    Map<String, StatisticItem> kLineMap = action.getTargetKlineMap();
     System.out.println(
         "startTime,win,direct,endTime,spendDays,startPrice,endPrice,amplitudeFromMAPrice,amplitudeFromOpenPrice,profitPercent");
     long maxDataTime = 0L;
-    for (StatisticStrategyAction.StatisticItem item : kLineMap.values()) {
+    for (StatisticItem item : kLineMap.values()) {
 //            if (item.getStartDataTime() < maxDataTime) {
 //                continue;
 //            }
