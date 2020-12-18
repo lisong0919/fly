@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class StrategyDemo {
@@ -116,16 +114,16 @@ public class StrategyDemo {
 
         //条件1： 死叉出现
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();
-        simpleCriteria1.setSource(new Sector(Sector.SectorType.DIF));
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_DIF));
         simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria1.setTarget(new Sector(Sector.SectorType.DEA));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_DEA));
         LastNKlineCriteria lc1 = new LastNKlineCriteria(4, simpleCriteria1, LastNKlineCriteria.MatchType.FIRST_MATCH);
 
 
         SimpleCriteria simpleCriteria2 = new SimpleCriteria();
-        simpleCriteria2.setSource(new Sector(Sector.SectorType.DIF));
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_DIF));
         simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria2.setTarget(new Sector(Sector.SectorType.DEA));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_DEA));
         LastNKlineCriteria lc2 = new LastNKlineCriteria(4, simpleCriteria2, LastNKlineCriteria.MatchType.SECOND_MATCH);
 
 
@@ -151,15 +149,15 @@ public class StrategyDemo {
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(Sector.SectorType.PREV_KLINE_CLOSE_PRICE));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PREV_CLOSE_PRICE));
         LastNKlineCriteria criteria3 = new LastNKlineCriteria(3, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
         criteria3.setDescription("收盘价依次递减");
 
         //条件4：MACD红柱放出
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
-        simpleCriteria5.setSource(new Sector(Sector.SectorType.MACD));
+        simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_MACD));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria5.setTarget(new Sector(Sector.SectorType.PREV_KLINE_MACD));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
         LastNKlineCriteria criteria4 = new LastNKlineCriteria(3, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         criteria4.setDescription("MACD红柱放出");
 

@@ -5,6 +5,7 @@ import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
+import com.wealth.fly.core.entity.Event;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.entity.RealTimePrice;
 import com.wealth.fly.core.strategy.Strategy;
@@ -133,6 +134,7 @@ public class MABreakBackTester extends BackTester {
         strategy1.setCriteria(StrategyFactory.getClassicMALongCriteria());
         strategy1.setGoingLong(true);
         strategy1.setOpenStock(true);
+        strategy1.setTriggerEventList(Arrays.asList(new Event[]{Event.NewKLine}));
         strategyList.add(strategy1);
 
         Strategy strategy2 = new Strategy();
@@ -140,6 +142,7 @@ public class MABreakBackTester extends BackTester {
         strategy2.setCriteria(StrategyFactory.getClassicMAShortCriteria());
         strategy2.setGoingLong(false);
         strategy2.setOpenStock(true);
+        strategy2.setTriggerEventList(Arrays.asList(new Event[]{Event.NewKLine}));
         strategyList.add(strategy2);
 
 
@@ -149,6 +152,7 @@ public class MABreakBackTester extends BackTester {
         strategy3.setGoingLong(true);
         strategy3.setOpenStock(false);
         strategy3.setCloseStrategyId(strategy1.getId());
+        strategy3.setTriggerEventList(Arrays.asList(new Event[]{Event.RealTime}));
         strategyList.add(strategy3);
 
 
@@ -158,6 +162,7 @@ public class MABreakBackTester extends BackTester {
         strategy4.setGoingLong(false);
         strategy4.setOpenStock(false);
         strategy4.setCloseStrategyId(strategy2.getId());
+        strategy4.setTriggerEventList(Arrays.asList(new Event[]{Event.RealTime}));
         strategyList.add(strategy4);
 
         System.out.println(JSONObject.toJSONString(strategyList));

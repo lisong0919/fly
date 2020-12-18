@@ -1,11 +1,13 @@
 package com.wealth.fly.core.strategy;
 
 import com.wealth.fly.core.constants.CommonConstants;
+import com.wealth.fly.core.entity.Event;
 import com.wealth.fly.core.strategy.criteria.*;
 import com.wealth.fly.core.strategy.criteria.LastNKlineCriteria.MatchType;
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 public class StrategyFactory {
 
@@ -54,7 +56,6 @@ public class StrategyFactory {
         compoundCriteria.add(simpleCriteria1);
         compoundCriteria.add(simpleCriteria2);
 //        compoundCriteria.add(simpleCriteria3);
-
         return compoundCriteria;
     }
 

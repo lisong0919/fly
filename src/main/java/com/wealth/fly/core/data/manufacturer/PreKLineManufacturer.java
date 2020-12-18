@@ -24,8 +24,8 @@ public class PreKLineManufacturer implements NewKLineManufacturer {
             //TODO 从数据库查
             return;
         }
-        sectorValues.put(Sector.SectorType.PREV_KLINE_CLOSE_PRICE.name(), prevKLine.getClose());
-        sectorValues.put(Sector.SectorType.PREV_KLINE_MACD.name(), prevKLine.getMacd());//上一根K线的MACD
+        sectorValues.put(Sector.SectorType.KLINE_PREV_CLOSE_PRICE.name(), prevKLine.getClose());
+        sectorValues.put(Sector.SectorType.KLINE_PREV_MACD.name(), prevKLine.getMacd());//上一根K线的MACD
 
         prevKLine=kLine;
     }

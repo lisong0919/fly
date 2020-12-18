@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-@Component
+
 public class LastKLineManufacturer implements NewKLineManufacturer {
 
     private LinkedList<Map<String, BigDecimal>> lastKlineSectorValuesList = new LinkedList<>();

@@ -1,5 +1,6 @@
 package com.wealth.fly.core.entity;
 
+import com.wealth.fly.core.strategy.Strategy;
 import lombok.Data;
 import lombok.ToString;
 

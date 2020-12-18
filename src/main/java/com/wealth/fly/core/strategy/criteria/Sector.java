@@ -1,8 +1,14 @@
 package com.wealth.fly.core.strategy.criteria;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 @Data
+@EqualsAndHashCode
 public class Sector {
     private SectorType type;
     private Object value;
@@ -21,61 +27,58 @@ public class Sector {
 
     public enum SectorType {
 
-        DIF,
-
-        DEA,
-
-        MACD,
-
-        PREV_KLINE_CLOSE_PRICE,
-
-        PREV_KLINE_MACD,
-
-        STOCK_PRICE_OPEN,
-
         KLINE_PRICE_OPEN,
 
-        KLINE_MAX_PRICE_CHANGE_PERCENT,
-
-        KLINE_PRICE_CHANGE_PERCENT,
-
-        /**
-         *  成交量
-         */
-        KLINE_VOLUME,
-
-
-        /**
-         * 收盘价
-         */
         KLINE_PRICE_CLOSE,
 
         KLINE_PRICE_HIGH,
 
         KLINE_PRICE_LOW,
 
-        /**
-         * 实时价格
-         */
-        REALTIME_PRICE,
+        KLINE_VOLUME,
 
-        /**
-         * 实时均线价格
-         */
-        REALTIME_PRICE_MA,
-        /**
-         * 价格MA
-         */
         KLINE_PRICE_MA,
 
-        /**
-         * 成交量MA
-         */
         KLINE_VOLUME_MA,
 
+        KLINE_DIF,
 
-        KLINE_MACD_MA
+        KLINE_DEA,
 
+        KLINE_MACD,
+
+        KLINE_MACD_MA,
+
+        KLINE_MAX_PRICE_CHANGE_PERCENT,
+
+        KLINE_PRICE_CHANGE_PERCENT,
+
+        KLINE_PREV_CLOSE_PRICE,
+
+        KLINE_PREV_MACD,
+
+
+        REALTIME_PRICE,
+
+        REALTIME_PRICE_MA,
+
+        STOCK_PRICE_OPEN
 
     }
+
+
+    public static void main(String[] args) {
+        Sector sector1=new Sector(SectorType.KLINE_DEA,3);
+        Sector sector2=new Sector(SectorType.KLINE_DEA,4);
+
+        HashSet<Sector> hashSet=new HashSet<>();
+        hashSet.add(sector1);
+        hashSet.add(sector2);
+        System.out.println(hashSet);
+    }
+
+//    @Override
+//    public int hashCode(){
+//
+//    }
 }

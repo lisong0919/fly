@@ -20,8 +20,8 @@ public class MACDManufacturer implements NewKLineManufacturer {
     @Override
     public void manufact(KLine kLine, Map<String, BigDecimal> sectorValues) {
         double diff = MathUtil.caculateDIF(kLine.getEma12().doubleValue(), kLine.getEma26().doubleValue());
-        sectorValues.put(Sector.SectorType.DIF.name(), new BigDecimal(diff));
-        sectorValues.put(Sector.SectorType.DEA.name(), kLine.getDea9());
-        sectorValues.put(Sector.SectorType.MACD.name(), kLine.getMacd());
+        sectorValues.put(Sector.SectorType.KLINE_DIF.name(), new BigDecimal(diff));
+        sectorValues.put(Sector.SectorType.KLINE_DEA.name(), kLine.getDea9());
+        sectorValues.put(Sector.SectorType.KLINE_MACD.name(), kLine.getMacd());
     }
 }

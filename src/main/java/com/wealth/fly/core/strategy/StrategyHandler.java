@@ -2,14 +2,13 @@ package com.wealth.fly.core.strategy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.wealth.fly.core.DataFetcher;
-import com.wealth.fly.core.KLineListener;
+import com.wealth.fly.core.listener.KLineListener;
 import com.wealth.fly.core.MAHandler;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.data.manufacturer.*;
 import com.wealth.fly.core.data.manufacturer.interf.DataManufacturer;
-import com.wealth.fly.core.data.manufacturer.interf.RealtimeManufacturer;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.entity.RealTimePrice;
 import com.wealth.fly.core.strategy.criteria.Sector;
@@ -41,6 +40,7 @@ public class StrategyHandler implements KLineListener{
     //策略
     private List<Strategy> strategyList;
     private List<StrategyAction> strategyActionList=new ArrayList<>();
+
 
     //数据加工器
     private List<DataManufacturer> newKLineEventDataManufacturerList =new ArrayList<>();
@@ -105,6 +105,7 @@ public class StrategyHandler implements KLineListener{
                 HoldingStock holdingStock = new HoldingStock();
                 holdingStock.setOpenKline(kLine);
                 holdingStock.setOpenStrategy(strategy);
+                holdingStock.setOpenStockPrice(kLine.getClose());
                 holdingStockMap.put(strategy.getId(), holdingStock);
 
                 //通知已注册action
@@ -158,19 +159,12 @@ public class StrategyHandler implements KLineListener{
     }
 
 
-
-    @Override
-    public void reinfore(KLine data, Map<String, BigDecimal> sectorValues) {
-        for (HoldingStock holdingStock : holdingStockMap.values()) {
-            sectorValues.put(SectorType.STOCK_PRICE_OPEN.name(), holdingStock.getOpenKline().getClose());
-        }
-    }
-
     @Data
     @ToString
     public static class HoldingStock {
         private Strategy openStrategy;
         private KLine openKline;
+        private BigDecimal openStockPrice;
     }
 
 }

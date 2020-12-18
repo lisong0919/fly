@@ -5,14 +5,13 @@ import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.exchanger.Exchanger;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.PostConstruct;
 
 import com.wealth.fly.core.exchanger.OkexExchanger;
+import com.wealth.fly.core.listener.KLineListener;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
