@@ -27,5 +27,11 @@ public class CommonKLineManufacturer implements NewKLineManufacturer {
         sectorValues.put(Sector.SectorType.KLINE_MAX_PRICE_CHANGE_PERCENT.name(), CommonConstants.MAX_AMPLITUDE);//K线涨跌幅可接受的最大值
         //涨跌幅(开盘与收盘价之间价格浮动百分比)
         sectorValues.put(Sector.SectorType.KLINE_PRICE_CHANGE_PERCENT.name(), MathUtil.distancePercentInDecimal(kLine.getClose(), kLine.getOpen()));
+
+        //macd相关
+        double diff = MathUtil.caculateDIF(kLine.getEma12().doubleValue(), kLine.getEma26().doubleValue());
+        sectorValues.put(Sector.SectorType.KLINE_DIF.name(), new BigDecimal(diff));
+        sectorValues.put(Sector.SectorType.KLINE_DEA.name(), kLine.getDea9());
+        sectorValues.put(Sector.SectorType.KLINE_MACD.name(), kLine.getMacd());
     }
 }

@@ -15,51 +15,55 @@ import org.slf4j.LoggerFactory;
 
 public class DateUtil {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
 
 
-  public static Date parseStandardTime(long time) {
-    try {
-      Date result = DateUtils.parseDate(String.valueOf(time), CommonConstants.SYSTEM_DATE_FORMAT);
-      result = DateUtils.toCalendar(result, TimeZone.getTimeZone("Asia/Shanghai")).getTime();
-      return result;
-    } catch (ParseException e) {
-      LOGGER.error(e.getMessage(), e);
-      return null;
+    public static Date parseStandardTime(long time) {
+        try {
+            Date result = DateUtils.parseDate(String.valueOf(time), CommonConstants.SYSTEM_DATE_FORMAT);
+            result = DateUtils.toCalendar(result, TimeZone.getTimeZone("Asia/Shanghai")).getTime();
+            return result;
+        } catch (ParseException e) {
+            LOGGER.error(e.getMessage(), e);
+            return null;
+        }
     }
-  }
 
-  public static String formatToStandardTime(long timestamp) {
-    Date date = new Date(timestamp);
-    return new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(date);
-  }
+    public static String formatToStandardTime(long timestamp) {
+        Date date = new Date(timestamp);
+        return new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(date);
+    }
 
-  public static float getDistanceDays(long start, long end) {
+    public static float getDistanceDays(long start, long end) {
 
-    Date startDate = DateUtil.parseStandardTime(start);
-    Date endDate = DateUtil.parseStandardTime(end);
+        Date startDate = DateUtil.parseStandardTime(start);
+        Date endDate = DateUtil.parseStandardTime(end);
 
-    return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 / 24;
-  }
+        return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 / 24;
+    }
 
-  public static float getDistanceHours(long start, long end) {
+    public static float getDistanceHours(long start, long end) {
 
-    Date startDate = parseStandardTime(start);
-    Date endDate = parseStandardTime(end);
+        Date startDate = parseStandardTime(start);
+        Date endDate = parseStandardTime(end);
 
-    return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60 ;
-  }
+        return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60;
+    }
 
-  public static long getPreDateTime(long standardDateTime,DataGranularity dataGranularity){
-    Date date= parseStandardTime(standardDateTime);
+    public static long getPreDateTime(long standardDateTime, DataGranularity dataGranularity) {
+        return getPreDateTime(standardDateTime, dataGranularity, 1);
+    }
 
-    Date resDate=DateUtils.addSeconds(date,-dataGranularity.getSeconds());
+    public static long getPreDateTime(long standardDateTime, DataGranularity dataGranularity, int preCount) {
+        Date date = parseStandardTime(standardDateTime);
 
-    return Long.valueOf(new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(resDate));
-  }
+        Date resDate = DateUtils.addSeconds(date, -dataGranularity.getSeconds() * preCount);
 
-  public static void main(String[] args) {
+        return Long.valueOf(new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(resDate));
+    }
 
-    System.out.println(getPreDateTime(20201211120000L,DataGranularity.FOUR_HOUR));
-  }
+    public static void main(String[] args) {
+
+        System.out.println(getPreDateTime(202012202000L, DataGranularity.FOUR_HOUR,3));
+    }
 }

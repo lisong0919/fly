@@ -87,7 +87,8 @@ class FlyApplicationTests {
         }
 
         BigDecimal openStockPrice = holdingStock.getOpenKline().getClose();
-        BigDecimal priceMA = strategyHandler.getPriceMA();
+        BigDecimal priceMA = null;
+//        BigDecimal priceMA = strategyHandler.getPriceMA();
 
         if ("ClassicMALongOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
           BigDecimal missPrice = MathUtil.addPercent(priceMA,

@@ -5,12 +5,15 @@ import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
+import com.wealth.fly.core.data.DataBroker;
 import com.wealth.fly.core.entity.Event;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.entity.MAParam;
 import com.wealth.fly.core.entity.RealTimePrice;
 import com.wealth.fly.core.strategy.Strategy;
 import com.wealth.fly.core.strategy.StrategyFactory;
 import com.wealth.fly.core.strategy.StrategyHandler;
+import com.wealth.fly.core.strategy.criteria.Sector;
 import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,20 +28,20 @@ import java.util.List;
 public class MABreakBackTester extends BackTester {
 
 
-
-
     private Long startTime;
     private Long endTime;
 
+    @Autowired
+    private DataBroker dataBroker;
 
 
     @Override
     public List<RealTimePrice> generateRealTimePrice(KLine kLine) {
-        BigDecimal price= triggerRealTimeIfPossiable(kLine);
-        if(price==null){
+        BigDecimal price = triggerRealTimeIfPossiable(kLine);
+        if (price == null) {
             return null;
         }
-        RealTimePrice realTimePrice=new RealTimePrice();
+        RealTimePrice realTimePrice = new RealTimePrice();
         realTimePrice.setPrice(price);
         realTimePrice.setDataTime(kLine.getDataTime());
 
@@ -81,7 +84,9 @@ public class MABreakBackTester extends BackTester {
                 }
 
                 BigDecimal openStockPrice = holdingStock.getOpenKline().getClose();
-                BigDecimal priceMA = strategyHandler.getPriceMA();
+
+                Sector sector = new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM);
+                BigDecimal priceMA = dataBroker.getMaValue(sector, CommonConstants.DEFAULT_DATA_GRANULARITY, new MAParam(kLine.getDataTime(), kLine.getClose()));
 
                 if ("ClassicMALongOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
                     BigDecimal missPrice = MathUtil.addPercent(priceMA,

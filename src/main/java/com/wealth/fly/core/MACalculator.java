@@ -82,9 +82,10 @@ public class MACalculator {
      * @param value
      * @return 返回MA数据，如果没有达到capacity，返回null
      */
-    public synchronized BigDecimal replaceLast(String tag, BigDecimal value) {
+    public synchronized BigDecimal replaceLast(Object tag, BigDecimal value) {
 
         if (count.intValue() != capacity) {
+            push(tag,value);
             return null;
         }
 

@@ -37,9 +37,9 @@ public class Sector {
 
         KLINE_VOLUME,
 
-        KLINE_PRICE_MA,
+        KLINE_PRICE_MA(true,false),
 
-        KLINE_VOLUME_MA,
+        KLINE_VOLUME_MA(true,false),
 
         KLINE_DIF,
 
@@ -47,7 +47,7 @@ public class Sector {
 
         KLINE_MACD,
 
-        KLINE_MACD_MA,
+        KLINE_MACD_MA(true,false),
 
         KLINE_MAX_PRICE_CHANGE_PERCENT,
 
@@ -60,10 +60,27 @@ public class Sector {
 
         REALTIME_PRICE,
 
-        REALTIME_PRICE_MA,
+        REALTIME_PRICE_MA(true,true),
 
-        STOCK_PRICE_OPEN
+        STOCK_PRICE_OPEN;
 
+        private boolean isMa;
+        private boolean realtime;
+
+        SectorType(){
+            this(false,false);
+        }
+
+        SectorType(boolean isMa,boolean realtime){
+            this.isMa=isMa;
+            this.realtime=realtime;
+        }
+        public boolean isMa(){
+            return this.isMa;
+        }
+        public boolean isRealtime(){
+            return this.isRealtime();
+        }
     }
 
 
