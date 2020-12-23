@@ -68,14 +68,16 @@ public class LastKLineManufacturer implements NewKLineManufacturer {
     }
 
     private void setValues(Map<String, BigDecimal> sectorValues){
-        for (int i = 0; i < lastKlineSectorValuesMap.size(); i++) {
-            Map<String, BigDecimal> lastSectorValues = lastKlineSectorValuesMap.get(i);
+        int count=0;
+        for (Long datatime:lastKlineSectorValuesMap.keySet()) {
+            Map<String, BigDecimal> lastSectorValues = lastKlineSectorValuesMap.get(datatime);
 
             for (String key : lastSectorValues.keySet()) {
                 if (!key.startsWith(CommonConstants.LAST_KLINE_PARAM)) {
-                    sectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + (i + 1) + "_" + key, lastSectorValues.get(key));
+                    sectorValues.put(CommonConstants.LAST_KLINE_PARAM + "_" + (count + 1) + "_" + key, lastSectorValues.get(key));
                 }
             }
+            count++;
         }
     }
 }

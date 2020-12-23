@@ -275,7 +275,7 @@
     <if test="dataTime != null">
       and data_time &lt;= #{dataTime}
     </if>
-    order by data_time limit #{limit}
+    order by data_time desc limit #{limit}
   </select>
 
 

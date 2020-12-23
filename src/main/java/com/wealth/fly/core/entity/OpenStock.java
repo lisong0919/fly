@@ -10,5 +10,10 @@ import java.math.BigDecimal;
 @ToString
 public class OpenStock {
     private BigDecimal openPrice;
+    private Long openDataTime;
 
+    public OpenStock(BigDecimal openPrice, Long openDataTime) {
+        this.openPrice = openPrice;
+        this.openDataTime = openDataTime;
+    }
 }

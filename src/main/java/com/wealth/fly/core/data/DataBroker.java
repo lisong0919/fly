@@ -7,6 +7,7 @@ import com.wealth.fly.core.entity.OpenStock;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.data.manufacturer.*;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.entity.RealTimePrice;
 import com.wealth.fly.core.strategy.Strategy;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.core.strategy.criteria.CriteriaParser;
@@ -34,10 +35,12 @@ public class DataBroker {
     //数据加工器
     private CommonKLineManufacturer commonKLineManufacturer = new CommonKLineManufacturer();
     private static final SimpleOpenStockManufacturer openStockManuFacturer = new SimpleOpenStockManufacturer();
+    private static final SimpleRealtimeManufacturer realtimeManufacturer=new SimpleRealtimeManufacturer();
 
     private HashMap<String, MAManufacturer> maManufacturerMap = new HashMap<>();
     private HashMap<String, LastKLineManufacturer> lastKLineManufacturerHashMap = new HashMap<>();
     private HashMap<String, PreKLineManufacturer> preKLineManufacturerHashMap = new HashMap<>();
+
 
 
     public Map<String, BigDecimal> getKLineDataByStrategy(Strategy strategy, long datatime, Map<String, StrategyHandler.HoldingStock> holdingStockMap) {
@@ -52,13 +55,17 @@ public class DataBroker {
     }
 
     public BigDecimal getMaValue(Sector sector, DataGranularity dataGranularity, MAParam maParam) {
-         return getMAManufacturer(sector,dataGranularity).getMaValue(maParam);
+        return getMAManufacturer(sector, dataGranularity).getMaValue(maParam);
     }
 
-    public Map<String, BigDecimal> getRealTimeDataByStrategy(Strategy strategy) {
+    public Map<String, BigDecimal> getRealTimeDataByStrategy(Strategy strategy, RealTimePrice realTimePrice, Map<String, StrategyHandler.HoldingStock> holdingStockMap) {
+        Map<String, BigDecimal> result = new HashMap<>();
+        realtimeManufacturer.manufact(realTimePrice,result);
+        processOpenStockData(strategy,result,holdingStockMap);
+        Set<Sector> sectorSet = CriteriaParser.parseSectorType(strategy.getCriteria());
+        processMa(sectorSet, strategy, new MAParam(realTimePrice.getDataTime(), realTimePrice.getPrice()), result);
 
-
-        return null;
+        return result;
     }
 
     public Map<String, BigDecimal> getKLineDataByStrategyWithoutLastKlineData(Strategy strategy, KLine kLine, Map<String, StrategyHandler.HoldingStock> holdingStockMap) {
@@ -84,8 +91,7 @@ public class DataBroker {
         if (!strategy.isOpenStock()) {
             StrategyHandler.HoldingStock holdingStock = holdingStockMap.get(strategy.getCloseStrategyId());
             if (holdingStock != null) {
-                OpenStock openStock = new OpenStock();
-                openStock.setOpenPrice(holdingStock.getOpenStockPrice());
+                OpenStock openStock = new OpenStock(holdingStock.getOpenStockPrice(), holdingStock.getOpenDataTime());
                 openStockManuFacturer.manufact(openStock, sectorValues);
             }
         }

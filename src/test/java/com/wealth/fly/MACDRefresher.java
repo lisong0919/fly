@@ -3,6 +3,7 @@ package com.wealth.fly;
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
+import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,7 +22,7 @@ public class MACDRefresher {
   public void refresh(){
 
     List<KLine> kLineList = kLineDao
-            .getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
+            .getLastKLineByGranularity(DataGranularity.FOUR_HOUR.name(), 100000);
 
     KLine prevKLine=kLineList.get(kLineList.size()-1);
 

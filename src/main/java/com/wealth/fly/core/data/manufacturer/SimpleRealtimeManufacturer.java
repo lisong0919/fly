@@ -17,6 +17,5 @@ public class SimpleRealtimeManufacturer implements RealtimeManufacturer {
     @Override
     public void manufact(RealTimePrice realTimePrice, Map<String, BigDecimal> sectorValues) {
         sectorValues.put(Sector.SectorType.REALTIME_PRICE.name(), realTimePrice.getPrice());
-        sectorValues.put(Sector.SectorType.REALTIME_PRICE_MA.name(), realTimePrice.getMaPrice());
     }
 }

@@ -12,6 +12,7 @@ public class BackTestRunner {
 
     @Test
     public void backTest(){
+        backTester.setStartTime(20200423120000L);
         backTester.run();
     }
 }

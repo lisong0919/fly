@@ -64,7 +64,8 @@ public abstract class BackTester {
                    continue;
                 }
                 for(RealTimePrice realTimePrice:realTimePriceList){
-                    strategyHandler.onRealTime(realTimePrice.getDataTime(), realTimePrice.getPrice());
+
+                    strategyHandler.onRealTime(realTimePrice);
                 }
             }
         }

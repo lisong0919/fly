@@ -10,13 +10,14 @@ import java.math.BigDecimal;
 public class RealTimePrice {
     private Long dataTime;
     private BigDecimal price;
-    private BigDecimal maPrice;
 
-    public RealTimePrice(){}
+    public RealTimePrice() {
 
-    public RealTimePrice(Long dataTime, BigDecimal price, BigDecimal maPrice) {
+    }
+
+    public RealTimePrice(Long dataTime, BigDecimal price) {
         this.dataTime = dataTime;
         this.price = price;
-        this.maPrice = maPrice;
     }
+
 }

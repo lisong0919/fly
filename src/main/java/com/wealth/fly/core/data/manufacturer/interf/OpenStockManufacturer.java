@@ -1,13 +1,9 @@
 package com.wealth.fly.core.data.manufacturer.interf;
 
 
-import com.wealth.fly.core.data.manufacturer.interf.DataManufacturer;
-import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.entity.OpenStock;
-import com.wealth.fly.core.strategy.criteria.Sector;
 
+import com.wealth.fly.core.entity.OpenStock;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
 

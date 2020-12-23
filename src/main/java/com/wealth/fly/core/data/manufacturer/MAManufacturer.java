@@ -37,10 +37,11 @@ public class MAManufacturer implements DataManufacturer<MAParam> {
         List<KLine> kLineList = kLineDao.getLastKLineLEDataTime(dataGranularity.name(), datatime, maLevel);
 
         if (kLineList == null || kLineList.size() != maLevel) {
-            throw new DataInsufficientException("数据不足:" + name);
+            throw new DataInsufficientException("数据不足:" + name + "_" + datatime);
         }
 
-        for (KLine kLine : kLineList) {
+        for (int i = kLineList.size() - 1; i >= 0; i--) {
+            KLine kLine = kLineList.get(i);
             BigDecimal maValue = null;
             if (sectorType == Sector.SectorType.KLINE_PRICE_MA || sectorType == Sector.SectorType.REALTIME_PRICE_MA) {
                 maValue = kLine.getClose();
@@ -63,14 +64,16 @@ public class MAManufacturer implements DataManufacturer<MAParam> {
 
     @Override
     public void manufact(MAParam maParam, Map<String, BigDecimal> sectorValues) {
-        sectorValues.put(sectorType.name() + "_" + maLevel, getMaValue(maParam));
+        sectorValues.put(sectorType.name(), getMaValue(maParam));
+//        sectorValues.put(sectorType.name() + "_" + maLevel, getMaValue(maParam));
     }
+
 
     public BigDecimal getMaValue(MAParam maParam) {
         BigDecimal maValue = null;
 
         long preDatatime = DateUtil.getPreDateTime(maParam.getDatatime(), dataGranularity);
-        if (maCalculator.getCount().intValue() < maLevel || preDatatime != maCalculator.getLast().getValue().longValue()) {
+        if (maCalculator == null || maCalculator.getCount() == null || maCalculator.getLast() == null || maCalculator.getCount().intValue() < maLevel || preDatatime != maCalculator.getLast().getValue().longValue()) {
             maValue = initMACalculator(maParam.getDatatime());
         } else {
             if (sectorType.isRealtime()) {

@@ -4,9 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
-import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.data.DataBroker;
-import com.wealth.fly.core.entity.Event;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.entity.MAParam;
 import com.wealth.fly.core.entity.RealTimePrice;
@@ -14,11 +12,9 @@ import com.wealth.fly.core.strategy.Strategy;
 import com.wealth.fly.core.strategy.StrategyFactory;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.core.strategy.criteria.Sector;
-import com.wealth.fly.statistic.SimpleStatisticStrategyAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,15 +74,14 @@ public class MABreakBackTester extends BackTester {
             for (StrategyHandler.HoldingStock holdingStock : strategyHandler.getHoldingStockMap()
                     .values()) {
 
-                if (kLine.getDataTime().longValue() == holdingStock.getOpenKline().getDataTime()
-                        .longValue()) {
+                if (kLine.getDataTime().longValue() == holdingStock.getOpenDataTime().longValue()) {
                     continue;
                 }
 
-                BigDecimal openStockPrice = holdingStock.getOpenKline().getClose();
+                BigDecimal openStockPrice = holdingStock.getOpenStockPrice();
 
                 Sector sector = new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM);
-                BigDecimal priceMA = dataBroker.getMaValue(sector, CommonConstants.DEFAULT_DATA_GRANULARITY, new MAParam(kLine.getDataTime(), kLine.getClose()));
+                BigDecimal priceMA = dataBroker.getMaValue(sector, getDataGranularity(), new MAParam(kLine.getDataTime(), kLine.getClose()));
 
                 if ("ClassicMALongOpenStrategy".equals(holdingStock.getOpenStrategy().getId())) {
                     BigDecimal missPrice = MathUtil.addPercent(priceMA,
@@ -139,7 +134,7 @@ public class MABreakBackTester extends BackTester {
         strategy1.setCriteria(StrategyFactory.getClassicMALongCriteria());
         strategy1.setGoingLong(true);
         strategy1.setOpenStock(true);
-        strategy1.setTriggerEventList(Arrays.asList(new Event[]{Event.NewKLine}));
+        strategy1.setDataGranularity(getDataGranularity());
         strategyList.add(strategy1);
 
         Strategy strategy2 = new Strategy();
@@ -147,7 +142,7 @@ public class MABreakBackTester extends BackTester {
         strategy2.setCriteria(StrategyFactory.getClassicMAShortCriteria());
         strategy2.setGoingLong(false);
         strategy2.setOpenStock(true);
-        strategy2.setTriggerEventList(Arrays.asList(new Event[]{Event.NewKLine}));
+        strategy2.setDataGranularity(getDataGranularity());
         strategyList.add(strategy2);
 
 
@@ -157,7 +152,7 @@ public class MABreakBackTester extends BackTester {
         strategy3.setGoingLong(true);
         strategy3.setOpenStock(false);
         strategy3.setCloseStrategyId(strategy1.getId());
-        strategy3.setTriggerEventList(Arrays.asList(new Event[]{Event.RealTime}));
+        strategy3.setDataGranularity(getDataGranularity());
         strategyList.add(strategy3);
 
 
@@ -167,7 +162,7 @@ public class MABreakBackTester extends BackTester {
         strategy4.setGoingLong(false);
         strategy4.setOpenStock(false);
         strategy4.setCloseStrategyId(strategy2.getId());
-        strategy4.setTriggerEventList(Arrays.asList(new Event[]{Event.RealTime}));
+        strategy4.setDataGranularity(getDataGranularity());
         strategyList.add(strategy4);
 
         System.out.println(JSONObject.toJSONString(strategyList));

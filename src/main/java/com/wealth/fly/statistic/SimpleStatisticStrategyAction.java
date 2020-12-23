@@ -1,7 +1,9 @@
 package com.wealth.fly.statistic;
 
+
 import com.wealth.fly.common.MathUtil;
-import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.entity.CloseStock;
+import com.wealth.fly.core.entity.OpenStock;
 import com.wealth.fly.core.strategy.StrategyAction;
 import com.wealth.fly.core.strategy.Strategy;
 
@@ -22,19 +24,19 @@ public class SimpleStatisticStrategyAction implements StrategyAction {
 
 
     @Override
-    public void onOpenStock(Strategy strategy, KLine openKLine) {
+    public void onOpenStock(Strategy strategy, OpenStock openStock) {
 
     }
 
     @Override
-    public void onCloseStock(Strategy openStrategy, KLine openKLine, Strategy closeStrategy, BigDecimal closePrice, long closeDataTime) {
+    public void onCloseStock(Strategy openStrategy, Strategy closeStrategy, CloseStock closeStock) {
         StatisticItem item = new StatisticItem();
-        item.setStartPrice(openKLine.getClose());
-        item.setStartDataTime(openKLine.getDataTime());
-        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(openKLine.getClose(), openKLine.getOpen()));
+        item.setStartPrice(closeStock.getOpenPirce());
+        item.setStartDataTime(closeStock.getOpenDataTime());
+//        item.setAmplitudeFromOpenPrice(MathUtil.distancePercentInDecimal(openKLine.getClose(), openKLine.getOpen()));
         item.setGoingLong(openStrategy.isGoingLong());
-        item.setEndPrice(closePrice);
-        item.setEndDataTime(closeDataTime);
+        item.setEndPrice(closeStock.getClosePrice());
+        item.setEndDataTime(closeStock.getCloseDataTime());
         item.setProfitPercent(MathUtil.distancePercentInDecimal(item.getEndPrice(), item.getStartPrice()));
 
         boolean increase = item.getEndPrice().compareTo(item.getStartPrice()) > 0;
