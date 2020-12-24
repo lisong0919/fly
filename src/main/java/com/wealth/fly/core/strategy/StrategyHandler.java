@@ -80,10 +80,10 @@ public class StrategyHandler implements KLineListener {
             return;
         }
 
-        LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{datatime, strategy.isGoingLong() ? "long" : "short", JSONObject.toJSONString(sectorValues)});
+        LOGGER.info("[{}] [{}] sectorValues: {}", new Object[]{datatime, strategy.getId(), JSONObject.toJSONString(sectorValues)});
         boolean match = strategy.getCriteria().getCriteriaType().getCriteriaHandler().match(strategy.getCriteria(), sectorValues);
 
-        LOGGER.info("[{}] [{}] match result is {}", new Object[]{datatime, strategy.isGoingLong() ? "long" : "short", match});
+        LOGGER.info("[{}] [{}] match result is {}", new Object[]{datatime, strategy.getId(), match});
         if (match) {
             if (strategy.isOpenStock()) {
                 HoldingStock holdingStock = new HoldingStock();
@@ -95,15 +95,19 @@ public class StrategyHandler implements KLineListener {
                     action.onOpenStock(strategy, new OpenStock(price, datatime));
                 }
             } else {
-                HoldingStock holdingStock = holdingStockMap.get(strategy.getId());
+                HoldingStock holdingStock = holdingStockMap.get(strategy.getCloseStrategyId());
+                if(holdingStock==null){
+                    return;
+                }
                 for (StrategyAction action : strategyActionList) {
                     CloseStock closeStock = new CloseStock();
-                    closeStock.setOpenDataTime(holdingStock.openDataTime);
+                    closeStock.setOpenDataTime(holdingStock.getOpenDataTime());
                     closeStock.setOpenPirce(holdingStock.getOpenStockPrice());
                     closeStock.setCloseDataTime(datatime);
                     closeStock.setClosePrice(price);
                     action.onCloseStock(holdingStock.getOpenStrategy(), strategy, closeStock);
                 }
+                holdingStockMap.remove(strategy.getCloseStrategyId());
             }
         }
     }
@@ -111,7 +115,7 @@ public class StrategyHandler implements KLineListener {
     public void onRealTime(RealTimePrice realTimePrice) {
         for (Strategy strategy : strategyList) {
             try {
-                Map<String, BigDecimal> sectorValues = dataBroker.getRealTimeDataByStrategy(strategy, new RealTimePrice(), holdingStockMap);
+                Map<String, BigDecimal> sectorValues = dataBroker.getRealTimeDataByStrategy(strategy, realTimePrice, holdingStockMap);
                 strategyCheck(realTimePrice.getDataTime(), realTimePrice.getPrice(), strategy, sectorValues);
             } catch (DataInsufficientException e) {
                 LOGGER.error(e.getMessage(), e);

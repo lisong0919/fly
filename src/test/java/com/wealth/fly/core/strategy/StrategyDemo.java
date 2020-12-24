@@ -33,6 +33,8 @@ public class StrategyDemo {
         simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
         simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_VOLUME_MA, 10));
 
+        System.out.println(simpleCriteria1.getCriteriaType().getCriteriaHandler().match(simpleCriteria1,getTestSectorValues()));
+
         SimpleCriteria simpleCriteria2 = new SimpleCriteria();
         simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
         simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
@@ -46,43 +48,52 @@ public class StrategyDemo {
         lc1.setDescription("条件1：放量下跌");
 
 
+
+
         //条件2：2个K线中任意一个突破MA30
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
         simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         SimpleCriteria simpleCriteria4 = new SimpleCriteria();
         simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_PRICE_OPEN));
         simpleCriteria4.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
 
 
         CompoundCriteria cc2 = new CompoundCriteria(CompoundCriteria.Operator.AND);
         cc2.add(simpleCriteria3);
         cc2.add(simpleCriteria4);
 
-        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
-
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.FIRST_MATCH);
+        lc2.setDescription("条件2:突破均线");
 
 
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
-        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, 30));
+        simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
 
-        System.out.println(lc3.getCriteriaType().getCriteriaHandler().match(lc3,getTestSectorValues()));
 
+
+        //条件4：涨跌幅限制
+        SimpleCriteria simpleCriteria6 = new SimpleCriteria();
+        simpleCriteria6.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CHANGE_PERCENT));
+        simpleCriteria6.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria6.setTarget(new Sector(Sector.SectorType.KLINE_MAX_PRICE_CHANGE_PERCENT));
+        LastNKlineCriteria lc4 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria6, LastNKlineCriteria.MatchType.ALL_MATCH);
 
         CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(lc1);
         finalCriteria.add(lc2);
         finalCriteria.add(lc3);
+        finalCriteria.add(lc4);
 
-
+//        System.out.println(finalCriteria.getCriteriaType().getCriteriaHandler().match(finalCriteria,getTestSectorValues()));
     }
 
     @Test

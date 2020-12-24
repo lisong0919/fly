@@ -53,7 +53,7 @@ public class MAManufacturer implements DataManufacturer<MAParam> {
             maCalculator.push(kLine.getDataTime(), maValue);
         }
 
-        return maCalculator.getLast().getValue();
+        return maCalculator.getAverage();
     }
 
     @Override
