@@ -50,6 +50,15 @@ public class DateUtil {
         return (endDate.getTime() - startDate.getTime()) / 1000 / 60 / 60;
     }
 
+
+    public static float getDistanceMinutes(long start, long end) {
+
+        Date startDate = parseStandardTime(start);
+        Date endDate = parseStandardTime(end);
+
+        return (endDate.getTime() - startDate.getTime()) / 1000 / 60;
+    }
+
     public static long getPreDateTime(long standardDateTime, DataGranularity dataGranularity) {
         return getPreDateTime(standardDateTime, dataGranularity, 1);
     }
@@ -64,6 +73,6 @@ public class DateUtil {
 
     public static void main(String[] args) {
 
-        System.out.println(getPreDateTime(202012202000L, DataGranularity.FOUR_HOUR,3));
+        System.out.println(getPreDateTime(202012202000L, DataGranularity.FOUR_HOUR, 3));
     }
 }

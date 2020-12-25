@@ -13,7 +13,7 @@ public class CommonConstants {
     public static final int DEFAULT_LAST_LINE_SIZE = 2;
     public static final int DEFAULT_MA_PRICE_NUM = 60;
     public static final int DEFAULT_MA_VOLUME_NUM = 10;
-    public static final int DEFAULT_MA_MACD_NUM=10;
+    public static final int DEFAULT_MA_MACD_NUM = 10;
 
 
     public static final String WIN_PERCENT = "0.025";
@@ -23,4 +23,12 @@ public class CommonConstants {
 
     public static final BigDecimal PROFIT_PERCENT = new BigDecimal("0.04");
     public static final BigDecimal FLOAT_PERCENT = new BigDecimal("0.001");
+
+
+    //新策略
+    public static final int MACD_LAST_LINE_SIZE = 7;
+    public static final int MACD_MA_NUM = 20;
+    public static final String MACD_WIN_PERCENT = "0.02";
+    public static final String MACD_MISS_PERCENT = "0.02";
+
 }

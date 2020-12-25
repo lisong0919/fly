@@ -10,6 +10,8 @@ public class LastNKlineCriteria extends AbstractCriteria implements Criteria {
     private int n;
     private Criteria matcher;
     private MatchType matchType;
+    private int rangeStart;
+    private int rangeEnd;
 
     public LastNKlineCriteria() {
     }
@@ -29,6 +31,21 @@ public class LastNKlineCriteria extends AbstractCriteria implements Criteria {
         ONE_MATCH,
         FIRST_MATCH,
         SECOND_MATCH,
-        ALL_MATCH
+        ALL_MATCH,
+        MOST_MATCH,
+        RANGE_MATCH
+    }
+
+    public int getRangeStart() {
+        return rangeStart;
+    }
+
+    public int getRangeEnd() {
+        return rangeEnd;
+    }
+
+    public void setRange(int rangeStart, int rangeEnd) {
+        this.rangeStart = rangeStart;
+        this.rangeEnd = rangeEnd;
     }
 }

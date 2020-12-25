@@ -44,6 +44,7 @@ public class LastKLineManufacturer implements NewKLineManufacturer {
     }
 
     public void initAndManufact(LinkedHashMap<Long,Map<String, BigDecimal>> sectorValuesMap,Map<String, BigDecimal> sectorValues){
+        lastKlineSectorValuesMap.clear();
         lastKlineSectorValuesMap.putAll(sectorValuesMap);
         setValues(sectorValues);
     }
@@ -56,12 +57,16 @@ public class LastKLineManufacturer implements NewKLineManufacturer {
             throw new DataInsufficientException("lastKlineSectorValuesList not ready.");
         }
 
+//        long firstKey=lastKlineSectorValuesMap.keySet().iterator().next();
+//        lastKlineSectorValuesMap.remove(firstKey);
+        //删除第一条
+        Iterator it= lastKlineSectorValuesMap.keySet().iterator();
+        it.next();
+        it.remove();
+
         //因为下面要边遍历边修改，所以不能add原map
         Map<String, BigDecimal> tempSectorValues = new HashMap<>();
         tempSectorValues.putAll(sectorValues);
-
-        long firstKey=lastKlineSectorValuesMap.keySet().iterator().next();
-        lastKlineSectorValuesMap.remove(firstKey);
         lastKlineSectorValuesMap.put(kLine.getDataTime(),tempSectorValues);
 
         setValues(sectorValues);

@@ -29,6 +29,134 @@ public class StrategyFactory {
 //
 //    }
 
+    public static Criteria getClassicMacdShortCriteria() {
+        //macd放量
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_MACD_MA, CommonConstants.MACD_MA_NUM));
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria1, LastNKlineCriteria.MatchType.MOST_MATCH);
+
+        //呈扇形结构
+        //逐步递增
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria2, LastNKlineCriteria.MatchType.RANGE_MATCH);
+        lc2.setRange(4,7);
+
+        //逐步递减
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+        LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria3, LastNKlineCriteria.MatchType.RANGE_MATCH);
+        lc3.setRange(1,3);
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        compoundCriteria.add(lc2);
+        compoundCriteria.add(lc3);
+
+        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        finalCriteria.add(lc1);
+        finalCriteria.add(compoundCriteria);
+
+        return finalCriteria;
+    }
+
+    public static Criteria getClassicMacdShortCloseCriteria() {
+
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
+        String winPercent = new BigDecimal(CommonConstants.MACD_WIN_PERCENT).multiply(new BigDecimal(100)).toPlainString();
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.PERCENT, winPercent));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.STOCK_PRICE_OPEN));
+
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
+        String missPercent = new BigDecimal(CommonConstants.MACD_MISS_PERCENT).multiply(new BigDecimal(100)).toPlainString();
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, missPercent));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.STOCK_PRICE_OPEN));
+
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.OR);
+        compoundCriteria.add(simpleCriteria1);
+        compoundCriteria.add(simpleCriteria2);
+        compoundCriteria.add(simpleCriteria3);
+
+        return compoundCriteria;
+    }
+
+
+    public static Criteria getClassicMacdLongCriteria() {
+        //macd放量
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, "100"));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.KLINE_MACD_MA, CommonConstants.MACD_MA_NUM));
+        LastNKlineCriteria lc1 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria1, LastNKlineCriteria.MatchType.MOST_MATCH);
+
+        //呈扇形结构
+        //逐步递减
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+        LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria2, LastNKlineCriteria.MatchType.RANGE_MATCH);
+        lc2.setRange(4,7);
+
+        //逐步递增
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+        LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria3, LastNKlineCriteria.MatchType.RANGE_MATCH);
+        lc3.setRange(1,3);
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        compoundCriteria.add(lc2);
+        compoundCriteria.add(lc3);
+
+        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        finalCriteria.add(lc1);
+        finalCriteria.add(compoundCriteria);
+
+        return finalCriteria;
+    }
+
+    public static Criteria getClassicMacdLongCloseCriteria() {
+
+        SimpleCriteria simpleCriteria1 = new SimpleCriteria();
+        simpleCriteria1.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
+        String winPercent = new BigDecimal(CommonConstants.MACD_WIN_PERCENT).multiply(new BigDecimal(100)).toPlainString();
+        simpleCriteria1.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.PERCENT, winPercent));
+        simpleCriteria1.setTarget(new Sector(Sector.SectorType.STOCK_PRICE_OPEN));
+
+        SimpleCriteria simpleCriteria2 = new SimpleCriteria();
+        simpleCriteria2.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
+        String missPercent = new BigDecimal(CommonConstants.MACD_MISS_PERCENT).multiply(new BigDecimal(100)).toPlainString();
+        simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.PERCENT, missPercent));
+        simpleCriteria2.setTarget(new Sector(Sector.SectorType.STOCK_PRICE_OPEN));
+
+        SimpleCriteria simpleCriteria3 = new SimpleCriteria();
+        simpleCriteria3.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
+
+        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.OR);
+        compoundCriteria.add(simpleCriteria1);
+        compoundCriteria.add(simpleCriteria2);
+        compoundCriteria.add(simpleCriteria3);
+
+        return compoundCriteria;
+    }
+
+
     public static Criteria getClassicMALongCloseCriteria() {
         SimpleCriteria simpleCriteria1 = new SimpleCriteria();
         simpleCriteria1.setSource(new Sector(Sector.SectorType.REALTIME_PRICE));
@@ -200,7 +328,6 @@ public class StrategyFactory {
         simpleCriteria5.setTarget(new Sector(Sector.SectorType.KLINE_PRICE_MA, CommonConstants.DEFAULT_MA_PRICE_NUM));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, simpleCriteria5, LastNKlineCriteria.MatchType.ALL_MATCH);
         lc3.setDescription("条件3: 站稳均线");
-
 
 
         //条件4：涨跌幅限制
