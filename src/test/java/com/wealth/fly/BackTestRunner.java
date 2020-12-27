@@ -21,7 +21,7 @@ public class BackTestRunner {
         backTester.setStartTime(20200521160000L);
 
 //        backTester.setStartTime(20201126000000L);
-//        backTester.setEndTime(20201130000000L);
+        backTester.setEndTime(20200621160000L);
         backTester.run();
     }
 }

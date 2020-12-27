@@ -8,7 +8,7 @@ public class CommonConstants {
 
     public static final String LAST_KLINE_PARAM = "LAST_KLINE_PARAM";
 
-    public static final DataGranularity DEFAULT_DATA_GRANULARITY = DataGranularity.FOUR_HOUR;
+
 
     public static final int DEFAULT_LAST_LINE_SIZE = 2;
     public static final int DEFAULT_MA_PRICE_NUM = 60;
@@ -26,9 +26,10 @@ public class CommonConstants {
 
 
     //新策略
+    public static final DataGranularity DEFAULT_DATA_GRANULARITY = DataGranularity.FIFTEEN_MINUTES;
     public static final int MACD_LAST_LINE_SIZE = 7;
     public static final int MACD_MA_NUM = 20;
-    public static final String MACD_WIN_PERCENT = "0.02";
+    public static final String MACD_WIN_PERCENT = "0.003";
     public static final String MACD_MISS_PERCENT = "0.02";
 
 }

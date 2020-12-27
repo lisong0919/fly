@@ -114,22 +114,22 @@ public class MACDBackTester extends BackTester {
         strategyList.add(strategy2);
 
 
-        Strategy strategy3 = new Strategy();
-        strategy3.setId("ClassicMACDShortOpenStrategy");
-        strategy3.setCriteria(StrategyFactory.getClassicMacdLongCriteria());
-        strategy3.setGoingLong(false);
-        strategy3.setOpenStock(true);
-        strategy3.setDataGranularity(getDataGranularity());
-        strategyList.add(strategy3);
-
-        Strategy strategy4 = new Strategy();
-        strategy4.setId("ClassicMACDShortCloseStrategy");
-        strategy4.setCriteria(StrategyFactory.getClassicMacdLongCloseCriteria());
-        strategy4.setGoingLong(false);
-        strategy4.setOpenStock(false);
-        strategy4.setCloseStrategyId(strategy3.getId());
-        strategy4.setDataGranularity(getDataGranularity());
-        strategyList.add(strategy4);
+//        Strategy strategy3 = new Strategy();
+//        strategy3.setId("ClassicMACDShortOpenStrategy");
+//        strategy3.setCriteria(StrategyFactory.getClassicMacdLongCriteria());
+//        strategy3.setGoingLong(false);
+//        strategy3.setOpenStock(true);
+//        strategy3.setDataGranularity(getDataGranularity());
+//        strategyList.add(strategy3);
+//
+//        Strategy strategy4 = new Strategy();
+//        strategy4.setId("ClassicMACDShortCloseStrategy");
+//        strategy4.setCriteria(StrategyFactory.getClassicMacdLongCloseCriteria());
+//        strategy4.setGoingLong(false);
+//        strategy4.setOpenStock(false);
+//        strategy4.setCloseStrategyId(strategy3.getId());
+//        strategy4.setDataGranularity(getDataGranularity());
+//        strategyList.add(strategy4);
 
         System.out.println(JSONObject.toJSONString(strategyList));
 

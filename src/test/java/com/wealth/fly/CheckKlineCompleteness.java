@@ -27,6 +27,7 @@ public class CheckKlineCompleteness {
                 .getLastKLineByGranularity(DataGranularity.FIFTEEN_MINUTES.name(), 100000);
 
         checkBatch(kLineList);
+        System.out.println("all finished........");
 
     }
 

@@ -22,7 +22,7 @@ public class MACDRefresher {
   public void refresh(){
 
     List<KLine> kLineList = kLineDao
-            .getLastKLineByGranularity(DataGranularity.FOUR_HOUR.name(), 100000);
+            .getLastKLineByGranularity(DataGranularity.FIFTEEN_MINUTES.name(), 100000);
 
     KLine prevKLine=kLineList.get(kLineList.size()-1);
 
@@ -42,8 +42,10 @@ public class MACDRefresher {
 
     kLineDao.updateByPrimaryKeySelective(kLine);
       prevKLine=kLine;
+      System.out.println("update "+kLine.getDataTime()+" finshed...");
     }
 
+    System.out.println("all finished....");
 
   }
 

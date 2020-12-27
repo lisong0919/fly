@@ -9,6 +9,8 @@ public class AbstractConditionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConditionHandler.class);
     private static final BigDecimal PERCENT = new BigDecimal(100);
+    private static final BigDecimal ZERO=new BigDecimal(0.0000);
+
 
 
     public int compare(BigDecimal sourceValue, BigDecimal targetValue, Condition.ConditionValueType conditionValueType, String conditionValue) {
@@ -20,9 +22,17 @@ public class AbstractConditionHandler {
             return sourceValue.subtract(targetValue).compareTo(new BigDecimal(conditionValue));
         }
         if (Condition.ConditionValueType.PERCENT.equals(conditionValueType)) {
+
+            //非零比零大无数倍
+            if(targetValue.doubleValue()==ZERO.doubleValue()){
+                return 1;
+            }
+
             return sourceValue.subtract(targetValue).multiply(PERCENT).divide(targetValue, 7, BigDecimal.ROUND_DOWN).compareTo(new BigDecimal(conditionValue));
         }
 
         throw new RuntimeException("unsupport condition value type:" + conditionValueType);
     }
+
+
 }
