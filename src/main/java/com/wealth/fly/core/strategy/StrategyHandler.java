@@ -67,7 +67,12 @@ public class StrategyHandler implements KLineListener {
         for (Strategy strategy : strategyList) {
             try {
                 Map<String, BigDecimal> sectorValues = dataBroker.getKLineDataByStrategy(strategy, kLine.getDataTime(), holdingStockMap);
-                strategyCheck(kLine.getDataTime(), kLine.getClose(), strategy, sectorValues);
+                if(strategy.isGoingLong()){
+                    strategyCheck(kLine.getDataTime(), kLine.getHigh(), strategy, sectorValues);
+                }else{
+                    strategyCheck(kLine.getDataTime(), kLine.getLow(), strategy, sectorValues);
+                }
+
             } catch (DataInsufficientException e) {
                 LOGGER.error(e.getMessage());
             }

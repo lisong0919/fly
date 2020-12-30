@@ -35,12 +35,13 @@ public class DataBroker {
     //数据加工器
     private CommonKLineManufacturer commonKLineManufacturer = new CommonKLineManufacturer();
     private static final SimpleOpenStockManufacturer openStockManuFacturer = new SimpleOpenStockManufacturer();
-    private static final SimpleRealtimeManufacturer realtimeManufacturer=new SimpleRealtimeManufacturer();
+    private static final SimpleRealtimeManufacturer realtimeManufacturer = new SimpleRealtimeManufacturer();
 
     private HashMap<String, MAManufacturer> maManufacturerMap = new HashMap<>();
     private HashMap<String, LastKLineManufacturer> lastKLineManufacturerHashMap = new HashMap<>();
     private HashMap<String, PreKLineManufacturer> preKLineManufacturerHashMap = new HashMap<>();
 
+    private static final BigDecimal ZERO = new BigDecimal(0);
 
 
     public Map<String, BigDecimal> getKLineDataByStrategy(Strategy strategy, long datatime, Map<String, StrategyHandler.HoldingStock> holdingStockMap) {
@@ -51,6 +52,7 @@ public class DataBroker {
         }
         Map<String, BigDecimal> sectorValues = getKLineDataByStrategyWithoutLastKlineData(strategy, kLine, holdingStockMap);
         processLastKline(strategy, kLine, sectorValues, holdingStockMap);
+        sectorValues.put(Sector.SectorType.ZERO.name(), ZERO);
         return sectorValues;
     }
 
@@ -60,11 +62,11 @@ public class DataBroker {
 
     public Map<String, BigDecimal> getRealTimeDataByStrategy(Strategy strategy, RealTimePrice realTimePrice, Map<String, StrategyHandler.HoldingStock> holdingStockMap) {
         Map<String, BigDecimal> result = new HashMap<>();
-        realtimeManufacturer.manufact(realTimePrice,result);
-        processOpenStockData(strategy,result,holdingStockMap);
+        realtimeManufacturer.manufact(realTimePrice, result);
+        processOpenStockData(strategy, result, holdingStockMap);
         Set<Sector> sectorSet = CriteriaParser.parseSectorType(strategy.getCriteria());
         processMa(sectorSet, strategy, new MAParam(realTimePrice.getDataTime(), realTimePrice.getPrice()), result);
-
+        result.put(Sector.SectorType.ZERO.name(), ZERO);
         return result;
     }
 

@@ -62,7 +62,9 @@ public class Sector {
 
         REALTIME_PRICE_MA(true,true),
 
-        STOCK_PRICE_OPEN;
+        STOCK_PRICE_OPEN,
+
+        ZERO;
 
         private boolean isMa;
         private boolean realtime;

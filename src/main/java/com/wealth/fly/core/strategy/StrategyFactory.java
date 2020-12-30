@@ -44,7 +44,7 @@ public class StrategyFactory {
         simpleCriteria2.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
         LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria2, LastNKlineCriteria.MatchType.RANGE_MATCH);
-        lc2.setRange(4,7);
+        lc2.setRange(4, 7);
 
         //逐步递减
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
@@ -52,15 +52,23 @@ public class StrategyFactory {
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria3, LastNKlineCriteria.MatchType.RANGE_MATCH);
-        lc3.setRange(1,3);
+        lc3.setRange(1, 3);
 
-        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         compoundCriteria.add(lc2);
         compoundCriteria.add(lc3);
 
-        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        //macd大于0
+        SimpleCriteria simpleCriteria4 = new SimpleCriteria();
+        simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.ZERO));
+        LastNKlineCriteria lc4 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
+
+        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(lc1);
         finalCriteria.add(compoundCriteria);
+        finalCriteria.add(lc4);
 
         return finalCriteria;
     }
@@ -84,7 +92,7 @@ public class StrategyFactory {
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
 
-        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.OR);
+        CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.OR);
         compoundCriteria.add(simpleCriteria1);
         compoundCriteria.add(simpleCriteria2);
         compoundCriteria.add(simpleCriteria3);
@@ -108,7 +116,7 @@ public class StrategyFactory {
         simpleCriteria2.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria2.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
         LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria2, LastNKlineCriteria.MatchType.RANGE_MATCH);
-        lc2.setRange(4,7);
+        lc2.setRange(4, 7);
 
         //逐步递增
         SimpleCriteria simpleCriteria3 = new SimpleCriteria();
@@ -116,15 +124,23 @@ public class StrategyFactory {
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.GREAT_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
         LastNKlineCriteria lc3 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria3, LastNKlineCriteria.MatchType.RANGE_MATCH);
-        lc3.setRange(1,3);
+        lc3.setRange(1, 3);
 
-        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         compoundCriteria.add(lc2);
         compoundCriteria.add(lc3);
 
-        CompoundCriteria finalCriteria=new CompoundCriteria(CompoundCriteria.Operator.AND);
+        //macd小于0
+        SimpleCriteria simpleCriteria4 = new SimpleCriteria();
+        simpleCriteria4.setSource(new Sector(Sector.SectorType.KLINE_MACD));
+        simpleCriteria4.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
+        simpleCriteria4.setTarget(new Sector(Sector.SectorType.ZERO));
+        LastNKlineCriteria lc4 = new LastNKlineCriteria(CommonConstants.MACD_LAST_LINE_SIZE, simpleCriteria4, LastNKlineCriteria.MatchType.ALL_MATCH);
+
+        CompoundCriteria finalCriteria = new CompoundCriteria(CompoundCriteria.Operator.AND);
         finalCriteria.add(lc1);
         finalCriteria.add(compoundCriteria);
+        finalCriteria.add(lc4);
 
         return finalCriteria;
     }
@@ -148,7 +164,7 @@ public class StrategyFactory {
         simpleCriteria3.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
         simpleCriteria3.setTarget(new Sector(Sector.SectorType.KLINE_PREV_MACD));
 
-        CompoundCriteria compoundCriteria=new CompoundCriteria(CompoundCriteria.Operator.OR);
+        CompoundCriteria compoundCriteria = new CompoundCriteria(CompoundCriteria.Operator.OR);
         compoundCriteria.add(simpleCriteria1);
         compoundCriteria.add(simpleCriteria2);
         compoundCriteria.add(simpleCriteria3);

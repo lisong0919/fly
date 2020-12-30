@@ -11,8 +11,11 @@ public class BackTestRunner {
 //    @Autowired
 //    private MABreakBackTester backTester;
 
+//    @Autowired
+//    private MACDBackTester backTester;
+
     @Autowired
-    private MACDBackTester backTester;
+    private FindMax backTester;
 
 
     @Test
@@ -20,8 +23,10 @@ public class BackTestRunner {
 
         backTester.setStartTime(20200521160000L);
 
-//        backTester.setStartTime(20201126000000L);
-        backTester.setEndTime(20200621160000L);
+//        backTester.setEndTime(20200721160000L);
+//        backTester.setEndTime(20201021160000L);
         backTester.run();
+
+        System.out.println(((FindMax) backTester).getStasticMap());
     }
 }

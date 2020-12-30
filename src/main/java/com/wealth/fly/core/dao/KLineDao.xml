@@ -301,7 +301,7 @@
   <select id="getLastKLineByDataTimeRange" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
-    from kline where granularity=#{granularity} and data_time &gt; #{dataTimeBegin} and data_time &lt; #{dataTimeEnd} order by data_time
+    from kline where granularity=#{granularity} and data_time &gt;= #{dataTimeBegin} and data_time &lt;= #{dataTimeEnd} order by data_time
   </select>
 
 

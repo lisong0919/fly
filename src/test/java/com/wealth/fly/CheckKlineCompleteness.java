@@ -24,7 +24,7 @@ public class CheckKlineCompleteness {
     public void check() {
         //时间从晚到早
         List<KLine> kLineList = kLineDao
-                .getLastKLineByGranularity(DataGranularity.FIFTEEN_MINUTES.name(), 100000);
+                .getLastKLineByGranularity(DataGranularity.THIRTY_MINUTES.name(), 100000);
 
         checkBatch(kLineList);
         System.out.println("all finished........");
@@ -42,7 +42,7 @@ public class CheckKlineCompleteness {
 
             int distance = (int) DateUtil.getDistanceMinutes(prevKline.getDataTime(), kLine.getDataTime());
             distance = Math.abs(distance);
-            if (distance != 15) {
+            if (distance != 30) {
                 System.out.println("==================>not complete between " + kLine.getDataTime() + " and " + prevKline.getDataTime());
                 return false;
             }
