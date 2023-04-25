@@ -60,7 +60,7 @@ public class GridStatusFetcher {
         }
         for (Grid grid : gridList) {
             try {
-                if (StringUtils.isEmpty(grid.getSellOrderId())) {
+                if (StringUtils.isEmpty(grid.getAlgoOrderId())) {
                     //TODO 告警
                     log.error("网格也挂单但无止盈策略单id,gridId:{}", grid.getId());
                     continue;
@@ -68,7 +68,7 @@ public class GridStatusFetcher {
                 Order algoOrder = null;
                 Order sellOrder = null;
                 try {
-                    algoOrder = exchanger.getAlgoOrder(grid.getSellOrderId());
+                    algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
                     sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
                 } catch (IOException e) {
                     log.error("查策略委托单信息报错 " + e.getMessage(), e);
@@ -83,7 +83,7 @@ public class GridStatusFetcher {
                     }
                 } else {
                     //TODO告警
-                    throw new RuntimeException("发现非计划内策略委托单状态" + algoOrder.getState() + ",委托单id:" + grid.getSellOrderId() + ",网格id:" + grid.getId());
+                    throw new RuntimeException("发现非计划内策略委托单状态" + algoOrder.getState() + ",委托单id:" + grid.getAlgoOrderId() + ",网格id:" + grid.getId());
                 }
             } catch (Exception e) {
                 log.error(e.getMessage(), e);

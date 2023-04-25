@@ -35,7 +35,7 @@ public class Grid {
 
     private String buyOrderId;
 
-    private String sellOrderId;
+    private String algoOrderId;
 
     private Long gridHistoryId;
 

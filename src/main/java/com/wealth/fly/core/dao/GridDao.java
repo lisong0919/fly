@@ -17,7 +17,7 @@ public interface GridDao extends IService<Grid> {
 
     void updateGridStatus(Integer id, int status);
 
-    void updateGridActive(int id, String sellOrderId,long gridHistoryId);
+    void updateGridActive(int id, String algoOrderId,long gridHistoryId);
 
     void updateGridFinished(int id);
 

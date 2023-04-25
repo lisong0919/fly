@@ -46,11 +46,11 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
     }
 
     @Override
-    public void updateGridActive(int id, String sellOrderId, long gridHistoryId) {
+    public void updateGridActive(int id, String algoOrderId, long gridHistoryId) {
         Grid grid = Grid.builder()
                 .id(id)
                 .status(GridStatus.ACTIVE.getCode())
-                .sellOrderId(sellOrderId)
+                .algoOrderId(algoOrderId)
                 .gridHistoryId(gridHistoryId)
                 .build();
         updateById(grid);
@@ -61,7 +61,7 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
         Grid grid = Grid.builder()
                 .id(id)
                 .status(GridStatus.IDLE.getCode())
-                .sellOrderId("")
+                .algoOrderId("")
                 .buyOrderId("")
                 .gridHistoryId(0L)
                 .build();
