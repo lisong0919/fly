@@ -1,40 +1,40 @@
-package com.wealth.fly.core;
+package com.wealth.fly.core.fetcher;
 
 import com.wealth.fly.common.DateUtil;
+import com.wealth.fly.core.MAHandler;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
+import com.wealth.fly.core.listener.KLineListener;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DataFetcher {
+public class KlineDataFetcher {
 
-    @Autowired
+    @Resource
     private KLineDao kLineDao;
-    @Autowired
+    @Resource
     private Exchanger exchanger;
-    @Autowired
+    @Resource
     private MAHandler maHandler;
-    @Autowired
     private List<KLineListener> kLineListenerList = new ArrayList<>();
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KlineDataFetcher.class);
 
 
     @PostConstruct
     public void init() {
-        starFetchTimer();
+//        starKlineFetchTimer();
     }
 
     public void registerKLineListener(KLineListener listener) {
@@ -48,7 +48,7 @@ public class DataFetcher {
     }
 
 
-    private void starFetchTimer() {
+    private void starKlineFetchTimer() {
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override

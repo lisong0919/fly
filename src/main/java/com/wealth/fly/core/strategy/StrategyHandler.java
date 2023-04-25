@@ -2,12 +2,11 @@ package com.wealth.fly.core.strategy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.wealth.fly.common.MathUtil;
-import com.wealth.fly.core.DataFetcher;
-import com.wealth.fly.core.KLineListener;
+import com.wealth.fly.core.fetcher.KlineDataFetcher;
+import com.wealth.fly.core.listener.KLineListener;
 import com.wealth.fly.core.MAHandler;
 import com.wealth.fly.core.SmsUtil;
 import com.wealth.fly.core.constants.CommonConstants;
-import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.MAType;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
@@ -17,24 +16,24 @@ import com.wealth.fly.core.strategy.criteria.Sector.SectorType;
 import java.math.BigDecimal;
 import java.util.*;
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 
 import com.wealth.fly.core.strategy.criteria.condition.Condition;
 import com.wealth.fly.statistic.StatisticStrategyAction;
-import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class StrategyHandler implements KLineListener {
 
-    @Autowired
+    @Resource
     private KLineDao kLineDao;
     @Autowired
     private MAHandler maHandler;
     @Autowired
-    private DataFetcher dataFetcher;
+    private KlineDataFetcher klineDataFetcher;
 
 //    @Autowired
 //    private StatisticVolumeStrategyAction strategyAction;
@@ -86,7 +85,7 @@ public class StrategyHandler implements KLineListener {
 
         LOGGER.info("init strategy from strategy.json finished, strategy list is {}", strategyList);
 
-        dataFetcher.registerKLineListener(this);
+        klineDataFetcher.registerKLineListener(this);
     }
 
     @Override

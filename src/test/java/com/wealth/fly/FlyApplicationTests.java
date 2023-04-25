@@ -5,6 +5,8 @@ import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.exchanger.OkexExchanger;
+import com.wealth.fly.core.model.Order;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.StatisticStrategyAction;
 import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
@@ -14,6 +16,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 
+import javax.annotation.Resource;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -24,17 +28,22 @@ import java.util.Map;
 @SpringBootTest
 class FlyApplicationTests {
 
-    @Autowired
+    //    @Resource
     private StrategyHandler strategyHandler;
 
-    @Autowired
+    //    @Resource
     private KLineDao kLineDao;
+
+    @Resource
+    private OkexExchanger okexExchanger;
 
 //    @Autowired
 //    private StatisticVolumeStrategyAction action;
 
-    @Autowired
+    //    @Autowired
     private StatisticStrategyAction action;
+
+
 
     @Test
     public void statistics() {
