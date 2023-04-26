@@ -1,5 +1,6 @@
 package com.wealth.fly.core.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +19,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Grid {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Integer id;
 
     private String instId;
@@ -39,7 +40,7 @@ public class Grid {
 
     private Long gridHistoryId;
 
-    private Date createAt;
+    private Date createdAt;
 
     private Date updatedAt;
 }

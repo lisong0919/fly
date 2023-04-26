@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="util">
+
+    <!-- 分页 -->
+    <sql id="_page">
+        <if test="startRecord!=null and pageSize!=null and pageSize>0">
+            limit #{startRecord},#{pageSize}
+        </if>
+    </sql>
+
+    <!-- 排序 -->
+    <sql id="_order">
+        <choose>
+            <when test="sort != null and sort != '' and  order !=null and order!='' ">
+                order by ${sort} ${order}
+            </when>
+            <when test="sort != null and sort != ''">
+                order by ${sort}
+            </when>
+        </choose>
+    </sql>
+
+    <sql id="_modify">
+        <if test="modifyBy != null and modifyBy != ''">
+            modify_by = #{modifyBy,jdbcType=BIGINT},
+        </if>
+        modify_time =<include refid="util._modifyTime"/>,
+    </sql>
+
+    <sql id="_create">
+        create_time =<include refid="util._createTime"/>,
+        create_by = #{createBy},
+
+    </sql>
+
+    <sql id="_createTime">
+        <choose>
+            <when test="createTime != null and createTime != ''">
+                #{createTime,jdbcType=BIGINT}
+            </when>
+            <otherwise>
+               <include refid="util._now"/>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <sql id="_modifyTime">
+        <choose>
+            <when test="modifyTime != null and modifyTime != ''">
+                #{modifyTime,jdbcType=BIGINT}
+            </when>
+            <otherwise>
+                <include refid="util._now"/>
+            </otherwise>
+        </choose>
+    </sql>
+
+    <sql id="_now">
+        now()
+    </sql>
+
+    <sql id="_empty">
+        ''
+    </sql>
+
+    <!-- 排序+分页 -->
+    <sql id="_orderPage">
+        <include refid="util._order"/>
+        <include refid="util._page"/>
+    </sql>
+</mapper>

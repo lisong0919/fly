@@ -8,6 +8,7 @@ import com.wealth.fly.core.dao.mapper.GridMapper;
 import com.wealth.fly.core.entity.Grid;
 import org.springframework.stereotype.Repository;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -19,9 +20,13 @@ import java.util.List;
 public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDao {
 
     @Override
-    public List<Grid> listGrids(String instId, Integer status, BigDecimal maxBuyPrice, int limit) {
+    public boolean save(Grid entity) {
+        return retBool(baseMapper.insert(entity));
+    }
+
+    @Override
+    public List<Grid> listGrids(String instId, BigDecimal maxBuyPrice, int limit) {
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Grid::getStatus, status);
         wrapper.eq(Grid::getInstId, instId);
         wrapper.lt(Grid::getBuyPrice, maxBuyPrice);
         wrapper.orderByDesc(Grid::getBuyPrice);
@@ -29,7 +34,7 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
             wrapper.last("limit " + limit);
         }
 
-        return list(wrapper);
+        return baseMapper.selectList(wrapper);
     }
 
     @Override
@@ -37,7 +42,7 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Grid::getInstId, instId);
         wrapper.in(Grid::getStatus, statusList);
-        return list(wrapper);
+        return baseMapper.selectList(wrapper);
     }
 
     @Override

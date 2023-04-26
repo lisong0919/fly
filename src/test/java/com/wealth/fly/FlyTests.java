@@ -1,32 +1,40 @@
 package com.wealth.fly;
 
+import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.dao.KLineDao;
+import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.OkexExchanger;
-import com.wealth.fly.core.model.Order;
 import com.wealth.fly.core.strategy.StrategyHandler;
 import com.wealth.fly.statistic.StatisticStrategyAction;
-import com.wealth.fly.statistic.StatisticVolumeStrategyAction;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.junit4.SpringRunner;
 
 
 import javax.annotation.Resource;
-import java.io.IOException;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-@SpringBootTest
-class FlyApplicationTests {
+//@RunWith(SpringRunner.class)
+@SpringBootTest(classes = FlyTestApplication.class)
+class FlyTests {
 
     //    @Resource
     private StrategyHandler strategyHandler;
@@ -37,12 +45,42 @@ class FlyApplicationTests {
     @Resource
     private OkexExchanger okexExchanger;
 
+    @Resource
+    private GridDao gridDao;
+
+
 //    @Autowired
 //    private StatisticVolumeStrategyAction action;
 
     //    @Autowired
     private StatisticStrategyAction action;
 
+
+    @Test
+    public void initGrid() {
+        BigDecimal flag = new BigDecimal(1200);
+        String weight = "0.005";
+
+        for (int i = 0; i < 200; i++) {
+            String buyPrice = flag.toPlainString();
+            flag = flag.add(flag.multiply(new BigDecimal(weight)));
+            flag = flag.setScale(2, RoundingMode.HALF_UP);
+            String sellPrice = flag.toPlainString();
+
+            System.out.println(buyPrice + "-" + sellPrice);
+
+            Grid grid = Grid.builder()
+                    .instId("ETH-USD-230630")
+                    .weight(weight)
+                    .buyPrice(buyPrice)
+                    .sellPrice(sellPrice)
+                    .num("100")
+                    .build();
+            gridDao.save(grid);
+        }
+
+        System.out.println(">>>>>>>>>网格初始化成功");
+    }
 
 
     @Test

@@ -9,6 +9,7 @@ import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridHistory;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.exchanger.Exchanger;
+import com.wealth.fly.core.fetcher.GridStatusFetcher;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.fetcher.MarkPriceFetcher;
@@ -22,8 +23,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author : lisong
@@ -36,6 +39,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Resource
     private MarkPriceFetcher markPriceFetcher;
     @Resource
+    private GridStatusFetcher gridStatusFetcher;
+    @Resource
     private GridDao gridDao;
     @Resource
     private GridHistoryDao gridHistoryDao;
@@ -47,14 +52,21 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @PostConstruct
     public void init() {
         markPriceFetcher.registerListener(this);
+        gridStatusFetcher.registerGridStatusChangeListener(this);
     }
 
     @Override
     public void onNewMarkPrice(MarkPrice markPrice) {
         //先查出比当前价格低的网格
-        List<Grid> gridList = gridDao.listGrids(markPrice.getInstId(), GridStatus.IDLE.getCode(), new BigDecimal(markPrice.getMarkPx()), 3);
+        List<Grid> gridList = gridDao.listGrids(markPrice.getInstId(), new BigDecimal(markPrice.getMarkPx()), 3);
+        if (!CollectionUtils.isEmpty(gridList)) {
+            gridList = gridList.stream()
+                    .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
+                    .collect(Collectors.toList());
+        }
+
         if (CollectionUtils.isEmpty(gridList)) {
-            log.error("无合适网格 {} ", markPrice.getInstId());
+            log.info("无合适网格 {} ", markPrice.getInstId());
             return;
         }
         for (Grid grid : gridList) {
@@ -71,9 +83,6 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                         .ordType("limit")
                         .sz(grid.getNum()) //TODO 根据保证金计算
                         .px(grid.getBuyPrice())
-                        .tpTriggerPx(grid.getSellPrice())
-                        .tpTriggerPxType("mark")
-                        .tpOrdPx(grid.getSellPrice())
                         .tag(String.valueOf(grid.getId()))
                         .build();
                 String orderId = null;
@@ -104,25 +113,25 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Override
     public void onActive(Grid grid, Order buyOrder) {
         //下止盈策略单
-//        Order order = Order.builder()
-//                .instId(grid.getInstId())
-//                .tdMode("cross")
-//                .side("sell")
-//                .posSide("long")
-//                .ordType("conditional")
-//                .sz(grid.getNum())
-//                .tag("" + grid.getId())
-//                .tpTriggerPx(grid.getSellPrice())
-//                .tpTriggerPxType("mark")
-//                .tpOrdPx(grid.getSellPrice())
-//                .build();
-//        String algoId = null;
-//        try {
-//            algoId = exchanger.createAlgoOrder(order);
-//        } catch (IOException e) {
-//            log.error("止盈委托下单失败 " + e.getMessage(), e);
-//            return;
-//        }
+        Order order = Order.builder()
+                .instId(grid.getInstId())
+                .tdMode("cross")
+                .side("sell")
+                .posSide("long")
+                .ordType("conditional")
+                .sz(grid.getNum())
+                .tag("" + grid.getId())
+                .tpTriggerPx(grid.getSellPrice())
+                .tpTriggerPxType("mark")
+                .tpOrdPx(grid.getSellPrice())
+                .build();
+        String algoId = null;
+        try {
+            algoId = exchanger.createAlgoOrder(order);
+        } catch (IOException e) {
+            log.error("止盈委托下单失败 " + e.getMessage(), e);
+            return;
+        }
 
         GridHistory gridHistory = GridHistory.builder()
                 .gridId(grid.getId())
@@ -132,15 +141,18 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .buyPrice(buyOrder.getAvgPx())
                 .buyFee(buyOrder.getFee())
                 .feeCcy(buyOrder.getFeeCcy())
-                .pendingTime(new Date(buyOrder.getCTime()))
+                .pendingTime(new Date())
                 .buyTime(new Date(buyOrder.getFillTime()))
                 .build();
-        BigDecimal money = new BigDecimal(buyOrder.getAvgPx()).multiply(new BigDecimal(buyOrder.getSz()));
-        gridHistory.setMoney(money.toPlainString());
+        //每张合约单价值10U
+        BigDecimal usdtAmount = new BigDecimal(10).multiply(new BigDecimal(buyOrder.getSz()));
+        usdtAmount = usdtAmount.setScale(2, RoundingMode.FLOOR);
+        gridHistory.setUsdtAmount(usdtAmount.toPlainString());
+        gridHistory.setCurrencyAmount(usdtAmount.divide(new BigDecimal(buyOrder.getAvgPx()), 6, RoundingMode.FLOOR).toPlainString());
         gridHistoryDao.save(gridHistory);
 
         //下单成功后才更新状态和策略单id
-        gridDao.updateGridActive(grid.getId(), buyOrder.getAlgoId(), gridHistory.getGridId());
+        gridDao.updateGridActive(grid.getId(), algoId, gridHistory.getId());
 
         GridLog gridLog = GridLog.builder()
                 .type(GridLogType.GRID_ACTIVE.getCode())
@@ -161,11 +173,19 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .algoOrderId(algoOrder.getOrdId())
                 .sellOrderId(sellOrder.getOrdId())
                 .orderProfit(sellOrder.getPnl())
-                .gridProfitPercent(grid.getWeight())
                 .sellTime(new Date(sellOrder.getFillTime()))
                 .build();
-        gridHistoryDao.updateById(gridHistory);
 
+        //计算网格收益
+        GridHistory existGridHistory = gridHistoryDao.getById(grid.getGridHistoryId());
+        BigDecimal sellPrice = new BigDecimal(sellOrder.getAvgPx());
+        BigDecimal buyPrice = new BigDecimal(existGridHistory.getBuyPrice());
+        BigDecimal gridProfitPercent = sellPrice.subtract(buyPrice).divide(buyPrice, 6, RoundingMode.FLOOR);
+
+        gridHistory.setGridProfitPercent(gridProfitPercent.toPlainString());
+        gridHistory.setGridProfit(new BigDecimal(existGridHistory.getCurrencyAmount()).multiply(gridProfitPercent).setScale(6, RoundingMode.HALF_UP).toPlainString());
+
+        gridHistoryDao.updateById(gridHistory);
 
         GridLog gridLog = GridLog.builder()
                 .type(GridLogType.GRID_FINISHED_PROFIT.getCode())

@@ -1,5 +1,6 @@
 package com.wealth.fly.core.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Builder
 public class GridLog {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     private Integer type;
@@ -28,6 +29,6 @@ public class GridLog {
 
     private String message;
 
-    private Date createAt;
+    private Date createdAt;
 
 }

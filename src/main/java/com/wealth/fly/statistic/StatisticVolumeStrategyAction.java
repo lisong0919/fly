@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+//@Component
 public class StatisticVolumeStrategyAction implements Action {
 
     private Map<String, StatisticStrategyAction.StatisticItem> targetKlineMap = new LinkedHashMap<>();

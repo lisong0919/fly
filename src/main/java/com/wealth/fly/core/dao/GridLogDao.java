@@ -7,5 +7,7 @@ import com.wealth.fly.core.entity.GridLog;
  * @author : lisong
  * @date : 2023/4/26
  */
-public interface GridLogDao extends IService<GridLog> {
+public interface GridLogDao{
+
+    boolean save(GridLog entity);
 }

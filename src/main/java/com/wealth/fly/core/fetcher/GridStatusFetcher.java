@@ -33,7 +33,7 @@ public class GridStatusFetcher {
     @Value("${grid.inst.id}")
     private String instId;
 
-    private List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
+    private final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
 
     @PostConstruct
     public void init() {
@@ -49,6 +49,10 @@ public class GridStatusFetcher {
         log.info("init mark price data fetcher timer finished.");
     }
 
+
+    public void registerGridStatusChangeListener(GridStatusChangeListener listener) {
+        statusChangeListeners.add(listener);
+    }
 
     /**
      * 探测已激活网格是否已完成
@@ -69,7 +73,9 @@ public class GridStatusFetcher {
                 Order sellOrder = null;
                 try {
                     algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
-                    sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
+                    if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
+                        sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
+                    }
                 } catch (IOException e) {
                     log.error("查策略委托单信息报错 " + e.getMessage(), e);
                     continue;
@@ -103,7 +109,7 @@ public class GridStatusFetcher {
             try {
                 if (StringUtils.isEmpty(grid.getBuyOrderId())) {
                     //TODO 告警
-                    log.error("网格也挂单但无订单id,gridId:{}", grid.getId());
+                    log.error("网格有挂单但无订单id,gridId:{}", grid.getId());
                     continue;
                 }
                 Order order = null;

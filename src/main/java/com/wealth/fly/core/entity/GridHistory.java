@@ -1,12 +1,12 @@
 package com.wealth.fly.core.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -18,7 +18,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Builder
 public class GridHistory {
-    @TableId
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Integer gridId;
     private String instId;
@@ -34,7 +34,12 @@ public class GridHistory {
     /**
      * 金额
      */
-    private String money;
+    private String usdtAmount;
+
+    /**
+     * 币的数量
+     */
+    private String currencyAmount;
 
     private String buyPrice;
 
@@ -42,9 +47,9 @@ public class GridHistory {
 
     private String buyFee;
 
-    private String feeCcy;
-
     private String sellFee;
+
+    private String feeCcy;
 
     private String orderProfit;
 
@@ -60,7 +65,7 @@ public class GridHistory {
 
     private Date sellTime;
 
-    private Date createAt;
+    private Date createdAt;
 
     private Date updatedAt;
 }

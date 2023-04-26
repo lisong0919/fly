@@ -10,8 +10,10 @@ import java.util.List;
  * @author : lisong
  * @date : 2023/4/24
  */
-public interface GridDao extends IService<Grid> {
-    List<Grid> listGrids(String instId, Integer status, BigDecimal maxBuyPrice, int limit);
+public interface GridDao{
+    boolean save(Grid entity);
+
+    List<Grid> listGrids(String instId, BigDecimal maxBuyPrice, int limit);
 
     List<Grid> listByStatus(String instId, List<Integer> statusList);
 
