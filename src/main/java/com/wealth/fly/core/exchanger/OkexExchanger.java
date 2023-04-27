@@ -151,6 +151,15 @@ public class OkexExchanger implements Exchanger {
         return JsonUtil.getEntity("/data/0", jsonNode, Order.class);
     }
 
+    public BigDecimal getForceClosePrice(String instId) throws IOException {
+        String requestPath="/api/v5/account/positions?instId=" + instId;
+        String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查看持仓信息");
+
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response);
+
+        return new BigDecimal(JsonUtil.getString("/data/0/liqPx",jsonNode));
+    }
 
     private static Map<String, String> getGetAuthHeaders(String requestPath) {
         return getAuthHeaders("GET", requestPath, "");

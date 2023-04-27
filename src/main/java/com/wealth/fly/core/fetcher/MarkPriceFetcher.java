@@ -33,6 +33,7 @@ public class MarkPriceFetcher {
     @PostConstruct
     public void init() {
         Timer timer = new Timer();
+
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {

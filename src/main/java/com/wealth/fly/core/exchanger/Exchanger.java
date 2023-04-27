@@ -7,6 +7,7 @@ import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -49,4 +50,12 @@ public interface Exchanger {
     Order getAlgoOrder(String algoId) throws IOException;
 
 
+    /**
+     * 查询强平价格
+     *
+     * @param instId
+     * @return
+     * @throws Exception
+     */
+    BigDecimal getForceClosePrice(String instId) throws IOException;
 }

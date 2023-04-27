@@ -1,5 +1,6 @@
 package com.wealth.fly.core.strategy;
 
+import com.wealth.fly.core.SmsUtil;
 import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
@@ -16,6 +17,7 @@ import com.wealth.fly.core.fetcher.MarkPriceFetcher;
 import com.wealth.fly.core.listener.MarkPriceListener;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -49,6 +51,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Resource
     private Exchanger exchanger;
 
+    @Value("${min.force.close.price.eth}")
+    private String minForceClosePriceForETH;
+
     @PostConstruct
     public void init() {
         markPriceFetcher.registerListener(this);
@@ -57,6 +62,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onNewMarkPrice(MarkPrice markPrice) {
+        try {
+            BigDecimal currentForceClosePrice = exchanger.getForceClosePrice(markPrice.getInstId());
+            if (currentForceClosePrice.compareTo(new BigDecimal(minForceClosePriceForETH)) >= 0) {
+                log.error("持仓强平价格{}大于{}，不能继续开仓", currentForceClosePrice, minForceClosePriceForETH);
+                return;
+            }
+        } catch (IOException e) {
+            log.error("查询强平价格报错" + e.getMessage(), e);
+            return;
+        }
+
         //先查出比当前价格低的网格
         List<Grid> gridList = gridDao.listGrids(markPrice.getInstId(), new BigDecimal(markPrice.getMarkPx()), 3);
         if (!CollectionUtils.isEmpty(gridList)) {
@@ -66,7 +82,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
 
         if (CollectionUtils.isEmpty(gridList)) {
-            log.info("无合适网格 {} ", markPrice.getInstId());
+            log.debug("无合适网格 {} ", markPrice.getInstId());
             return;
         }
         for (Grid grid : gridList) {
@@ -104,6 +120,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                         .message(String.format("[%s-%s-%s]网格委托下单成功", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
                         .build();
                 gridLogDao.save(gridLog);
+                log.info("[{}-{}-{}]网格委托下单成功", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -112,6 +129,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onActive(Grid grid, Order buyOrder) {
+        log.info("[{}-{}-{}]收到网格激活通知", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
         //下止盈策略单
         Order order = Order.builder()
                 .instId(grid.getInstId())
@@ -165,6 +183,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onFinished(Grid grid, Order algoOrder, Order sellOrder) {
+        log.info("[{}-{}-{}]收到网格已完成通知", grid.getBuyPrice(), grid.getSellPrice(), sellOrder.getSz());
         gridDao.updateGridFinished(grid.getId());
 
         GridHistory gridHistory = GridHistory.builder()

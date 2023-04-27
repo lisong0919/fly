@@ -78,14 +78,14 @@ public class HttpClientUtil {
 
         setHeaders(httpPost, headers);
 
-        log.info("提交post请求体-{} {} {}", apiDesc, url, requestBody);
+        log.debug("提交post请求体-{} {} {}", apiDesc, url, requestBody);
         CloseableHttpResponse httpResponse = client.execute(httpPost);
 
         HttpEntity respnoseEntity = httpResponse.getEntity();
         String responseBody = EntityUtils.toString(respnoseEntity, "utf-8");
         EntityUtils.consume(httpResponse.getEntity());
 
-        log.info("post请求响应-{} {} request:{} response:{}", apiDesc, url, requestBody, responseBody);
+        log.debug("post请求响应-{} {} request:{} response:{}", apiDesc, url, requestBody, responseBody);
         return responseBody;
     }
 
@@ -94,8 +94,7 @@ public class HttpClientUtil {
     }
 
     public static String get(String url, Map<String, String> headers, String apiDesc) throws IOException {
-        log.info("get请求-{} {}", apiDesc == null ? "" : apiDesc, url);
-        log.info("get请求头:{}", headers);
+        log.debug("get请求-{} {}", apiDesc == null ? "" : apiDesc, url);
         HttpGet httpGet = new HttpGet(url);
         httpGet.setConfig(requestConfig);
         setHeaders(httpGet, headers);
@@ -104,7 +103,7 @@ public class HttpClientUtil {
         HttpEntity responseEntity = httpResponse.getEntity();
         String result = EntityUtils.toString(responseEntity, "utf-8");
         EntityUtils.consume(httpResponse.getEntity());
-        log.info("get请求响应-{} {} {} ", apiDesc == null ? "" : apiDesc, url, result);
+        log.debug("get请求响应-{} {} {} ", apiDesc == null ? "" : apiDesc, url, result);
         return result;
     }
 

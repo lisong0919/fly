@@ -84,8 +84,10 @@ public class GridStatusFetcher {
                 if (OkexAlgoOrderState.LIVE.equals(algoOrder.getState()) || OkexAlgoOrderState.PARTIALLY_EFFECTIVE.equals(algoOrder.getState())) {
                     continue;
                 } else if (OkexAlgoOrderState.EFFECTIVE.equals(algoOrder.getState())) {
-                    for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
-                        statusChangeListener.onFinished(grid, algoOrder, sellOrder);
+                    if (sellOrder != null && OkexOrderState.FILLED.equals(sellOrder.getState())) {
+                        for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                            statusChangeListener.onFinished(grid, algoOrder, sellOrder);
+                        }
                     }
                 } else {
                     //TODO告警
