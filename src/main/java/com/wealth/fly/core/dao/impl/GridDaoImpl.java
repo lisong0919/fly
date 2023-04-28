@@ -42,6 +42,7 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Grid::getInstId, instId);
         wrapper.in(Grid::getStatus, statusList);
+        wrapper.orderByDesc(Grid::getId);
         return baseMapper.selectList(wrapper);
     }
 

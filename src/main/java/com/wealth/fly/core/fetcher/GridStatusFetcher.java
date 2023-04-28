@@ -1,5 +1,6 @@
 package com.wealth.fly.core.fetcher;
 
+import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.constants.OkexAlgoOrderState;
 import com.wealth.fly.core.constants.OkexOrderState;
@@ -41,10 +42,15 @@ public class GridStatusFetcher {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                if (Monitor.stopAll) {
+                    log.info(">>>>> stopAll");
+                    return;
+                }
                 detectPendingGrid();
                 detectActiveGrid();
+                Monitor.gridStatusLastFetchTime = new Date();
             }
-        }, 3000L, 3000L);
+        }, 6000L, 6000L);
 
         log.info("init mark price data fetcher timer finished.");
     }

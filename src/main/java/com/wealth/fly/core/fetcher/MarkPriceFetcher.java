@@ -1,5 +1,6 @@
 package com.wealth.fly.core.fetcher;
 
+import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.listener.MarkPriceListener;
@@ -9,10 +10,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * @author : lisong
@@ -37,6 +35,10 @@ public class MarkPriceFetcher {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
+                if (Monitor.stopAll) {
+                    log.info(">>>>> stopAll");
+                    return;
+                }
                 //TODO 动态算
                 MarkPrice markPrice = null;
                 try {
@@ -52,8 +54,9 @@ public class MarkPriceFetcher {
                         log.error("MarkPrice监听器处理出错,detailMsg:" + e.getMessage(), e);
                     }
                 }
+                Monitor.markPriceLastFetchTime = new Date();
             }
-        }, 3000L, 3000L);
+        }, 6000L, 6000L);
 
         log.info("init mark price data fetcher timer finished.");
     }
