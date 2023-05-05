@@ -59,9 +59,9 @@ class FlyTests {
     @Test
     public void initGrid() {
         BigDecimal flag = new BigDecimal(1200);
-        String weight = "0.005";
+        String weight = "0.003";
 
-        for (int i = 0; i < 200; i++) {
+        for (int i = 0; i < 300; i++) {
             String buyPrice = flag.toPlainString();
             flag = flag.add(flag.multiply(new BigDecimal(weight)));
             flag = flag.setScale(2, RoundingMode.HALF_UP);
@@ -71,6 +71,8 @@ class FlyTests {
 
             Grid grid = Grid.builder()
                     .instId("ETH-USD-230630")
+                    .strategy(2)
+                    .strategyDesc("千三/100张")
                     .weight(weight)
                     .buyPrice(buyPrice)
                     .sellPrice(sellPrice)

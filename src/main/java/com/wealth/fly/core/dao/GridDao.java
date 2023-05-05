@@ -13,9 +13,9 @@ import java.util.List;
 public interface GridDao{
     boolean save(Grid entity);
 
-    List<Grid> listGrids(String instId, BigDecimal maxBuyPrice, int limit);
+    List<Grid> listGrids(Integer strategy, BigDecimal maxBuyPrice, int limit);
 
-    List<Grid> listByStatus(String instId, List<Integer> statusList);
+    List<Grid> listByStatus(List<Integer> statusList);
 
     void updateGridStatus(Integer id, int status);
 

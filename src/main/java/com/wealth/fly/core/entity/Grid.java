@@ -24,6 +24,10 @@ public class Grid {
 
     private String instId;
 
+    private Integer strategy;
+
+    private String strategyDesc;
+
     private String weight;
 
     private String buyPrice;

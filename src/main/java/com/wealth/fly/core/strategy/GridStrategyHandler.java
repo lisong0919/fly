@@ -1,6 +1,5 @@
 package com.wealth.fly.core.strategy;
 
-import com.wealth.fly.core.SmsUtil;
 import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
@@ -54,6 +53,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Value("${min.force.close.price.eth}")
     private String minForceClosePriceForETH;
 
+    @Value("${grid.default.strategy}")
+    private Integer gridStrategy;
+
     @PostConstruct
     public void init() {
         markPriceFetcher.registerListener(this);
@@ -74,7 +76,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
 
         //先查出比当前价格低的网格
-        List<Grid> gridList = gridDao.listGrids(markPrice.getInstId(), new BigDecimal(markPrice.getMarkPx()), 3);
+        List<Grid> gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice.getMarkPx()), 3);
         if (!CollectionUtils.isEmpty(gridList)) {
             gridList = gridList.stream()
                     .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
@@ -129,7 +131,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onActive(Grid grid, Order buyOrder) {
-        log.info("[{}-{}-{}]收到网格激活通知", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+        log.info("[{}-{}-{}]网格挂单已成交,网格已被激活", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
         //下止盈策略单
         Order order = Order.builder()
                 .instId(grid.getInstId())

@@ -13,6 +13,7 @@ import com.wealth.fly.core.exchanger.Exchanger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,6 +36,15 @@ public class TestController {
     private GridDao gridDao;
     @Resource
     private Exchanger exchanger;
+
+    @Value("${grid.default.strategy}")
+    private Integer gridStrategy;
+
+    @Value("${grid.inst.id}")
+    private String activeInstId;
+
+    @Value("${min.force.close.price.eth}")
+    private String minForceClosePrice;
 
     @RequestMapping("/test")
     public Object proxyOkex() {
@@ -59,11 +69,11 @@ public class TestController {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 
-        String instId = "ETH-USD-230630";
-        String markPrice = exchanger.getMarkPriceByInstId(instId).getMarkPx();
+        String markPrice = exchanger.getMarkPriceByInstId(activeInstId).getMarkPx();
 
         StringBuilder sb = new StringBuilder();
         sb.append("markPrice>>>>").append(markPrice).append("<br/>");
+        sb.append("强平风控>>>>").append(minForceClosePrice).append("<br/>");
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
         sb.append("markPriceLastFetchTime>>>>").append(Monitor.markPriceLastFetchTime == null ? "无" : sdf.format(Monitor.markPriceLastFetchTime)).append("<br/>");
@@ -76,7 +86,7 @@ public class TestController {
         }
 
         sb.append("<br/><br/>").append("==========活跃网格=========<br/>");
-        List<Grid> gridList = gridDao.listByStatus(instId, Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()));
+        List<Grid> gridList = gridDao.listByStatus(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()));
         if (gridList != null) {
             for (Grid grid : gridList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");
@@ -84,7 +94,7 @@ public class TestController {
         }
 
         sb.append("<br/><br/>").append("==========排队网格=========<br/>");
-        gridList = gridDao.listGrids(instId, new BigDecimal(markPrice), 20);
+        gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice), 20);
         if (gridList != null) {
             for (Grid grid : gridList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");

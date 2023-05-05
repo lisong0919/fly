@@ -25,9 +25,9 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
     }
 
     @Override
-    public List<Grid> listGrids(String instId, BigDecimal maxBuyPrice, int limit) {
+    public List<Grid> listGrids(Integer strategy, BigDecimal maxBuyPrice, int limit) {
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Grid::getInstId, instId);
+        wrapper.eq(Grid::getStrategy, strategy);
         wrapper.lt(Grid::getBuyPrice, maxBuyPrice);
         wrapper.orderByDesc(Grid::getBuyPrice);
         if (limit != -1) {
@@ -38,9 +38,8 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
     }
 
     @Override
-    public List<Grid> listByStatus(String instId, List<Integer> statusList) {
+    public List<Grid> listByStatus(List<Integer> statusList) {
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Grid::getInstId, instId);
         wrapper.in(Grid::getStatus, statusList);
         wrapper.orderByDesc(Grid::getId);
         return baseMapper.selectList(wrapper);

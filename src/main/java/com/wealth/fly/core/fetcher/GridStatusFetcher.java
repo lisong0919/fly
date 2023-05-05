@@ -31,8 +31,6 @@ public class GridStatusFetcher {
     private Exchanger exchanger;
     @Resource
     private GridDao gridDao;
-    @Value("${grid.inst.id}")
-    private String instId;
 
     private final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
 
@@ -64,7 +62,7 @@ public class GridStatusFetcher {
      * 探测已激活网格是否已完成
      */
     private void detectActiveGrid() {
-        List<Grid> gridList = gridDao.listByStatus(instId, Collections.singletonList(GridStatus.ACTIVE.getCode()));
+        List<Grid> gridList = gridDao.listByStatus(Collections.singletonList(GridStatus.ACTIVE.getCode()));
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
@@ -109,7 +107,7 @@ public class GridStatusFetcher {
      * 探测已挂单网格是否已激活
      */
     private void detectPendingGrid() {
-        List<Grid> gridList = gridDao.listByStatus(instId, Collections.singletonList(GridStatus.PENDING.getCode()));
+        List<Grid> gridList = gridDao.listByStatus(Collections.singletonList(GridStatus.PENDING.getCode()));
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
@@ -122,7 +120,7 @@ public class GridStatusFetcher {
                 }
                 Order order = null;
                 try {
-                    order = exchanger.getOrder(instId, grid.getBuyOrderId());
+                    order = exchanger.getOrder(grid.getInstId(), grid.getBuyOrderId());
                 } catch (IOException e) {
                     log.error("调用查订单接口报错 " + e.getMessage(), e);
                     continue;
