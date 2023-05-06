@@ -13,9 +13,11 @@ public class OkexOrderState {
      * filled：完全成交
      */
 
-    public static final String CANCELED="canceled";
-    public static final String LIVE="live";
-    public static final String PARTIALLY_FILLED="partially_filled";
-    public static final String FILLED="filled";
+    public static final String CANCELED = "canceled";
+    public static final String LIVE = "live";
+    public static final String PARTIALLY_FILLED = "partially_filled";
+    public static final String FILLED = "filled";
+
+
 
 }

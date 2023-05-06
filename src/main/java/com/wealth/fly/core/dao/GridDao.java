@@ -10,16 +10,16 @@ import java.util.List;
  * @author : lisong
  * @date : 2023/4/24
  */
-public interface GridDao{
+public interface GridDao {
     boolean save(Grid entity);
 
     List<Grid> listGrids(Integer strategy, BigDecimal maxBuyPrice, int limit);
 
-    List<Grid> listByStatus(List<Integer> statusList);
+    List<Grid> listByStatusOrderByBuyPrice(List<Integer> statusList, int limit);
 
     void updateGridStatus(Integer id, int status);
 
-    void updateGridActive(int id, String algoOrderId,long gridHistoryId);
+    void updateGridActive(int id, String algoOrderId, long gridHistoryId);
 
     void updateGridFinished(int id);
 

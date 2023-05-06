@@ -12,7 +12,8 @@ import lombok.Getter;
 public enum GridLogType {
     CREATE_PENDING_ORDER(1, "开委托单，网格待激活"),
     GRID_ACTIVE(2, "委托单成交，网格被激活"),
-    GRID_FINISHED_PROFIT(3, "网格已止盈");
+    GRID_FINISHED_PROFIT(3, "网格已止盈"),
+    GRID_BUY_ORDER_CANCEL(4, "网格委托买单撤销");
 
     private int code;
     private String desc;

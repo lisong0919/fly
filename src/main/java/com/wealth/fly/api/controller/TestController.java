@@ -1,18 +1,13 @@
 package com.wealth.fly.api.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.dao.GridLogDao;
-import com.wealth.fly.core.dao.mapper.GridLogMapper;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.exchanger.Exchanger;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +17,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -86,7 +80,7 @@ public class TestController {
         }
 
         sb.append("<br/><br/>").append("==========活跃网格=========<br/>");
-        List<Grid> gridList = gridDao.listByStatus(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()));
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
         if (gridList != null) {
             for (Grid grid : gridList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");

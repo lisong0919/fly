@@ -217,4 +217,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         gridLogDao.save(gridLog);
     }
 
+    @Override
+    public void onCancel(Grid grid, Order buyOrder) {
+        log.info("[{}-{}-{}]收到网格委托买单撤销通知", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+        gridDao.updateGridFinished(grid.getId());
+
+        GridLog gridLog = GridLog.builder()
+                .type(GridLogType.GRID_BUY_ORDER_CANCEL.getCode())
+                .gridId(grid.getId())
+                .message(String.format("[%s-%s-%s]网格委托买单撤销", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
+                .build();
+        gridLogDao.save(gridLog);
+    }
+
 }

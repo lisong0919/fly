@@ -10,7 +10,6 @@ import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -62,7 +61,8 @@ public class GridStatusFetcher {
      * 探测已激活网格是否已完成
      */
     private void detectActiveGrid() {
-        List<Grid> gridList = gridDao.listByStatus(Collections.singletonList(GridStatus.ACTIVE.getCode()));
+        //价格最低的几个未完成，价格高的肯定也是未完成
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), 3);
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
@@ -104,10 +104,11 @@ public class GridStatusFetcher {
     }
 
     /**
-     * 探测已挂单网格是否已激活
+     * 探测已挂单网格是否已激活或撤销
      */
     private void detectPendingGrid() {
-        List<Grid> gridList = gridDao.listByStatus(Collections.singletonList(GridStatus.PENDING.getCode()));
+        //价格最低的几个未完成，价格高的肯定也是未完成
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), 3);
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
@@ -129,6 +130,10 @@ public class GridStatusFetcher {
                 if (OkexOrderState.FILLED.equals(order.getState())) {
                     for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
                         statusChangeListener.onActive(grid, order);
+                    }
+                }else if(OkexOrderState.CANCELED.equals(order.getState())){
+                    for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                        statusChangeListener.onCancel(grid, order);
                     }
                 }
             } catch (Exception e) {

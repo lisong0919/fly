@@ -26,4 +26,12 @@ public interface GridStatusChangeListener {
      */
     void onFinished(Grid grid, Order algoOrder, Order sellOrder);
 
+    /**
+     * 网格委托买单撤销
+     *
+     * @param grid
+     * @param buyOrder
+     */
+    void onCancel(Grid grid, Order buyOrder);
+
 }
