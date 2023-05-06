@@ -8,6 +8,7 @@ import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.exchanger.Exchanger;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 
@@ -64,9 +66,11 @@ public class TestController {
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 
         String markPrice = exchanger.getMarkPriceByInstId(activeInstId).getMarkPx();
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
 
         StringBuilder sb = new StringBuilder();
         sb.append("markPrice>>>>").append(markPrice).append("<br/>");
+        sb.append("最近止盈点>>>>").append(CollectionUtils.isEmpty(gridList) ? "无" : gridList.get(0).getSellPrice()).append("<br/>");
         sb.append("强平风控>>>>").append(minForceClosePrice).append("<br/>");
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
@@ -80,7 +84,6 @@ public class TestController {
         }
 
         sb.append("<br/><br/>").append("==========活跃网格=========<br/>");
-        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
         if (gridList != null) {
             for (Grid grid : gridList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");

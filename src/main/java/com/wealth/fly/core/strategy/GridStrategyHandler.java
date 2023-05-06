@@ -8,6 +8,7 @@ import com.wealth.fly.core.dao.GridLogDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridHistory;
 import com.wealth.fly.core.entity.GridLog;
+import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.fetcher.GridStatusFetcher;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
@@ -148,6 +149,16 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         String algoId = null;
         try {
             algoId = exchanger.createAlgoOrder(order);
+        } catch (TPCannotLowerThanMPException e) {
+            log.error("委托单的止盈点低于现价，可能是价格波动太大, detailMsg:" + e.getMessage(), e);
+            //价格波动太大的情况直接市价止盈
+            order.setTpOrdPx("-1");
+            try {
+                algoId = exchanger.createAlgoOrder(order);
+            } catch (IOException ioException) {
+                log.error("止盈委托下单失败 " + e.getMessage(), e);
+                return;
+            }
         } catch (IOException e) {
             log.error("止盈委托下单失败 " + e.getMessage(), e);
             return;
@@ -174,13 +185,10 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         //下单成功后才更新状态和策略单id
         gridDao.updateGridActive(grid.getId(), algoId, gridHistory.getId());
 
-        GridLog gridLog = GridLog.builder()
-                .type(GridLogType.GRID_ACTIVE.getCode())
-                .gridId(grid.getId())
-                .gridHistoryId(gridHistory.getId())
-                .message(String.format("[%s-%s-%s]委托单成交，网格被激活，止盈策略单已创建", grid.getBuyPrice(), grid.getSellPrice(), buyOrder.getSz()))
-                .build();
-        gridLogDao.save(gridLog);
+
+        String message = String.format("[%s-%s-%s]委托单成交，网格被激活，%s止盈策略单已创建", grid.getBuyPrice(), order.getTpOrdPx(), buyOrder.getSz()
+                , "-1".equals(order.getTpOrdPx()) ? "市价" : "");
+        saveLog(GridLogType.GRID_ACTIVE, grid.getId(), message, gridHistory.getId());
     }
 
     @Override
@@ -230,4 +238,13 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         gridLogDao.save(gridLog);
     }
 
+    private void saveLog(GridLogType gridLogType, Integer gridId, String logMessage, Long historyId) {
+        GridLog gridLog = GridLog.builder()
+                .type(gridLogType.getCode())
+                .gridId(gridId)
+                .gridHistoryId(historyId)
+                .message(logMessage)
+                .build();
+        gridLogDao.save(gridLog);
+    }
 }

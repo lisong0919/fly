@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 import lombok.Setter;
@@ -152,13 +153,13 @@ public class OkexExchanger implements Exchanger {
     }
 
     public BigDecimal getForceClosePrice(String instId) throws IOException {
-        String requestPath="/api/v5/account/positions?instId=" + instId;
+        String requestPath = "/api/v5/account/positions?instId=" + instId;
         String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查看持仓信息");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
         checkCode(jsonNode, response);
-
-        return new BigDecimal(JsonUtil.getString("/data/0/liqPx",jsonNode));
+        //TODO 无仓位时会报错
+        return new BigDecimal(JsonUtil.getString("/data/0/liqPx", jsonNode));
     }
 
     private static Map<String, String> getGetAuthHeaders(String requestPath) {
@@ -195,8 +196,11 @@ public class OkexExchanger implements Exchanger {
     }
 
     private void checkCode(JsonNode jsonNode, String res) {
-        Integer code = JsonUtil.getInteger("/code", jsonNode);
+        int code = JsonUtil.getInteger("/code", jsonNode);
         if (code != 0) {
+            if (code == 51303) {
+                throw new TPCannotLowerThanMPException(JsonUtil.getString("/data/0/sMsg", jsonNode), code);
+            }
             throw new RuntimeException("接口返回码错误,response: " + res);
         }
     }
