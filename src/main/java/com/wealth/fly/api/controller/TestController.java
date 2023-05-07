@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -66,11 +67,20 @@ public class TestController {
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 
         String markPrice = exchanger.getMarkPriceByInstId(activeInstId).getMarkPx();
-        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
+        List<Grid> activeGridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), 1);
+
+        List<Grid> waitingList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice), 10);
+        List<Grid> idleGridList = null;
+        if (!CollectionUtils.isEmpty(waitingList)) {
+            idleGridList = waitingList.stream()
+                    .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
+                    .collect(Collectors.toList());
+        }
 
         StringBuilder sb = new StringBuilder();
         sb.append("markPrice>>>>").append(markPrice).append("<br/>");
-        sb.append("最近止盈点>>>>").append(CollectionUtils.isEmpty(gridList) ? "无" : gridList.get(0).getSellPrice()).append("<br/>");
+        sb.append("最近止盈点>>>>").append(CollectionUtils.isEmpty(activeGridList) ? "无" : activeGridList.get(0).getSellPrice()).append("<br/>");
+        sb.append("最近挂单点>>>>").append(CollectionUtils.isEmpty(idleGridList) ? "无" : idleGridList.get(0).getBuyPrice()).append("<br/>");
         sb.append("强平风控>>>>").append(minForceClosePrice).append("<br/>");
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
@@ -83,17 +93,17 @@ public class TestController {
             }
         }
 
+        List<Grid> nonIdleList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
         sb.append("<br/><br/>").append("==========活跃网格=========<br/>");
-        if (gridList != null) {
-            for (Grid grid : gridList) {
+        if (nonIdleList != null) {
+            for (Grid grid : nonIdleList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");
             }
         }
 
         sb.append("<br/><br/>").append("==========排队网格=========<br/>");
-        gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice), 20);
-        if (gridList != null) {
-            for (Grid grid : gridList) {
+        if (waitingList != null) {
+            for (Grid grid : waitingList) {
                 sb.append(String.format("%s-%s-%s-%s", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), grid.getStatus())).append("<br/>");
             }
         }

@@ -30,8 +30,7 @@ public interface GridStatusChangeListener {
      * 网格委托买单撤销
      *
      * @param grid
-     * @param buyOrder
      */
-    void onCancel(Grid grid, Order buyOrder);
+    void onCancel(Grid grid);
 
 }

@@ -115,6 +115,22 @@ public class OkexExchanger implements Exchanger {
     }
 
     @Override
+    public void cancelOrder(String instId, String orderId) throws IOException {
+        String requestPath = "/api/v5/trade/cancel-order";
+        String url = host + requestPath;
+        Order order = Order.builder()
+                .instId(instId)
+                .ordId(orderId)
+                .build();
+        String requestBody = JsonUtil.toJSONString(order);
+
+        String response = HttpClientUtil.postBody(url, requestBody, getPostAuthHeaders(requestPath, requestBody), "撤单");
+
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response);
+    }
+
+    @Override
     public String createAlgoOrder(Order order) throws IOException {
         String requestPath = "/api/v5/trade/order-algo";
         String url = host + requestPath;
@@ -198,8 +214,8 @@ public class OkexExchanger implements Exchanger {
     private void checkCode(JsonNode jsonNode, String res) {
         int code = JsonUtil.getInteger("/code", jsonNode);
         if (code != 0) {
-            if (code == 51303) {
-                throw new TPCannotLowerThanMPException(JsonUtil.getString("/data/0/sMsg", jsonNode), code);
+            if (code == 1 && JsonUtil.getInteger("/data/0/sCode", jsonNode) == 51303) {
+                throw new TPCannotLowerThanMPException(JsonUtil.getString("/data/0/sMsg", jsonNode), 51303);
             }
             throw new RuntimeException("接口返回码错误,response: " + res);
         }

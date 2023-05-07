@@ -56,7 +56,7 @@ public class MarkPriceFetcher {
                 }
                 Monitor.markPriceLastFetchTime = new Date();
             }
-        }, 6000L, 6000L);
+        }, 3000L, 3000L);
 
         log.info("init mark price data fetcher timer finished.");
     }

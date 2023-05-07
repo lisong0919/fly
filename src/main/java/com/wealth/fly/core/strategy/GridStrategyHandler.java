@@ -77,7 +77,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
 
         //先查出比当前价格低的网格
-        List<Grid> gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice.getMarkPx()), 3);
+        List<Grid> gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice.getMarkPx()), 1);
         if (!CollectionUtils.isEmpty(gridList)) {
             gridList = gridList.stream()
                     .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
@@ -107,7 +107,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 String orderId = null;
                 try {
                     orderId = exchanger.createOrder(order);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     log.error("下单出错 " + e.getMessage(), e);
                     gridDao.updateGridStatus(grid.getId(), GridStatus.IDLE.getCode());
                     continue;
@@ -147,16 +147,18 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .tpOrdPx(grid.getSellPrice())
                 .build();
         String algoId = null;
+        boolean closeDirectly = false;
         try {
             algoId = exchanger.createAlgoOrder(order);
         } catch (TPCannotLowerThanMPException e) {
             log.error("委托单的止盈点低于现价，可能是价格波动太大, detailMsg:" + e.getMessage(), e);
-            //价格波动太大的情况直接市价止盈
-            order.setTpOrdPx("-1");
+            //价格波动太大的情况直接市价平仓
             try {
-                algoId = exchanger.createAlgoOrder(order);
+                closeLongOrder(grid);
+                log.info("[{}-{}-{}]委托单的止盈点低于现价，可能是价格波动太大，直接市价平仓", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                closeDirectly = true;
             } catch (IOException ioException) {
-                log.error("止盈委托下单失败 " + e.getMessage(), e);
+                log.error("市价平仓失败 " + e.getMessage(), e);
                 return;
             }
         } catch (IOException e) {
@@ -183,13 +185,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         gridHistoryDao.save(gridHistory);
 
         //下单成功后才更新状态和策略单id
-        gridDao.updateGridActive(grid.getId(), algoId, gridHistory.getId());
-
-
-        String message = String.format("[%s-%s-%s]委托单成交，网格被激活，%s止盈策略单已创建", grid.getBuyPrice(), order.getTpOrdPx(), buyOrder.getSz()
-                , "-1".equals(order.getTpOrdPx()) ? "市价" : "");
-        saveLog(GridLogType.GRID_ACTIVE, grid.getId(), message, gridHistory.getId());
+        if (closeDirectly) {
+            gridDao.updateGridFinished(grid.getId());
+            String message = String.format("[%s-%s-%s]委托单的止盈点低于现价，直接市价平仓", grid.getBuyPrice(), grid.getSellPrice(), buyOrder.getSz());
+            saveLog(GridLogType.GRID_FINISHED_PROFIT, grid.getId(), message, gridHistory.getId());
+        } else {
+            gridDao.updateGridActive(grid.getId(), algoId, gridHistory.getId());
+            String message = String.format("[%s-%s-%s]委托单成交，网格被激活，止盈策略单已创建", grid.getBuyPrice(), grid.getSellPrice(), buyOrder.getSz());
+            saveLog(GridLogType.GRID_ACTIVE, grid.getId(), message, gridHistory.getId());
+        }
     }
+
 
     @Override
     public void onFinished(Grid grid, Order algoOrder, Order sellOrder) {
@@ -226,7 +232,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     }
 
     @Override
-    public void onCancel(Grid grid, Order buyOrder) {
+    public void onCancel(Grid grid) {
         log.info("[{}-{}-{}]收到网格委托买单撤销通知", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
         gridDao.updateGridFinished(grid.getId());
 
@@ -236,6 +242,20 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .message(String.format("[%s-%s-%s]网格委托买单撤销", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
                 .build();
         gridLogDao.save(gridLog);
+    }
+
+    private void closeLongOrder(Grid grid) throws IOException {
+        Order order = Order.builder()
+                .instId(grid.getInstId())
+                .tdMode("cross")
+                .side("sell")
+                .posSide("long")
+                .ordType("market")
+                .sz(grid.getNum())
+                .px(grid.getBuyPrice())
+                .tag(String.valueOf(grid.getId()))
+                .build();
+        exchanger.createOrder(order);
     }
 
     private void saveLog(GridLogType gridLogType, Integer gridId, String logMessage, Long historyId) {

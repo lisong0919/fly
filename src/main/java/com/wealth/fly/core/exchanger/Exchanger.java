@@ -20,6 +20,8 @@ public interface Exchanger {
 
     String createOrder(Order order) throws IOException;
 
+    void cancelOrder(String instId, String orderId) throws IOException;
+
     /**
      * 策略委托下单
      *
