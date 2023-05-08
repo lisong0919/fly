@@ -18,6 +18,8 @@ public class Order {
     private String instId;
 
     private String ordId;
+
+    private String clOrdId;
     /**
      * 交易模式
      * 保证金模式：isolated：逐仓 ；cross：全仓

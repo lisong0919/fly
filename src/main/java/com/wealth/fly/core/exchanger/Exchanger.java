@@ -41,6 +41,8 @@ public interface Exchanger {
      */
     Order getOrder(String instId, String orderId) throws IOException;
 
+    Order getOrderByCustomerOrderId(String instId, String customerOrderId) throws IOException;
+
 
     /**
      * 查策略委托单信息

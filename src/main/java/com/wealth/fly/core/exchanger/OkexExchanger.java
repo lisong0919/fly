@@ -149,8 +149,22 @@ public class OkexExchanger implements Exchanger {
 
     @Override
     public Order getOrder(String instId, String orderId) throws IOException {
-        String requestPath = GET_SINGLE_ORDER_PATH + "?instId=" + instId + "&ordId=" + orderId;
+        return getOrder(instId, orderId, null);
+    }
 
+    @Override
+    public Order getOrderByCustomerOrderId(String instId, String customerOrderId) throws IOException {
+        return getOrder(instId, null, customerOrderId);
+    }
+
+    private Order getOrder(String instId, String orderId, String customerOrderId) throws IOException {
+        String requestPath = GET_SINGLE_ORDER_PATH + "?instId=" + instId;
+        if (!StringUtils.isEmpty(orderId)) {
+            requestPath += "&ordId=" + orderId;
+        }
+        if (!StringUtils.isEmpty(customerOrderId)) {
+            requestPath += "&clOrdId=" + customerOrderId;
+        }
 
         String url = host + requestPath;
         String response = HttpClientUtil.get(url, getGetAuthHeaders(requestPath), "查订单信息");

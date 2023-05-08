@@ -18,6 +18,7 @@ import com.wealth.fly.core.fetcher.MarkPriceFetcher;
 import com.wealth.fly.core.listener.MarkPriceListener;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -28,10 +29,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +59,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Value("${grid.default.strategy}")
     private Integer gridStrategy;
 
+    private volatile boolean createOrderLock = false;
+
 
     @PostConstruct
     public void init() {
@@ -81,6 +81,19 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             return;
         }
 
+        try {
+            if (createOrderLock) {
+                log.info("下单加锁失败，有任务正在下单");
+                return;
+            }
+            createOrderLock = true;
+            createOrder(markPrice);
+        } finally {
+            createOrderLock = false;
+        }
+    }
+
+    private void createOrder(MarkPrice markPrice) {
         //先查出比当前价格低的网格
         List<Grid> gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice.getMarkPx()), 1);
         if (!CollectionUtils.isEmpty(gridList)) {
@@ -95,6 +108,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
         for (Grid grid : gridList) {
             try {
+                String customerOrderId = UUID.randomUUID().toString().replaceAll("-", "");
                 //下单
                 Order order = Order.builder()
                         .instId(markPrice.getInstId())
@@ -104,6 +118,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                         .ordType("limit")
                         .sz(grid.getNum()) //TODO 根据保证金计算
                         .px(grid.getBuyPrice())
+                        .clOrdId(customerOrderId)
                         .tag(String.valueOf(grid.getId()))
                         .build();
                 String orderId = null;
@@ -112,16 +127,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 } catch (InsufficientBalanceException e) {
                     log.info("[{}-{}-{}]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     return;
-                }
-//                catch (SocketTimeoutException e) {
-//                    if ("Read timed out".equals(e.getMessage())) {
-//
-//                    }
-//                }
-                catch (Exception e) {
-                    //TODO 下单read timeout，但实际成功就会把状态又更新回去了
+                } catch (Exception e) {
                     log.error("下单出错 " + e.getMessage(), e);
-                    continue;
+
+                    //有些特殊情况，下单报错，但是可能由于read timeout等原因，实际交易所订单成功
+                    order = exchanger.getOrderByCustomerOrderId(grid.getInstId(), customerOrderId);
+                    if (order != null && StringUtils.isNotBlank(order.getOrdId())) {
+                        log.info("[{}-{}-{}]下单出错，但实际交易所订单成功，订单id:{}", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), orderId);
+                        orderId = order.getOrdId();
+                    } else {
+                        continue;
+                    }
                 }
 
                 //更新网格订单id
@@ -255,6 +271,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .build();
         gridLogDao.save(gridLog);
     }
+
 
     private void closeLongOrder(Grid grid) throws IOException {
         Order order = Order.builder()
