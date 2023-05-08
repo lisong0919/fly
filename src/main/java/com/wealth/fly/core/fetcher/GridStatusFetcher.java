@@ -6,6 +6,7 @@ import com.wealth.fly.core.constants.OkexAlgoOrderState;
 import com.wealth.fly.core.constants.OkexOrderState;
 import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.entity.Grid;
+import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
 import com.wealth.fly.core.model.MarkPrice;
@@ -52,8 +53,13 @@ public class GridStatusFetcher {
                     log.info(">>>>> stopAll");
                     return;
                 }
+                try {
+                    detectActiveGrid();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+
                 detectPendingGrid();
-                detectActiveGrid();
                 Monitor.gridStatusLastFetchTime = new Date();
             }
         }, 3000L, 3000L);
@@ -77,38 +83,42 @@ public class GridStatusFetcher {
         }
         for (Grid grid : gridList) {
             try {
-                if (StringUtils.isEmpty(grid.getAlgoOrderId())) {
-                    //TODO 告警
-                    log.error("网格也挂单但无止盈策略单id,gridId:{}", grid.getId());
-                    continue;
-                }
-                Order algoOrder = null;
-                Order sellOrder = null;
-                try {
-                    algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
-                    if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
-                        sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
-                    }
-                } catch (IOException e) {
-                    log.error("查策略委托单信息报错 " + e.getMessage(), e);
-                    continue;
-                }
-
-                if (OkexAlgoOrderState.LIVE.equals(algoOrder.getState()) || OkexAlgoOrderState.PARTIALLY_EFFECTIVE.equals(algoOrder.getState())) {
-                    continue;
-                } else if (OkexAlgoOrderState.EFFECTIVE.equals(algoOrder.getState())) {
-                    if (sellOrder != null && OkexOrderState.FILLED.equals(sellOrder.getState())) {
-                        for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
-                            statusChangeListener.onFinished(grid, algoOrder, sellOrder);
-                        }
-                    }
-                } else {
-                    //TODO告警
-                    throw new RuntimeException("发现非计划内策略委托单状态" + algoOrder.getState() + ",委托单id:" + grid.getAlgoOrderId() + ",网格id:" + grid.getId());
-                }
+                gridFinished(grid);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
+        }
+    }
+
+    private void gridFinished(Grid grid) {
+        if (StringUtils.isEmpty(grid.getAlgoOrderId())) {
+            //TODO 告警
+            log.error("网格也挂单但无止盈策略单id,gridId:{}", grid.getId());
+            return;
+        }
+        Order algoOrder = null;
+        Order sellOrder = null;
+        try {
+            algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
+            if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
+                sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
+            }
+        } catch (IOException e) {
+            log.error("查策略委托单信息报错 " + e.getMessage(), e);
+            return;
+        }
+
+        if (OkexAlgoOrderState.LIVE.equals(algoOrder.getState()) || OkexAlgoOrderState.PARTIALLY_EFFECTIVE.equals(algoOrder.getState())) {
+            return;
+        } else if (OkexAlgoOrderState.EFFECTIVE.equals(algoOrder.getState())) {
+            if (sellOrder != null && OkexOrderState.FILLED.equals(sellOrder.getState())) {
+                for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                    statusChangeListener.onFinished(grid, algoOrder, sellOrder);
+                }
+            }
+        } else {
+            //TODO告警
+            throw new RuntimeException("发现非计划内策略委托单状态" + algoOrder.getState() + ",委托单id:" + grid.getAlgoOrderId() + ",网格id:" + grid.getId());
         }
     }
 
@@ -166,8 +176,12 @@ public class GridStatusFetcher {
 
         //非目标网格全部撤销
         for (Grid grid : gridList) {
-            if (grid.getId().intValue() != maxPriceGrid.getId().intValue()) {
-                cancelPendingGrid(grid);
+            try {
+                if (grid.getId().intValue() != maxPriceGrid.getId().intValue()) {
+                    cancelPendingGrid(grid);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
 
@@ -196,6 +210,10 @@ public class GridStatusFetcher {
             exchanger.cancelOrder(instId, grid.getBuyOrderId());
         } catch (IOException e) {
             log.error("撤销订单出错 " + e.getMessage(), e);
+            return;
+        } catch (CancelOrderAlreadyFinishedException e) {
+            log.error(e.getMessage(), e);
+            gridDao.updateGridFinished(grid.getId());
             return;
         }
         for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {

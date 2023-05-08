@@ -8,6 +8,7 @@ import com.wealth.fly.core.dao.GridLogDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridHistory;
 import com.wealth.fly.core.entity.GridLog;
+import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.fetcher.GridStatusFetcher;
@@ -26,6 +27,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.SocketTimeoutException;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -107,7 +109,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 String orderId = null;
                 try {
                     orderId = exchanger.createOrder(order);
-                } catch (Exception e) {
+                } catch (InsufficientBalanceException e) {
+                    log.info("[%s-%s-%s]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                    return;
+                }
+//                catch (SocketTimeoutException e) {
+//                    if ("Read timed out".equals(e.getMessage())) {
+//
+//                    }
+//                }
+                catch (Exception e) {
+                    //TODO 下单read timeout，但实际成功就会把状态又更新回去了
                     log.error("下单出错 " + e.getMessage(), e);
                     gridDao.updateGridStatus(grid.getId(), GridStatus.IDLE.getCode());
                     continue;

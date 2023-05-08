@@ -16,6 +16,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
+import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
@@ -214,9 +216,20 @@ public class OkexExchanger implements Exchanger {
     private void checkCode(JsonNode jsonNode, String res) {
         int code = JsonUtil.getInteger("/code", jsonNode);
         if (code != 0) {
-            if (code == 1 && JsonUtil.getInteger("/data/0/sCode", jsonNode) == 51303) {
-                throw new TPCannotLowerThanMPException(JsonUtil.getString("/data/0/sMsg", jsonNode), 51303);
+            if (code == 1) {
+                String codePath = "/data/0/sCode";
+                if (JsonUtil.getInteger(codePath, jsonNode) == 51303) {
+                    throw new TPCannotLowerThanMPException(JsonUtil.getString("/data/0/sMsg", jsonNode), 51303);
+                }
+                if (JsonUtil.getInteger(codePath, jsonNode) == 51402) {
+                    throw new CancelOrderAlreadyFinishedException(JsonUtil.getString("/data/0/sMsg", jsonNode), 51402);
+                }
+                if (JsonUtil.getInteger(codePath, jsonNode) == 51008) {
+                    throw new InsufficientBalanceException(JsonUtil.getString("/data/0/sMsg", jsonNode), 51008);
+                }
             }
+
+
             throw new RuntimeException("接口返回码错误,response: " + res);
         }
     }
