@@ -59,8 +59,16 @@ public class GridStatusFetcher {
                     log.error(e.getMessage(), e);
                 }
 
-                detectPendingGrid();
+                try {
+                    detectPendingGrid();
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+
                 Monitor.gridStatusLastFetchTime = new Date();
+
+                cancelUnnecessaryGrids();
+
             }
         }, 3000L, 3000L);
 
@@ -126,13 +134,43 @@ public class GridStatusFetcher {
      * 探测已挂单网格是否已激活或撤销
      */
     private void detectPendingGrid() {
-
-        //价格低的挂单全部取消掉，只保留一个价格比市价低一级的挂单，其他全部取消掉，以避免占用仓位
         List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), 100);
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
 
+        for (Grid grid : gridList) {
+            Order order = null;
+            try {
+                order = exchanger.getOrder(grid.getInstId(), grid.getBuyOrderId());
+            } catch (IOException e) {
+                log.error("调用查订单接口报错 " + e.getMessage(), e);
+                continue;
+            }
+
+            if (OkexOrderState.FILLED.equals(order.getState())) {
+                for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                    statusChangeListener.onActive(grid, order);
+                }
+            } else if (OkexOrderState.CANCELED.equals(order.getState())) {
+                for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                    statusChangeListener.onCancel(grid);
+                }
+            }
+        }
+
+        try {
+            cancelUnnecessaryGrids();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 价格低的挂单全部取消掉，只保留一个价格比市价低一级的挂单，其他全部取消掉，以避免占用仓位
+     */
+    private void cancelUnnecessaryGrids() {
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), 100);
         BigDecimal markPrice = null;
         try {
             MarkPrice markPriceObj = exchanger.getMarkPriceByInstId(instId);
@@ -154,7 +192,7 @@ public class GridStatusFetcher {
                 }
 
                 BigDecimal buyPrice = new BigDecimal(grid.getBuyPrice());
-                //比市价高的应当撤销
+                //比市价高的
                 if (buyPrice.compareTo(markPrice) > 0) {
                     continue;
                 }
@@ -170,13 +208,18 @@ public class GridStatusFetcher {
             }
         }
         if (maxPriceGrid == null) {
-            log.error("逻辑有误，未筛选出需要探测的pending网格");
             return;
         }
 
         //非目标网格全部撤销
         for (Grid grid : gridList) {
             try {
+                //比市价高的挂单，理论上应该已经成交或部分成交，不能直接取消
+                if (new BigDecimal(grid.getBuyPrice()).compareTo(markPrice) > 0) {
+                    //TODO 告警
+                    log.error("[{}-{}-{}]发现比buyPrice比市价高的网格仍然pending", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                    continue;
+                }
                 if (grid.getId().intValue() != maxPriceGrid.getId().intValue()) {
                     cancelPendingGrid(grid);
                 }
@@ -184,26 +227,8 @@ public class GridStatusFetcher {
                 log.error(e.getMessage(), e);
             }
         }
-
-        //探测筛选出的比市价低，且价格比其他网格高的网格
-        Order order = null;
-        try {
-            order = exchanger.getOrder(maxPriceGrid.getInstId(), maxPriceGrid.getBuyOrderId());
-        } catch (IOException e) {
-            log.error("调用查订单接口报错 " + e.getMessage(), e);
-            return;
-        }
-
-        if (OkexOrderState.FILLED.equals(order.getState())) {
-            for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
-                statusChangeListener.onActive(maxPriceGrid, order);
-            }
-        } else if (OkexOrderState.CANCELED.equals(order.getState())) {
-            for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
-                statusChangeListener.onCancel(maxPriceGrid);
-            }
-        }
     }
+
 
     private void cancelPendingGrid(Grid grid) {
         try {

@@ -93,7 +93,7 @@ public class OkexExchanger implements Exchanger {
         String res = HttpClientUtil.get(url, "获取标记价格");
         JsonNode jsonNode = JsonUtil.readValue(res);
 
-        checkCode(jsonNode, res);
+        checkCode(jsonNode, res, url, null);
         MarkPrice markPrice = JsonUtil.getEntity("/data/0", jsonNode, MarkPrice.class);
         if (markPrice != null) {
             long ts = JsonUtil.getLong("/data/0/ts", jsonNode);
@@ -110,7 +110,7 @@ public class OkexExchanger implements Exchanger {
         String response = HttpClientUtil.postBody(url, requestBody, getPostAuthHeaders(CREATE_ORDER_PATH, requestBody), "下单");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, url, requestBody);
 
         //返回订单id
         return JsonUtil.getString("/data/0/ordId", jsonNode);
@@ -129,7 +129,7 @@ public class OkexExchanger implements Exchanger {
         String response = HttpClientUtil.postBody(url, requestBody, getPostAuthHeaders(requestPath, requestBody), "撤单");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, url, requestBody);
     }
 
     @Override
@@ -141,7 +141,7 @@ public class OkexExchanger implements Exchanger {
         String response = HttpClientUtil.postBody(url, requestBody, getPostAuthHeaders(requestPath, requestBody), "策略委托下单");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, url, requestBody);
 
         //返回订单id
         return JsonUtil.getString("/data/0/algoId", jsonNode);
@@ -152,10 +152,11 @@ public class OkexExchanger implements Exchanger {
         String requestPath = GET_SINGLE_ORDER_PATH + "?instId=" + instId + "&ordId=" + orderId;
 
 
-        String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查订单信息");
+        String url = host + requestPath;
+        String response = HttpClientUtil.get(url, getGetAuthHeaders(requestPath), "查订单信息");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, url, null);
         return JsonUtil.getEntity("/data/0", jsonNode, Order.class);
     }
 
@@ -166,7 +167,7 @@ public class OkexExchanger implements Exchanger {
         String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查策略委托单信息");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, host + requestPath, null);
         return JsonUtil.getEntity("/data/0", jsonNode, Order.class);
     }
 
@@ -175,7 +176,7 @@ public class OkexExchanger implements Exchanger {
         String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查看持仓信息");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
-        checkCode(jsonNode, response);
+        checkCode(jsonNode, response, host + requestPath, null);
         //TODO 无仓位时会报错
         return new BigDecimal(JsonUtil.getString("/data/0/liqPx", jsonNode));
     }
@@ -213,7 +214,7 @@ public class OkexExchanger implements Exchanger {
         return dateFormat.format(new Date());
     }
 
-    private void checkCode(JsonNode jsonNode, String res) {
+    private void checkCode(JsonNode jsonNode, String res, String url, String requestBody) {
         int code = JsonUtil.getInteger("/code", jsonNode);
         if (code != 0) {
             if (code == 1) {
@@ -229,8 +230,7 @@ public class OkexExchanger implements Exchanger {
                 }
             }
 
-
-            throw new RuntimeException("接口返回码错误,response: " + res);
+            throw new RuntimeException("接口返回码错误,url:" + url + ",requestBody:" + requestBody + ",response: " + res);
         }
     }
 

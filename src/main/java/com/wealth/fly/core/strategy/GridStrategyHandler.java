@@ -29,7 +29,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +60,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Value("${grid.default.strategy}")
     private Integer gridStrategy;
+
 
     @PostConstruct
     public void init() {
@@ -92,9 +95,6 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
         for (Grid grid : gridList) {
             try {
-                //先更新状态为已委托，防止下单成功但数据库未更新成功，从而导致重复下单
-                gridDao.updateGridStatus(grid.getId(), GridStatus.PENDING.getCode());
-
                 //下单
                 Order order = Order.builder()
                         .instId(markPrice.getInstId())
@@ -110,7 +110,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 try {
                     orderId = exchanger.createOrder(order);
                 } catch (InsufficientBalanceException e) {
-                    log.info("[%s-%s-%s]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                    log.info("[{}-{}-{}]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     return;
                 }
 //                catch (SocketTimeoutException e) {
@@ -121,12 +121,12 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 catch (Exception e) {
                     //TODO 下单read timeout，但实际成功就会把状态又更新回去了
                     log.error("下单出错 " + e.getMessage(), e);
-                    gridDao.updateGridStatus(grid.getId(), GridStatus.IDLE.getCode());
                     continue;
                 }
 
                 //更新网格订单id
                 gridDao.updateOrderId(grid.getId(), orderId);
+                gridDao.updateGridStatus(grid.getId(), GridStatus.PENDING.getCode());
 
                 //记日志
                 GridLog gridLog = GridLog.builder()
