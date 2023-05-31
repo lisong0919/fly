@@ -19,6 +19,7 @@ import java.util.*;
 import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
+import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 import lombok.Setter;
@@ -26,10 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+
 
 @Service
 @Slf4j
@@ -58,7 +60,7 @@ public class OkexExchanger implements Exchanger {
                 url += "&end=" + transferTimeToOkexStandard(endTime);
             }
             String jsonResponse = com.wealth.fly.common.HttpClientUtil.get(url);
-            if (StringUtils.isEmpty(jsonResponse)) {
+            if (StringUtils.isBlank(jsonResponse)) {
                 throw new RuntimeException("获取k线数据失败");
             }
             JSONArray jsonArray = JSONObject.parseArray(jsonResponse);
@@ -193,6 +195,19 @@ public class OkexExchanger implements Exchanger {
         checkCode(jsonNode, response, host + requestPath, null);
         //TODO 无仓位时会报错
         return new BigDecimal(JsonUtil.getString("/data/0/liqPx", jsonNode));
+    }
+
+    public List<InstrumentInfo> listInstrumentInfo(String instType, String instFamily) throws IOException {
+        String requestPath = "/api/v5/public/instruments?instType=" + instType;
+        if (StringUtils.isNotBlank(instFamily)) {
+            requestPath += "&instFamily=" + instFamily;
+        }
+        String response = HttpClientUtil.get(host + requestPath, null, "获取交易产品基础信息");
+
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response, host + requestPath, null);
+
+        return JsonUtil.getEntityList("/data", jsonNode, InstrumentInfo.class);
     }
 
     private static Map<String, String> getGetAuthHeaders(String requestPath) {

@@ -1,11 +1,14 @@
 package com.wealth.fly.core;
 
+import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.exchanger.OkexExchanger;
+import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.Order;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author : lisong
@@ -22,12 +25,12 @@ public class OKExchangerTest {
 
     @Test
     public void testGetOrder() throws IOException {
-        System.out.println(exchanger.getOrder("ETH-USD-230630", "571015379842478080"));
+        System.out.println(exchanger.getOrder("ETH-USD-230630", "583658033688322050"));
     }
 
     @Test
     public void testGetAlgoOrder() throws IOException {
-        System.out.println(exchanger.getAlgoOrder("571087136158887936"));
+        System.out.println(exchanger.getAlgoOrder("583643121104691203"));
     }
 
     @Test
@@ -64,5 +67,11 @@ public class OKExchangerTest {
                 .build();
         String orderId = exchanger.createOrder(order);
         System.out.println("订单id》》》》》" + orderId);
+    }
+
+    @Test
+    public void listInstrumentInfo() throws IOException {
+        List<InstrumentInfo> instrumentInfoList = exchanger.listInstrumentInfo("OPTION", "ETH-USD");
+        System.out.println(JsonUtil.toJSONString(instrumentInfoList));
     }
 }

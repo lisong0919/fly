@@ -1,10 +1,12 @@
 package com.wealth.fly.core.fetcher;
 
+import com.wealth.fly.core.config.IConfig;
 import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.listener.MarkPriceListener;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -28,8 +30,18 @@ public class MarkPriceFetcher {
     @Value("${grid.inst.id}")
     private String instId;
 
+    @Resource
+    private IConfig configer;
+
     @PostConstruct
     public void init() {
+        List<Integer> strategiesList = configer.getActiveGridStrategies();
+        if (CollectionUtils.isEmpty(strategiesList)) {
+            log.info("无激活网格策略");
+            return;
+        }
+
+
         Timer timer = new Timer();
 
         timer.scheduleAtFixedRate(new TimerTask() {

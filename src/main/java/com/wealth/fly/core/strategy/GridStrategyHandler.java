@@ -1,5 +1,6 @@
 package com.wealth.fly.core.strategy;
 
+import com.wealth.fly.core.config.IConfig;
 import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
@@ -28,7 +29,6 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,6 +58,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Value("${grid.default.strategy}")
     private Integer gridStrategy;
+
+    @Resource
+    private IConfig iConfig;
 
     private volatile boolean createOrderLock = false;
 
