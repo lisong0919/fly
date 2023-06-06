@@ -1,5 +1,6 @@
 package com.wealth.fly.core;
 
+import com.wealth.fly.common.HttpClientUtil;
 import com.wealth.fly.core.exchanger.OkexExchanger;
 import com.wealth.fly.core.model.Order;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,5 +65,10 @@ public class OKExchangerTest {
                 .build();
         String orderId = exchanger.createOrder(order);
         System.out.println("订单id》》》》》" + orderId);
+    }
+
+    @Test
+    public void getFundingRate() throws IOException {
+        String responseStr= HttpClientUtil.get("https://www.okx.com/api/v5/public/funding-rate-history?instId=ETH-USDT-SWAP");
     }
 }

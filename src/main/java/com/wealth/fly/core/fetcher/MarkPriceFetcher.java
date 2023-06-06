@@ -36,7 +36,7 @@ public class MarkPriceFetcher {
             @Override
             public void run() {
                 if (Monitor.stopAll) {
-                    log.info(">>>>> stopAll");
+                    log.debug(">>>>> stopAll");
                     return;
                 }
                 //TODO 动态算
@@ -56,7 +56,7 @@ public class MarkPriceFetcher {
                 }
                 Monitor.markPriceLastFetchTime = new Date();
             }
-        }, 3000L, 3000L);
+        }, 6000L, 6000L);
 
         log.info("init mark price data fetcher timer finished.");
     }

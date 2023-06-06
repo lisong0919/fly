@@ -49,10 +49,6 @@ public class GridStatusFetcher {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (Monitor.stopAll) {
-                    log.info(">>>>> stopAll");
-                    return;
-                }
                 try {
                     detectActiveGrid();
                 } catch (Exception e) {
@@ -70,7 +66,7 @@ public class GridStatusFetcher {
                 cancelUnnecessaryGrids();
 
             }
-        }, 3000L, 3000L);
+        }, 5000L, 5000L);
 
         log.info("init mark price data fetcher timer finished.");
     }
@@ -123,6 +119,10 @@ public class GridStatusFetcher {
                 for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
                     statusChangeListener.onFinished(grid, algoOrder, sellOrder);
                 }
+            }
+        } else if (OkexAlgoOrderState.CANCELED.equals(algoOrder.getState())) {
+            for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
+                statusChangeListener.onCancel(grid);
             }
         } else {
             //TODO告警
@@ -220,7 +220,8 @@ public class GridStatusFetcher {
                     log.error("[{}-{}-{}]发现比buyPrice比市价高的网格仍然pending", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     continue;
                 }
-                if (grid.getId().intValue() != maxPriceGrid.getId().intValue()) {
+                if (grid.getId().intValue() != maxPriceGrid.getId().intValue() ||
+                        new BigDecimal(grid.getSellPrice()).compareTo(markPrice) < 0) {
                     cancelPendingGrid(grid);
                 }
             } catch (Exception e) {

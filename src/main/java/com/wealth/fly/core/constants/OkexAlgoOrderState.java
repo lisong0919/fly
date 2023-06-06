@@ -18,5 +18,6 @@ public class OkexAlgoOrderState {
     public static final String LIVE = "live";
     public static final String EFFECTIVE = "effective";
     public static final String PARTIALLY_EFFECTIVE = "partially_effective";
+    public static final String CANCELED="canceled";
     
 }
