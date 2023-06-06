@@ -128,7 +128,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 try {
                     orderId = exchanger.createOrder(order);
                 } catch (InsufficientBalanceException e) {
-                    log.info("[{}-{}-{}]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                    log.debug("[{}-{}-{}]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     return;
                 } catch (Exception e) {
                     log.error("下单出错 " + e.getMessage(), e);

@@ -1,6 +1,7 @@
 package com.wealth.fly.core;
 
 import com.wealth.fly.common.JsonUtil;
+import com.wealth.fly.common.HttpClientUtil;
 import com.wealth.fly.core.exchanger.OkexExchanger;
 import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.Order;
@@ -73,5 +74,10 @@ public class OKExchangerTest {
     public void listInstrumentInfo() throws IOException {
         List<InstrumentInfo> instrumentInfoList = exchanger.listInstrumentInfo("OPTION", "ETH-USD");
         System.out.println(JsonUtil.toJSONString(instrumentInfoList));
+    }
+
+    @Test
+    public void getFundingRate() throws IOException {
+        String responseStr= HttpClientUtil.get("https://www.okx.com/api/v5/public/funding-rate-history?instId=ETH-USDT-SWAP");
     }
 }

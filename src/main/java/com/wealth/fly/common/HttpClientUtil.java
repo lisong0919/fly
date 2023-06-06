@@ -2,7 +2,6 @@ package com.wealth.fly.common;
 
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,6 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
@@ -177,7 +175,7 @@ public class HttpClientUtil {
                         connMgr.closeExpiredConnections();
                         // Optionally, close connections
                         // that have been idle longer than 300  sec
-                        connMgr.closeIdleConnections(300, TimeUnit.SECONDS);
+                        connMgr.closeIdleConnections(3000, TimeUnit.SECONDS);
                     }
                 }
             } catch (InterruptedException ex) {
