@@ -220,8 +220,9 @@ public class GridStatusFetcher {
                     log.error("[{}-{}-{}]发现比buyPrice比市价高的网格仍然pending", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     continue;
                 }
-                if (grid.getId().intValue() != maxPriceGrid.getId().intValue() ||
-                        new BigDecimal(grid.getSellPrice()).compareTo(markPrice) < 0) {
+                if (grid.getId().intValue() != maxPriceGrid.getId().intValue()
+//                        || new BigDecimal(grid.getSellPrice()).compareTo(markPrice) < 0
+                ) {
                     cancelPendingGrid(grid);
                 }
             } catch (Exception e) {
