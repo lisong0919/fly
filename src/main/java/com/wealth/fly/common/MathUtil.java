@@ -38,4 +38,18 @@ public class MathUtil {
         double k = 2 / (numberOfDays + 1);
         return todaysPrice * k + EMAYesterday * (1 - k);
     }
+
+    public static void main(String[] args) {
+        double ema12 = MathUtil.calculateEMA(1847.88, 12, 1850.09);
+        double ema26 = MathUtil.calculateEMA(1847.88, 26, 1849.68);
+        double diff = MathUtil.caculateDIF(ema12, ema26);
+        double dea9 = MathUtil.caculateDEA(-1.7500000000, diff);
+
+        BigDecimal macd = new BigDecimal(MathUtil.caculateMACD(diff, dea9));
+
+        System.out.println("ema12:" + ema12);
+        System.out.println("ema26:" + ema26);
+        System.out.println("macd:" + macd);
+
+    }
 }

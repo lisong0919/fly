@@ -85,7 +85,7 @@ public class StrategyHandler implements KLineListener {
 
         LOGGER.info("init strategy from strategy.json finished, strategy list is {}", strategyList);
 
-        klineDataFetcher.registerKLineListener(this);
+//        klineDataFetcher.registerKLineListener(this);
     }
 
     @Override

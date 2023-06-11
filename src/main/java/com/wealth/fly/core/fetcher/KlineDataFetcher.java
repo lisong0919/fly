@@ -1,24 +1,25 @@
 package com.wealth.fly.core.fetcher;
 
 import com.wealth.fly.common.DateUtil;
-import com.wealth.fly.core.MAHandler;
+import com.wealth.fly.core.MACDHandler;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 
-import java.math.BigDecimal;
+
 import java.util.*;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import com.wealth.fly.core.listener.KLineListener;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-//@Component
+@Component
 public class KlineDataFetcher {
 
     @Resource
@@ -26,7 +27,8 @@ public class KlineDataFetcher {
     @Resource
     private Exchanger exchanger;
     @Resource
-    private MAHandler maHandler;
+    private MACDHandler macdHandler;
+
     private List<KLineListener> kLineListenerList = new ArrayList<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KlineDataFetcher.class);
@@ -34,7 +36,7 @@ public class KlineDataFetcher {
 
     @PostConstruct
     public void init() {
-//        starKlineFetchTimer();
+        starKlineFetchTimer();
     }
 
     public void registerKLineListener(KLineListener listener) {
@@ -54,7 +56,9 @@ public class KlineDataFetcher {
             @Override
             public void run() {
 
-                for (DataGranularity dataGranularity : DataGranularity.values()) {
+                List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
+
+                for (DataGranularity dataGranularity : granularities) {
                     try {
                         fetch(dataGranularity);
                     } catch (Exception e) {
@@ -62,7 +66,6 @@ public class KlineDataFetcher {
                         continue;
                     }
                 }
-
             }
         }, 10000L, 60000L);
 
@@ -94,24 +97,31 @@ public class KlineDataFetcher {
 
         //取数据的起始时间未设置的情况下，取回所有能取的数据
         List<KLine> kLineList = exchanger
-                .getKlineData("BTC-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
+                .getKlineData("ETH-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
 
         LOGGER.info("[{}] fetch kline data from exchanger success.", dataGranularity);
+
+        if (CollectionUtils.isNotEmpty(kLineList)) {
+            kLineList.sort((o1, o2) -> {
+                if (o1.getDataTime().equals(o2.getDataTime())) {
+                    return 0;
+                }
+                return o1.getDataTime() - o2.getDataTime() > 0 ? 1 : -1;
+            });
+        }
+
         boolean isDBEmpty = lastKLines == null || lastKLines.isEmpty();
         for (KLine kLine : kLineList) {
             kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
             kLine.setCurrencyId(1);
 
-            if(!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()){
-                notifyKLineListenerNewLine(kLine);
+            if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                macdHandler.setMACD(kLine);
+                kLineDao.insert(kLine);
             }
 
-            if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                kLine.setDea9(new BigDecimal(1));
-                kLine.setEma12(new BigDecimal(1));
-                kLine.setEma26(new BigDecimal(1));
-
-                kLineDao.insert(kLine);
+            if (!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                notifyKLineListenerNewLine(kLine);
             }
         }
         LOGGER.info("[{}] save kline data to db success,", dataGranularity);

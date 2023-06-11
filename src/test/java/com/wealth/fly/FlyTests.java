@@ -109,11 +109,11 @@ class FlyTests {
     @Test
     public void fillMACD() throws ParseException {
 
-        String min = "20200530234000";
+        String min = "20230609010000";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-        KLine prevKLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), 20200530233500L);
-        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
+        KLine prevKLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), 20230609000000L);
+        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), Long.parseLong(min));
 
         while (true) {
             //计算macd并设置
@@ -131,7 +131,7 @@ class FlyTests {
             prevKLine = kLine;
             Date date = DateUtils.addMinutes(simpleDateFormat.parse(min), 5);
             min = simpleDateFormat.format(date);
-            kLine = kLineDao.getKlineByDataTime(DataGranularity.FIVE_MINUTES.name(), Long.parseLong(min));
+            kLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), Long.parseLong(min));
             System.out.println(">>>>>>>>>" + min);
             if (kLine == null) {
                 System.out.println("not found" + min);

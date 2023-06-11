@@ -1,5 +1,6 @@
 package com.wealth.fly.core.exchanger;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,6 +13,7 @@ import com.wealth.fly.core.entity.KLine;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -39,35 +41,43 @@ public class OkexExchanger implements Exchanger {
     @Value("${okex.host}")
     private String host;
 
-    private final String KLINE_PATH = "/api/swap/v3/instruments";
+    private final String KLINE_PATH = "/api/v5/market/candles";
     private final String MARK_PRICE_PATH = "/api/v5/public/mark-price";
     private final String CREATE_ORDER_PATH = "/api/v5/trade/order";
     private final String GET_SINGLE_ORDER_PATH = "/api/v5/trade/order";
 
-    public List<KLine> getKlineData(String currency, Date startTime, Date endTime,
+    public List<KLine> getKlineData(String instId, Date startTime, Date endTime,
                                     DataGranularity dataGranularity) {
         try {
             String url =
-                    host + KLINE_PATH + "/" + currency + "/candles?granularity=" + dataGranularity
-                            .getSeconds();
+                    host + KLINE_PATH + "?instId=" + instId + "&bar=" + dataGranularity.getKey()+"&limit=300";
 
             if (startTime != null) {
-                url += "&start=" + transferTimeToOkexStandard(startTime);
+                url += "&before=" + (startTime.getTime() - 1);
             }
             if (endTime != null) {
-                url += "&end=" + transferTimeToOkexStandard(endTime);
+                url += "&after=" + (endTime.getTime() + 1);
             }
-            String jsonResponse = com.wealth.fly.common.HttpClientUtil.get(url);
+            String jsonResponse = HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
                 throw new RuntimeException("获取k线数据失败");
             }
-            JSONArray jsonArray = JSONObject.parseArray(jsonResponse);
+
             List<KLine> kLineList = new ArrayList<>();
+            JsonNode jsonNode = JsonUtil.readValue(jsonResponse);
+            checkCode(jsonNode, jsonResponse, url, null);
+
+            JSONObject jsonObject = JSON.parseObject(jsonResponse);
+            JSONArray jsonArray = jsonObject.getJSONArray("data");
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONArray data = (JSONArray) jsonArray.get(i);
-                Long dateTime = new Long(transferTimeToSystemStandard((String) data.get(0)));
+
+                if ("0".equals(data.get(8).toString())) {
+                    continue;
+                }
 
                 KLine kLine = new KLine();
+                Long dateTime = new Long(transferTimeToSystemStandard((String) data.get(0)));
                 kLine.setDataTime(dateTime);
                 kLine.setOpen(new BigDecimal((String) data.get(1)));
                 kLine.setHigh(new BigDecimal((String) data.get(2)));
@@ -83,7 +93,6 @@ public class OkexExchanger implements Exchanger {
             log.error(e.getMessage(), e);
             throw new RuntimeException("获取k线数据失败");
         }
-
     }
 
     @Override
@@ -248,15 +257,8 @@ public class OkexExchanger implements Exchanger {
         }
     }
 
-    private static String transferTimeToSystemStandard(String time) {
-        Date date = null;
-        try {
-            date = new SimpleDateFormat(CommonConstants.OK_DATE_FORMAT).parse(time);
-        } catch (ParseException e) {
-            log.error(e.getMessage(), e);
-        }
-        date = DateUtils.addHours(date, 8);
-        return new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(date);
+    private static String transferTimeToSystemStandard(String timeStamp) {
+        return new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(new Date(Long.parseLong(timeStamp)));
     }
 
     private static String transferTimeToOkexStandard(Date time) {

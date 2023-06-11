@@ -1,12 +1,19 @@
 package com.wealth.fly.core;
 
 import com.wealth.fly.common.HttpClientUtil;
+import com.wealth.fly.common.JsonUtil;
+import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.OkexExchanger;
 import com.wealth.fly.core.model.Order;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author : lisong
@@ -69,6 +76,17 @@ public class OKExchangerTest {
 
     @Test
     public void getFundingRate() throws IOException {
-        String responseStr= HttpClientUtil.get("https://www.okx.com/api/v5/public/funding-rate-history?instId=ETH-USDT-SWAP");
+        String responseStr = HttpClientUtil.get("https://www.okx.com/api/v5/public/funding-rate-history?instId=ETH-USDT-SWAP");
+    }
+
+    @Test
+    public void testGetKLineData() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date startTime = sdf.parse("2023-06-09 00:00:00");
+        Date endTime = sdf.parse("2023-06-09 02:00:00");
+
+
+        List<KLine> kLineList = exchanger.getKlineData("ETH-USDT-SWAP", startTime, endTime, DataGranularity.FOUR_HOUR);
+        System.out.println(JsonUtil.toJSONString(kLineList));
     }
 }

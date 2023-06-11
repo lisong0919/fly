@@ -18,6 +18,18 @@ public class DateUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
 
 
+    public static Long getPreKLineDataTime(long time, DataGranularity dataGranularity) {
+        Date date = null;
+        try {
+            date = DateUtils.parseDate(String.valueOf(time), CommonConstants.SYSTEM_DATE_FORMAT);
+        } catch (ParseException e) {
+            LOGGER.error(e.getMessage(), e);
+            return null;
+        }
+        Date preDate = DateUtils.addSeconds(date, -dataGranularity.getSeconds());
+        return Long.valueOf(new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT).format(preDate));
+    }
+
     public static Date parseStandardTime(long time) {
         try {
             Date result = DateUtils.parseDate(String.valueOf(time), CommonConstants.SYSTEM_DATE_FORMAT);
