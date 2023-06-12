@@ -1,11 +1,16 @@
 package com.wealth.fly.api.controller;
 
+import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.Monitor;
+import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.dao.GridLogDao;
+import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridLog;
+import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -17,10 +22,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,6 +33,8 @@ public class TestController {
     private GridLogDao gridLogDao;
     @Resource
     private GridDao gridDao;
+    @Resource
+    private KLineDao kLineDao;
     @Resource
     private Exchanger exchanger;
 
@@ -70,17 +74,22 @@ public class TestController {
         List<Grid> activeGridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), 1);
 
         List<Grid> waitingList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice), 10);
-        List<Grid> idleGridList = null;
+        List<Grid> pendingGridList = null;
         if (!CollectionUtils.isEmpty(waitingList)) {
-            idleGridList = waitingList.stream()
-                    .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
+            pendingGridList = waitingList.stream()
+                    .filter(g -> g.getStatus() == GridStatus.PENDING.getCode().intValue())
                     .collect(Collectors.toList());
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("markPrice>>>>").append(markPrice).append("<br/>");
         sb.append("最近止盈点>>>>").append(CollectionUtils.isEmpty(activeGridList) ? "无" : activeGridList.get(0).getSellPrice()).append("<br/>");
-        sb.append("最近挂单点>>>>").append(CollectionUtils.isEmpty(idleGridList) ? "无" : idleGridList.get(0).getBuyPrice()).append("<br/>");
+        sb.append("最近激活点>>>>").append(CollectionUtils.isEmpty(pendingGridList) ? "无" : pendingGridList.get(0).getBuyPrice()).append("<br/>");
+
+        Date now = new Date();
+        printMacd(now, DataGranularity.FIFTEEN_MINUTES, sb);
+        printMacd(now, DataGranularity.ONE_HOUR, sb);
+
         sb.append("强平风控>>>>").append(minForceClosePrice).append("<br/>");
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
@@ -89,7 +98,13 @@ public class TestController {
         List<GridLog> gridLogs = gridLogDao.listRecentLogs(20);
         if (gridLogs != null) {
             for (GridLog gridLog : gridLogs) {
+                if (gridLog.getType() == GridLogType.GRID_FINISHED_PROFIT.getCode()) {
+                    sb.append("<font color=\"red\">");
+                }
                 sb.append(sdf.format(gridLog.getCreatedAt()) + ">>>>" + gridLog.getMessage() + "<br/>");
+                if (gridLog.getType() == GridLogType.GRID_FINISHED_PROFIT.getCode()) {
+                    sb.append("</font>");
+                }
             }
         }
 
@@ -109,6 +124,17 @@ public class TestController {
         }
 
         return sb.toString();
+    }
+
+
+    private void printMacd(Date now, DataGranularity dataGranularity, StringBuilder sb) {
+        Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
+        Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
+
+        KLine prePreKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
+        KLine preKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+
+        sb.append("macd >>>" + dataGranularity.name() + " " + (prePreKLine == null ? "" : prePreKLine.getMacd()) + "---" + (preKLine == null ? "" : preKLine.getMacd()));
     }
 
 

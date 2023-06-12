@@ -9,18 +9,20 @@ import com.wealth.fly.core.exchanger.Exchanger;
 
 
 import java.util.*;
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import com.wealth.fly.core.listener.KLineListener;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.stereotype.Component;
 
 @Component
-public class KlineDataFetcher {
+@Slf4j
+public class KlineDataFetcher implements Job {
 
     @Resource
     private KLineDao kLineDao;
@@ -31,13 +33,6 @@ public class KlineDataFetcher {
 
     private List<KLineListener> kLineListenerList = new ArrayList<>();
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KlineDataFetcher.class);
-
-
-    @PostConstruct
-    public void init() {
-        starKlineFetchTimer();
-    }
 
     public void registerKLineListener(KLineListener listener) {
         kLineListenerList.add(listener);
@@ -50,28 +45,6 @@ public class KlineDataFetcher {
     }
 
 
-    private void starKlineFetchTimer() {
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-
-                List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
-
-                for (DataGranularity dataGranularity : granularities) {
-                    try {
-                        fetch(dataGranularity);
-                    } catch (Exception e) {
-                        LOGGER.error(e.getMessage(), e);
-                        continue;
-                    }
-                }
-            }
-        }, 10000L, 60000L);
-
-        LOGGER.info("init data fetcher timer finished.");
-    }
-
     private void fetch(DataGranularity dataGranularity) {
         List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
 
@@ -80,26 +53,27 @@ public class KlineDataFetcher {
 
         if (lastKLines != null && lastKLines.size() > 0) {
             Date now = Calendar.getInstance(Locale.CHINA).getTime();
-            Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
+//            Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
 
-            Date[] timeRange = getDateFetchRang(lastLineDate, now, dataGranularity);
+            Date[] timeRange = getDateFetchRang(lastKLines.get(0).getDataTime(), now, dataGranularity);
             //最后一条数据的时间，距离当前时间，是否超过数据粒度对应的时间间隔
             if (timeRange != null) {
                 fetchMinTime = timeRange[0];
                 fetchMaxTime = timeRange[1];
             } else {
-                LOGGER.debug("[{}] data is uptodate", dataGranularity);
+                log.info("[{}] data is uptodate", dataGranularity);
                 return;
             }
         } else {
-            LOGGER.info("[{}] no data in db,fetch all.", dataGranularity);
+            log.info("[{}] no data in db,fetch all.", dataGranularity);
         }
 
+        log.info("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
         //取数据的起始时间未设置的情况下，取回所有能取的数据
         List<KLine> kLineList = exchanger
                 .getKlineData("ETH-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
 
-        LOGGER.info("[{}] fetch kline data from exchanger success.", dataGranularity);
+        log.info("[{}] fetch kline data from exchanger success.", dataGranularity);
 
         if (CollectionUtils.isNotEmpty(kLineList)) {
             kLineList.sort((o1, o2) -> {
@@ -124,7 +98,20 @@ public class KlineDataFetcher {
                 notifyKLineListenerNewLine(kLine);
             }
         }
-        LOGGER.info("[{}] save kline data to db success,", dataGranularity);
+        log.info("[{}] save kline data to db success,", dataGranularity);
+    }
+
+    protected Date[] getDateFetchRang(Long lastLineTime, Date now, DataGranularity dataGranularity) {
+        Date[] result = new Date[2];
+
+        result[0] = DateUtils.addSeconds(DateUtil.parseStandardTime(lastLineTime), 1);
+        result[1] = now;
+
+        //不到最新数据的形成时间
+        if (result[1].getTime() - result[0].getTime() < 0) {
+            return null;
+        }
+        return result;
     }
 
 
@@ -156,5 +143,21 @@ public class KlineDataFetcher {
         return result;
     }
 
+    @Override
+    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+        fetchAll();
+    }
 
+    private void fetchAll() {
+        List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
+
+        for (DataGranularity dataGranularity : granularities) {
+            try {
+                fetch(dataGranularity);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                continue;
+            }
+        }
+    }
 }

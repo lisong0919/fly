@@ -21,6 +21,7 @@ import java.util.*;
 import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
+import com.wealth.fly.core.model.AccountPosition;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 import lombok.Setter;
@@ -31,6 +32,7 @@ import org.apache.commons.codec.digest.HmacUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -50,13 +52,13 @@ public class OkexExchanger implements Exchanger {
                                     DataGranularity dataGranularity) {
         try {
             String url =
-                    host + KLINE_PATH + "?instId=" + instId + "&bar=" + dataGranularity.getKey()+"&limit=300";
+                    host + KLINE_PATH + "?instId=" + instId + "&bar=" + dataGranularity.getKey() + "&limit=300";
 
             if (startTime != null) {
-                url += "&before=" + (startTime.getTime() - 1);
+                url += "&before=" + startTime.getTime();
             }
             if (endTime != null) {
-                url += "&after=" + (endTime.getTime() + 1);
+                url += "&after=" + endTime.getTime();
             }
             String jsonResponse = HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
@@ -200,8 +202,20 @@ public class OkexExchanger implements Exchanger {
 
         JsonNode jsonNode = JsonUtil.readValue(response);
         checkCode(jsonNode, response, host + requestPath, null);
-        //TODO 无仓位时会报错
-        return new BigDecimal(JsonUtil.getString("/data/0/liqPx", jsonNode));
+
+        List<AccountPosition> accountPositions = JsonUtil.getEntityList("/data", jsonNode, AccountPosition.class);
+
+        if (CollectionUtils.isEmpty(accountPositions)) {
+            return new BigDecimal("0");
+        }
+
+        for (AccountPosition accountPosition : accountPositions) {
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(accountPosition.getLiqPx()) && accountPosition.getPos() > 0) {
+                return new BigDecimal(accountPosition.getLiqPx());
+            }
+        }
+
+        return null;
     }
 
     private static Map<String, String> getGetAuthHeaders(String requestPath) {

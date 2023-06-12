@@ -1,13 +1,17 @@
 package com.wealth.fly.core.strategy;
 
+import com.wealth.fly.common.DateUtil;
+import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.dao.GridHistoryDao;
 import com.wealth.fly.core.dao.GridLogDao;
+import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridHistory;
 import com.wealth.fly.core.entity.GridLog;
+import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.exchanger.Exchanger;
@@ -28,7 +32,6 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +53,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     private GridHistoryDao gridHistoryDao;
     @Resource
     private GridLogDao gridLogDao;
+    @Resource
+    private KLineDao kLineDao;
+
     @Resource
     private Exchanger exchanger;
 
@@ -81,6 +87,10 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             return;
         }
 
+        if (!isMACDFilterPass()) {
+            return;
+        }
+
         try {
             if (createOrderLock) {
                 log.info("下单加锁失败，有任务正在下单");
@@ -91,6 +101,33 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         } finally {
             createOrderLock = false;
         }
+    }
+
+    private boolean isMACDFilterPass() {
+        Date now = new Date();
+        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES) && isMACDFilterPass(now, DataGranularity.ONE_HOUR);
+    }
+
+    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity) {
+        Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
+        Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
+
+        KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
+        KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+        if (preKline == null) {
+            log.info("k线不存在，macd滤网不通过 {}", preDataTime);
+            return false;
+        }
+        if (prePreKline == null) {
+            log.info("k线不存在，macd滤网不通过 {}", prePreDataTime);
+            return false;
+        }
+
+        if (preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
+            log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
+            return false;
+        }
+        return true;
     }
 
     private void createOrder(MarkPrice markPrice) {
