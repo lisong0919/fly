@@ -18,11 +18,12 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class KlineDataFetcher implements Job {
+public class KlineDataFetcher extends QuartzJobBean {
 
     @Resource
     private KLineDao kLineDao;
@@ -61,19 +62,19 @@ public class KlineDataFetcher implements Job {
                 fetchMinTime = timeRange[0];
                 fetchMaxTime = timeRange[1];
             } else {
-                log.info("[{}] data is uptodate", dataGranularity);
+                log.debug("[{}] data is uptodate", dataGranularity);
                 return;
             }
         } else {
             log.info("[{}] no data in db,fetch all.", dataGranularity);
         }
 
-        log.info("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
+        log.debug("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
         //取数据的起始时间未设置的情况下，取回所有能取的数据
         List<KLine> kLineList = exchanger
                 .getKlineData("ETH-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
 
-        log.info("[{}] fetch kline data from exchanger success.", dataGranularity);
+        log.debug("[{}] fetch kline data from exchanger success.", dataGranularity);
 
         if (CollectionUtils.isNotEmpty(kLineList)) {
             kLineList.sort((o1, o2) -> {
@@ -98,7 +99,9 @@ public class KlineDataFetcher implements Job {
                 notifyKLineListenerNewLine(kLine);
             }
         }
-        log.info("[{}] save kline data to db success,", dataGranularity);
+        if (CollectionUtils.isNotEmpty(kLineList)) {
+            log.info("[{}] save kline data to db success,", dataGranularity);
+        }
     }
 
     protected Date[] getDateFetchRang(Long lastLineTime, Date now, DataGranularity dataGranularity) {
@@ -144,7 +147,7 @@ public class KlineDataFetcher implements Job {
     }
 
     @Override
-    public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         fetchAll();
     }
 

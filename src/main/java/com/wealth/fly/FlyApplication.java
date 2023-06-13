@@ -18,23 +18,23 @@ public class FlyApplication {
         SpringApplication.run(FlyApplication.class, args);
     }
 
-    @Bean
-    public SimpleTriggerFactoryBean createSimpleTriggerFactoryBean(JobDetail jobDetail) {
-        SimpleTriggerFactoryBean simpleTriggerFactory
-                = new SimpleTriggerFactoryBean();
-
-        simpleTriggerFactory.setJobDetail(jobDetail);
-        simpleTriggerFactory.setStartDelay(2000);
-        simpleTriggerFactory.setRepeatInterval(30000);
-        return simpleTriggerFactory;
-    }
-
-    @Bean
-    public JobDetailFactoryBean createJobDetailFactoryBean() {
-        JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
-        jobDetailFactory.setJobClass(KlineDataFetcher.class);
-        jobDetailFactory.setDurability(true);
-        return jobDetailFactory;
-    }
+//    @Bean
+//    public SimpleTriggerFactoryBean createSimpleTriggerFactoryBean(JobDetail jobDetail) {
+//        SimpleTriggerFactoryBean simpleTriggerFactory
+//                = new SimpleTriggerFactoryBean();
+//
+//        simpleTriggerFactory.setJobDetail(jobDetail);
+//        simpleTriggerFactory.setStartDelay(2000);
+//        simpleTriggerFactory.setRepeatInterval(30000);
+//        return simpleTriggerFactory;
+//    }
+//
+//    @Bean
+//    public JobDetailFactoryBean createJobDetailFactoryBean() {
+//        JobDetailFactoryBean jobDetailFactory = new JobDetailFactoryBean();
+//        jobDetailFactory.setJobClass(KlineDataFetcher.class);
+//        jobDetailFactory.setDurability(true);
+//        return jobDetailFactory;
+//    }
 
 }

@@ -12,12 +12,14 @@ import com.wealth.fly.core.listener.GridStatusChangeListener;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,7 +31,7 @@ import java.util.*;
  */
 @Component
 @Slf4j
-public class GridStatusFetcher {
+public class GridStatusFetcher extends QuartzJobBean {
     @Resource
     private Exchanger exchanger;
     @Resource
@@ -43,34 +45,24 @@ public class GridStatusFetcher {
 
     private final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
 
-    @PostConstruct
-    public void init() {
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    detectActiveGrid();
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
+        try {
+            detectActiveGrid();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
 
-                try {
-                    detectPendingGrid();
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                }
+        try {
+            detectPendingGrid();
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
 
-                Monitor.gridStatusLastFetchTime = new Date();
+        Monitor.gridStatusLastFetchTime = new Date();
 
-                cancelUnnecessaryGrids();
-
-            }
-        }, 5000L, 5000L);
-
-        log.info("init mark price data fetcher timer finished.");
+        cancelUnnecessaryGrids();
     }
-
 
     public void registerGridStatusChangeListener(GridStatusChangeListener listener) {
         statusChangeListeners.add(listener);
@@ -247,4 +239,6 @@ public class GridStatusFetcher {
             statusChangeListener.onCancel(grid);
         }
     }
+
+
 }
