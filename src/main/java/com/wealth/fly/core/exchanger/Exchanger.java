@@ -3,6 +3,7 @@ package com.wealth.fly.core.exchanger;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 
@@ -62,4 +63,14 @@ public interface Exchanger {
      * @throws Exception
      */
     BigDecimal getForceClosePrice(String instId) throws IOException;
+
+    /**
+     * 获取交易产品基础信息
+     *
+     * @param instType
+     * @param instFamily
+     * @return
+     * @throws IOException
+     */
+    List<InstrumentInfo> listInstrumentInfo(String instType, String instFamily) throws IOException;
 }

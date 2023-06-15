@@ -1,5 +1,6 @@
 package com.wealth.fly.core.strategy;
 
+import com.wealth.fly.core.config.IConfig;
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridLogType;
@@ -64,6 +65,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Value("${grid.default.strategy}")
     private Integer gridStrategy;
+
+    @Resource
+    private IConfig iConfig;
 
     private volatile boolean createOrderLock = false;
 

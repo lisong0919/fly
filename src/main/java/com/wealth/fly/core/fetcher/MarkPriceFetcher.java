@@ -1,5 +1,6 @@
 package com.wealth.fly.core.fetcher;
 
+import com.wealth.fly.core.config.IConfig;
 import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.exchanger.Exchanger;
@@ -7,6 +8,7 @@ import com.wealth.fly.core.listener.MarkPriceListener;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
