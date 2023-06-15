@@ -25,7 +25,7 @@ public class MarkPriceFetcher extends QuartzJobBean {
     @Resource
     private Exchanger exchanger;
 
-    private List<MarkPriceListener> markPriceListeners = new ArrayList<>();
+    private static List<MarkPriceListener> markPriceListeners = new ArrayList<>();
 
     @Value("${grid.inst.id}")
     private String instId;

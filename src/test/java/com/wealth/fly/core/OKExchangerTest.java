@@ -92,6 +92,6 @@ public class OKExchangerTest {
 
     @Test
     public void testGetForceClosePrice() throws IOException {
-        System.out.println(exchanger.getForceClosePrice("ETH-USD-230630"));
+        System.out.println(exchanger.getForceClosePrice("ETH-USD-230929"));
     }
 }

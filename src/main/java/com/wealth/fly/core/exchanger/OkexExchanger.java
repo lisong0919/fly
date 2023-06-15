@@ -228,13 +228,13 @@ public class OkexExchanger implements Exchanger {
 
     private static Map<String, String> getAuthHeaders(String method, String requestPath, String body) {
 
-        String secretKey = "BD6FD031EA04652E4F619C100F8306F9";
+        String secretKey = "4EA4B3F8D39EBBA03695C980232A957D";
         String timestamp = getUTCTimestamp();
 
         Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("OK-ACCESS-KEY", "9ca3987e-3f27-4ead-8924-77cccfe0d885");
+        authHeaders.put("OK-ACCESS-KEY", "0d62d81d-b736-4136-9b16-21a262e5a50b");
         authHeaders.put("OK-ACCESS-TIMESTAMP", timestamp);
-        authHeaders.put("OK-ACCESS-PASSPHRASE", "5aesyCcvph19ww*iQ98Je*PSHcH6Oi4");
+        authHeaders.put("OK-ACCESS-PASSPHRASE", "AiqGdD1fBYl981NbGv*TjWWLILINsn0y");
 
         String toSign = timestamp + method + requestPath + body;
 

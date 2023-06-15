@@ -1,5 +1,6 @@
 package com.wealth.fly.core.fetcher;
 
+import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.constants.OkexAlgoOrderState;
@@ -43,7 +44,7 @@ public class GridStatusFetcher extends QuartzJobBean {
     @Value("${grid.inst.id}")
     private String instId;
 
-    private final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
+    private static final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {

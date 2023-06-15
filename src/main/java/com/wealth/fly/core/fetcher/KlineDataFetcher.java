@@ -32,7 +32,7 @@ public class KlineDataFetcher extends QuartzJobBean {
     @Resource
     private MACDHandler macdHandler;
 
-    private List<KLineListener> kLineListenerList = new ArrayList<>();
+    private static List<KLineListener> kLineListenerList = new ArrayList<>();
 
 
     public void registerKLineListener(KLineListener listener) {
