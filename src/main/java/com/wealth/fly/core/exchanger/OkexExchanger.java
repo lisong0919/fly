@@ -13,41 +13,36 @@ import com.wealth.fly.core.entity.KLine;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
-import com.wealth.fly.core.model.AccountPosition;
-import com.wealth.fly.core.model.InstrumentInfo;
-import com.wealth.fly.core.model.MarkPrice;
-import com.wealth.fly.core.model.Order;
-import lombok.Setter;
+import com.wealth.fly.core.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-@Service
 @Slf4j
 public class OkexExchanger implements Exchanger {
 
-    @Setter
-    @Value("${okex.host}")
-    private String host;
+    private static final String host = "https://www.okx.com";
+    private static final String KLINE_PATH = "/api/v5/market/candles";
+    private static final String MARK_PRICE_PATH = "/api/v5/public/mark-price";
+    private static final String CREATE_ORDER_PATH = "/api/v5/trade/order";
+    private static final String GET_SINGLE_ORDER_PATH = "/api/v5/trade/order";
 
-    private final String KLINE_PATH = "/api/v5/market/candles";
-    private final String MARK_PRICE_PATH = "/api/v5/public/mark-price";
-    private final String CREATE_ORDER_PATH = "/api/v5/trade/order";
-    private final String GET_SINGLE_ORDER_PATH = "/api/v5/trade/order";
+
+    private Account account;
+
+    public OkexExchanger(Account account) {
+        this.account = account;
+    }
 
     public List<KLine> getKlineData(String instId, Date startTime, Date endTime,
                                     DataGranularity dataGranularity) {
@@ -232,7 +227,7 @@ public class OkexExchanger implements Exchanger {
         return JsonUtil.getEntityList("/data", jsonNode, InstrumentInfo.class);
     }
 
-    private static Map<String, String> getGetAuthHeaders(String requestPath) {
+    private Map<String, String> getGetAuthHeaders(String requestPath) {
         return getAuthHeaders("GET", requestPath, "");
     }
 
@@ -240,15 +235,15 @@ public class OkexExchanger implements Exchanger {
         return getAuthHeaders("POST", requestPath, body);
     }
 
-    private static Map<String, String> getAuthHeaders(String method, String requestPath, String body) {
+    private Map<String, String> getAuthHeaders(String method, String requestPath, String body) {
 
-        String secretKey = "4EA4B3F8D39EBBA03695C980232A957D";
+        String secretKey = account.getSecretKey();
         String timestamp = getUTCTimestamp();
 
         Map<String, String> authHeaders = new HashMap<>();
-        authHeaders.put("OK-ACCESS-KEY", "0d62d81d-b736-4136-9b16-21a262e5a50b");
+        authHeaders.put("OK-ACCESS-KEY", account.getAccessKey());
         authHeaders.put("OK-ACCESS-TIMESTAMP", timestamp);
-        authHeaders.put("OK-ACCESS-PASSPHRASE", "AiqGdD1fBYl981NbGv*TjWWLILINsn0y");
+        authHeaders.put("OK-ACCESS-PASSPHRASE", account.getPassphrase());
 
         String toSign = timestamp + method + requestPath + body;
 

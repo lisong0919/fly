@@ -21,6 +21,22 @@ public class QuartzConfig {
     }
 
     @Bean
+    public CronTriggerFactoryBean gridStatusFetcherTrigger() {
+        CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
+        trigger.setJobDetail(gridStatusFetcherJobDetail().getObject());
+        trigger.setCronExpression("*/5 * * * * ?");
+        return trigger;
+    }
+
+    @Bean
+    public CronTriggerFactoryBean markPriceFetcherTrigger() {
+        CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
+        trigger.setJobDetail(markPriceFetcherJobDetail().getObject());
+        trigger.setCronExpression("*/6 * * * * ?");
+        return trigger;
+    }
+
+    @Bean
     public JobDetailFactoryBean KlineDataFetcherJobDetail() {
         JobDetailFactoryBean jobDetail = new JobDetailFactoryBean();
         jobDetail.setJobClass(KlineDataFetcher.class);
@@ -29,13 +45,6 @@ public class QuartzConfig {
         return jobDetail;
     }
 
-    @Bean
-    public CronTriggerFactoryBean gridStatusFetcherTrigger() {
-        CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
-        trigger.setJobDetail(gridStatusFetcherJobDetail().getObject());
-        trigger.setCronExpression("*/5 * * * * ?");
-        return trigger;
-    }
 
     @Bean
     public JobDetailFactoryBean gridStatusFetcherJobDetail() {
@@ -46,14 +55,6 @@ public class QuartzConfig {
         return jobDetail;
     }
 
-
-    @Bean
-    public CronTriggerFactoryBean markPriceFetcherTrigger() {
-        CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
-        trigger.setJobDetail(markPriceFetcherJobDetail().getObject());
-        trigger.setCronExpression("*/6 * * * * ?");
-        return trigger;
-    }
 
     @Bean
     public JobDetailFactoryBean markPriceFetcherJobDetail() {

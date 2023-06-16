@@ -5,19 +5,21 @@ import com.wealth.fly.core.MACDHandler;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.exchanger.Exchanger;
 
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.annotation.Resource;
 
+import com.wealth.fly.core.exchanger.ExchangerManager;
 import com.wealth.fly.core.listener.KLineListener;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
 
@@ -28,9 +30,10 @@ public class KlineDataFetcher extends QuartzJobBean {
     @Resource
     private KLineDao kLineDao;
     @Resource
-    private Exchanger exchanger;
-    @Resource
     private MACDHandler macdHandler;
+
+    @Value("${okex.account.default}")
+    private String defaultAccount;
 
     private static List<KLineListener> kLineListenerList = new ArrayList<>();
 
@@ -46,7 +49,7 @@ public class KlineDataFetcher extends QuartzJobBean {
     }
 
 
-    private void fetch(DataGranularity dataGranularity) {
+    private void fetch(DataGranularity dataGranularity) throws ParseException {
         List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
 
         Date fetchMinTime = null;
@@ -71,7 +74,7 @@ public class KlineDataFetcher extends QuartzJobBean {
 
         log.debug("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
         //取数据的起始时间未设置的情况下，取回所有能取的数据
-        List<KLine> kLineList = exchanger
+        List<KLine> kLineList = ExchangerManager.getExchangerByAccountId(defaultAccount)
                 .getKlineData("ETH-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
 
         log.debug("[{}] fetch kline data from exchanger success.", dataGranularity);

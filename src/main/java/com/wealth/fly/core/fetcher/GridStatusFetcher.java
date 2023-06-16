@@ -1,7 +1,7 @@
 package com.wealth.fly.core.fetcher;
 
-import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.Monitor;
+import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.constants.OkexAlgoOrderState;
 import com.wealth.fly.core.constants.OkexOrderState;
@@ -9,7 +9,9 @@ import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exchanger.Exchanger;
+import com.wealth.fly.core.exchanger.ExchangerManager;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
+import com.wealth.fly.core.model.GridStrategy;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
@@ -34,35 +36,41 @@ import java.util.*;
 @Slf4j
 public class GridStatusFetcher extends QuartzJobBean {
     @Resource
-    private Exchanger exchanger;
-    @Resource
     private GridDao gridDao;
 
-    @Value("${grid.default.strategy}")
-    private Integer gridStrategy;
+    @Value("${okex.account.default}")
+    private String defaultAccount;
 
-    @Value("${grid.inst.id}")
-    private String instId;
+    @Resource
+    private ConfigService configService;
 
     private static final List<GridStatusChangeListener> statusChangeListeners = new ArrayList<>();
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        try {
-            detectActiveGrid();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
+        List<Integer> activeGridStrategies = configService.getActiveGridStrategies();
 
-        try {
-            detectPendingGrid();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
+        for (Integer activeGridStrategy : activeGridStrategies) {
+            try {
+                detectActiveGrid(activeGridStrategy);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                detectPendingGrid(activeGridStrategy);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+
+            try {
+                cancelUnnecessaryGrids(activeGridStrategy);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
 
         Monitor.gridStatusLastFetchTime = new Date();
-
-        cancelUnnecessaryGrids();
     }
 
     public void registerGridStatusChangeListener(GridStatusChangeListener listener) {
@@ -72,9 +80,9 @@ public class GridStatusFetcher extends QuartzJobBean {
     /**
      * 探测已激活网格是否已完成
      */
-    private void detectActiveGrid() {
+    private void detectActiveGrid(Integer strategyId) {
         //价格最低的几个未完成，价格高的肯定也是未完成
-        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), 3);
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), strategyId, 3);
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
@@ -96,6 +104,7 @@ public class GridStatusFetcher extends QuartzJobBean {
         Order algoOrder = null;
         Order sellOrder = null;
         try {
+            Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
             algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
             if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
                 sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
@@ -126,14 +135,15 @@ public class GridStatusFetcher extends QuartzJobBean {
     /**
      * 探测已挂单网格是否已激活或撤销
      */
-    private void detectPendingGrid() {
-        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), 100);
+    private void detectPendingGrid(Integer strategyId) {
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategyId, 100);
         if (CollectionUtils.isEmpty(gridList)) {
             return;
         }
 
         for (Grid grid : gridList) {
             Order order = null;
+            Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
             try {
                 order = exchanger.getOrder(grid.getInstId(), grid.getBuyOrderId());
             } catch (IOException e) {
@@ -151,22 +161,19 @@ public class GridStatusFetcher extends QuartzJobBean {
                 }
             }
         }
-
-        try {
-            cancelUnnecessaryGrids();
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-        }
     }
 
     /**
      * 价格低的挂单全部取消掉，只保留一个价格比市价低一级的挂单，其他全部取消掉，以避免占用仓位
      */
-    private void cancelUnnecessaryGrids() {
-        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), 100);
+    private void cancelUnnecessaryGrids(Integer strategyId) {
+        List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategyId, 100);
         BigDecimal markPrice = null;
+        Exchanger exchanger = ExchangerManager.getExchangerByAccountId(defaultAccount);
+
+        GridStrategy strategy = configService.getGridStrategy(strategyId);
         try {
-            MarkPrice markPriceObj = exchanger.getMarkPriceByInstId(instId);
+            MarkPrice markPriceObj = exchanger.getMarkPriceByInstId(strategy.getInstId());
             markPrice = new BigDecimal(markPriceObj.getMarkPx());
         } catch (IOException e) {
             log.error("调用查标记价格接口报错:" + e.getMessage(), e);
@@ -227,7 +234,8 @@ public class GridStatusFetcher extends QuartzJobBean {
 
     private void cancelPendingGrid(Grid grid) {
         try {
-            exchanger.cancelOrder(instId, grid.getBuyOrderId());
+            Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
+            exchanger.cancelOrder(grid.getInstId(), grid.getBuyOrderId());
         } catch (IOException e) {
             log.error("撤销订单出错 " + e.getMessage(), e);
             return;

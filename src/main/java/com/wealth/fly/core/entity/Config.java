@@ -15,7 +15,7 @@ public class Config {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    private String key;
+    private String configKey;
 
     private String value;
 

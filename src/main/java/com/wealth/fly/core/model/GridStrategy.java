@@ -11,7 +11,9 @@ import java.math.BigDecimal;
  */
 @Data
 public class GridStrategy {
+    private Integer Id;
     private String instId;
-    private BigDecimal minForceClosePrice;
-    private ExchangerEnum exchanger;
+    private String minForceClosePrice;
+    private String account;
+    private ExchangerEnum exchangerType;
 }

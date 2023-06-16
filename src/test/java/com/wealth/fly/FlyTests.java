@@ -1,6 +1,7 @@
 package com.wealth.fly;
 
 import com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean;
+import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.common.MathUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
@@ -110,10 +111,12 @@ class FlyTests {
     public void fillMACD() throws ParseException {
 
         String min = "20230609010000";
+        DataGranularity dataGranularity = DataGranularity.FIFTEEN_MINUTES;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-        KLine prevKLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), 20230609000000L);
-        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), Long.parseLong(min));
+        Long preKlineDataTime = DateUtil.getPreKLineDataTime(Long.parseLong(min), dataGranularity);
+        KLine prevKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), preKlineDataTime);
+        KLine kLine = kLineDao.getKlineByDataTime(dataGranularity.name(), Long.parseLong(min));
 
         while (true) {
             //计算macd并设置

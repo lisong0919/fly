@@ -1,5 +1,6 @@
 package com.wealth.fly.core.listener;
 
+import com.wealth.fly.core.model.GridStrategy;
 import com.wealth.fly.core.model.MarkPrice;
 
 /**
@@ -7,5 +8,5 @@ import com.wealth.fly.core.model.MarkPrice;
  * @date : 2023/4/24
  */
 public interface MarkPriceListener {
-    void onNewMarkPrice(MarkPrice markPrice);
+    void onNewMarkPrice(MarkPrice markPrice, GridStrategy strategy);
 }

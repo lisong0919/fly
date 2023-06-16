@@ -16,7 +16,7 @@ public class ConfigDaoImpl extends ServiceImpl<ConfigMapper, Config> implements 
     @Override
     public Config getConfigByKey(String key) {
         LambdaQueryWrapper<Config> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Config::getKey, key);
+        wrapper.eq(Config::getConfigKey, key);
         wrapper.orderByDesc(Config::getUpdatedAt);
         wrapper.last("limit 1");
 

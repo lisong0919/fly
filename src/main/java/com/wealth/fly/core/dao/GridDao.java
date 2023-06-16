@@ -15,7 +15,7 @@ public interface GridDao {
 
     List<Grid> listGrids(Integer strategy, BigDecimal maxBuyPrice, int limit);
 
-    List<Grid> listByStatusOrderByBuyPrice(List<Integer> statusList, int limit);
+    List<Grid> listByStatusOrderByBuyPrice(List<Integer> statusList,Integer strategyId, int limit);
 
     void updateGridStatus(Integer id, int status);
 

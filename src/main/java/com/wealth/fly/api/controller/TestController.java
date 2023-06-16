@@ -2,6 +2,7 @@ package com.wealth.fly.api.controller;
 
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.Monitor;
+import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridLogType;
 import com.wealth.fly.core.constants.GridStatus;
@@ -12,6 +13,8 @@ import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
+import com.wealth.fly.core.exchanger.ExchangerManager;
+import com.wealth.fly.core.model.GridStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,16 +39,10 @@ public class TestController {
     @Resource
     private KLineDao kLineDao;
     @Resource
-    private Exchanger exchanger;
+    private ConfigService configService;
 
-    @Value("${grid.default.strategy}")
-    private Integer gridStrategy;
+    private Integer strategyId = 3;
 
-    @Value("${grid.inst.id}")
-    private String activeInstId;
-
-    @Value("${min.force.close.price.eth}")
-    private String minForceClosePrice;
 
     @RequestMapping("/test")
     public Object proxyOkex() {
@@ -70,10 +67,13 @@ public class TestController {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 
-        String markPrice = exchanger.getMarkPriceByInstId(activeInstId).getMarkPx();
-        List<Grid> activeGridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), 1);
+        GridStrategy gridStrategy = configService.getGridStrategy(strategyId);
 
-        List<Grid> waitingList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice), 10);
+        Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(gridStrategy.getId());
+        String markPrice = exchanger.getMarkPriceByInstId(gridStrategy.getInstId()).getMarkPx();
+        List<Grid> activeGridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.ACTIVE.getCode()), strategyId, 1);
+
+        List<Grid> waitingList = gridDao.listGrids(strategyId, new BigDecimal(markPrice), 10);
         List<Grid> pendingGridList = null;
         if (!CollectionUtils.isEmpty(waitingList)) {
             pendingGridList = waitingList.stream()
@@ -90,7 +90,6 @@ public class TestController {
         printMacd(now, DataGranularity.FIFTEEN_MINUTES, sb);
         printMacd(now, DataGranularity.ONE_HOUR, sb);
 
-        sb.append("强平风控>>>>").append(minForceClosePrice).append("<br/>");
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
         sb.append("markPriceLastFetchTime>>>>").append(Monitor.markPriceLastFetchTime == null ? "无" : sdf.format(Monitor.markPriceLastFetchTime)).append("<br/>");
@@ -108,7 +107,7 @@ public class TestController {
             }
         }
 
-        List<Grid> nonIdleList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), 100);
+        List<Grid> nonIdleList = gridDao.listByStatusOrderByBuyPrice(Arrays.asList(GridStatus.ACTIVE.getCode(), GridStatus.PENDING.getCode()), strategyId, 100);
         sb.append("<br/><br/>").append("==========活跃网格=========<br/>");
         if (nonIdleList != null) {
             for (Grid grid : nonIdleList) {

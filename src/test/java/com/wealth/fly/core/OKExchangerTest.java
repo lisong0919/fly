@@ -1,15 +1,20 @@
 package com.wealth.fly.core;
 
+import com.wealth.fly.FlyTestApplication;
 import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.common.HttpClientUtil;
 import com.wealth.fly.common.JsonUtil;
+import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.OkexExchanger;
+import com.wealth.fly.core.model.Account;
 import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.Order;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -22,13 +27,17 @@ import java.util.List;
  * @author : lisong
  * @date : 2023/4/25
  */
+@SpringBootTest(classes = FlyTestApplication.class)
 public class OKExchangerTest {
+
+    @Autowired
+    private ConfigService configService;
     private OkexExchanger exchanger;
 
     @BeforeEach
     public void init() {
-        exchanger = new OkexExchanger();
-        exchanger.setHost("https://www.okx.com");
+        Account account = configService.getAccount("account.okex.002");
+        exchanger = new OkexExchanger(account);
     }
 
     @Test

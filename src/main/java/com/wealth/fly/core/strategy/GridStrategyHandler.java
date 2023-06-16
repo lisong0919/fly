@@ -1,6 +1,6 @@
 package com.wealth.fly.core.strategy;
 
-import com.wealth.fly.core.config.IConfig;
+import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridLogType;
@@ -16,15 +16,16 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.exchanger.Exchanger;
+import com.wealth.fly.core.exchanger.ExchangerManager;
 import com.wealth.fly.core.fetcher.GridStatusFetcher;
 import com.wealth.fly.core.listener.GridStatusChangeListener;
+import com.wealth.fly.core.model.GridStrategy;
 import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.fetcher.MarkPriceFetcher;
 import com.wealth.fly.core.listener.MarkPriceListener;
 import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -57,17 +58,6 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Resource
     private KLineDao kLineDao;
 
-    @Resource
-    private Exchanger exchanger;
-
-    @Value("${min.force.close.price.eth}")
-    private String minForceClosePriceForETH;
-
-    @Value("${grid.default.strategy}")
-    private Integer gridStrategy;
-
-    @Resource
-    private IConfig iConfig;
 
     private volatile boolean createOrderLock = false;
 
@@ -79,11 +69,13 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     }
 
     @Override
-    public void onNewMarkPrice(MarkPrice markPrice) {
+    public void onNewMarkPrice(MarkPrice markPrice, GridStrategy strategy) {
+        Exchanger exchanger = ExchangerManager.getExchangerByAccountId(strategy.getAccount());
+
         try {
             BigDecimal currentForceClosePrice = exchanger.getForceClosePrice(markPrice.getInstId());
-            if (currentForceClosePrice.compareTo(new BigDecimal(minForceClosePriceForETH)) >= 0) {
-                log.error("持仓强平价格{}大于{}，不能继续开仓", currentForceClosePrice, minForceClosePriceForETH);
+            if (currentForceClosePrice.compareTo(new BigDecimal(strategy.getMinForceClosePrice())) >= 0) {
+                log.error("持仓强平价格{}大于{}，不能继续开仓", currentForceClosePrice, strategy.getMinForceClosePrice());
                 return;
             }
         } catch (IOException e) {
@@ -91,7 +83,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             return;
         }
 
-        if (!isMACDFilterPass()) {
+        if (!isMACDFilterPass(strategy)) {
             return;
         }
 
@@ -101,42 +93,42 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 return;
             }
             createOrderLock = true;
-            createOrder(markPrice);
+            createOrder(markPrice, strategy);
         } finally {
             createOrderLock = false;
         }
     }
 
-    private boolean isMACDFilterPass() {
+    private boolean isMACDFilterPass(GridStrategy strategy) {
         Date now = new Date();
-        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES) && isMACDFilterPass(now, DataGranularity.ONE_HOUR);
+        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy) && isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy);
     }
 
-    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity) {
+    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, GridStrategy strategy) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
         KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
         KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
         if (preKline == null) {
-            log.info("k线不存在，macd滤网不通过 {}", preDataTime);
+            log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), preDataTime);
             return false;
         }
         if (prePreKline == null) {
-            log.info("k线不存在，macd滤网不通过 {}", prePreDataTime);
+            log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), prePreDataTime);
             return false;
         }
 
         if (preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
-            log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
+            log.info("[{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
         return true;
     }
 
-    private void createOrder(MarkPrice markPrice) {
+    private void createOrder(MarkPrice markPrice, GridStrategy strategy) {
         //先查出比当前价格低的网格
-        List<Grid> gridList = gridDao.listGrids(gridStrategy, new BigDecimal(markPrice.getMarkPx()), 1);
+        List<Grid> gridList = gridDao.listGrids(strategy.getId(), new BigDecimal(markPrice.getMarkPx()), 1);
         if (!CollectionUtils.isEmpty(gridList)) {
             gridList = gridList.stream()
                     .filter(g -> g.getStatus() == GridStatus.IDLE.getCode().intValue())
@@ -147,6 +139,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             log.debug("无合适网格 {} ", markPrice.getInstId());
             return;
         }
+        Exchanger exchanger = ExchangerManager.getExchangerByAccountId(strategy.getAccount());
         for (Grid grid : gridList) {
             try {
                 String customerOrderId = UUID.randomUUID().toString().replaceAll("-", "");
@@ -217,6 +210,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 .build();
         String algoId = null;
         boolean closeDirectly = false;
+        Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
+
         try {
             algoId = exchanger.createAlgoOrder(order);
         } catch (TPCannotLowerThanMPException e) {
@@ -315,6 +310,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
 
     private void closeLongOrder(Grid grid) throws IOException {
+        Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
         Order order = Order.builder()
                 .instId(grid.getInstId())
                 .tdMode("cross")

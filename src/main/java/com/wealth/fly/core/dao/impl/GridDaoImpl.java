@@ -38,10 +38,13 @@ public class GridDaoImpl extends ServiceImpl<GridMapper, Grid> implements GridDa
     }
 
     @Override
-    public List<Grid> listByStatusOrderByBuyPrice(List<Integer> statusList, int limit) {
+    public List<Grid> listByStatusOrderByBuyPrice(List<Integer> statusList, Integer strategyId, int limit) {
         LambdaQueryWrapper<Grid> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(Grid::getStatus, statusList);
         wrapper.orderByAsc(Grid::getBuyPrice);
+        if (strategyId != null) {
+            wrapper.eq(Grid::getStrategy, strategyId);
+        }
         if (limit != -1) {
             wrapper.last("limit " + limit);
         }
