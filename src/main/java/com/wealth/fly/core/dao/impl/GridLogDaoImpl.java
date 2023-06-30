@@ -22,9 +22,11 @@ public class GridLogDaoImpl extends ServiceImpl<GridLogMapper, GridLog> implemen
     }
 
     @Override
-    public List<GridLog> listRecentLogs(int limit) {
+    public List<GridLog> listRecentLogs(Integer strategyId, int limit) {
         LambdaQueryWrapper<GridLog> wrapper = new LambdaQueryWrapper<>();
-
+        if (strategyId != null) {
+            wrapper.eq(GridLog::getStrategyId, strategyId);
+        }
         wrapper.orderByDesc(GridLog::getId);
         wrapper.last("limit " + limit);
         return baseMapper.selectList(wrapper);

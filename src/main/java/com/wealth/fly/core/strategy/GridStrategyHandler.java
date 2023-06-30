@@ -74,7 +74,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
         try {
             BigDecimal currentForceClosePrice = exchanger.getForceClosePrice(markPrice.getInstId());
-            if (currentForceClosePrice.compareTo(new BigDecimal(strategy.getMinForceClosePrice())) >= 0) {
+            if (currentForceClosePrice != null && currentForceClosePrice.compareTo(new BigDecimal(strategy.getMinForceClosePrice())) >= 0) {
                 log.error("持仓强平价格{}大于{}，不能继续开仓", currentForceClosePrice, strategy.getMinForceClosePrice());
                 return;
             }
@@ -101,10 +101,12 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     private boolean isMACDFilterPass(GridStrategy strategy) {
         Date now = new Date();
-        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy) && isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy);
+        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy, true)
+                && isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy, true)
+                && isMACDFilterPass(now, DataGranularity.FOUR_HOUR, strategy, false);
     }
 
-    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, GridStrategy strategy) {
+    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, GridStrategy strategy, boolean isStrict) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
@@ -118,11 +120,18 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), prePreDataTime);
             return false;
         }
-
-        if (preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
+        if (isStrict && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
             log.info("[{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
+
+        //非严格模式下，MACD小于零且递减才不通过
+        if (!isStrict && preKline.getMacd().compareTo(new BigDecimal("0")) < 0
+                && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
+            log.info("[{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), dataGranularity, prePreDataTime, preDataTime);
+            return false;
+        }
+
         return true;
     }
 
@@ -181,6 +190,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 //记日志
                 GridLog gridLog = GridLog.builder()
                         .gridId(grid.getId())
+                        .strategyId(grid.getStrategy())
                         .type(GridLogType.CREATE_PENDING_ORDER.getCode())
                         .message(String.format("[%s-%s-%s]网格委托下单成功", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
                         .build();
@@ -252,11 +262,11 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         if (closeDirectly) {
             gridDao.updateGridFinished(grid.getId());
             String message = String.format("[%s-%s-%s]委托单的止盈点低于现价，直接市价平仓", grid.getBuyPrice(), grid.getSellPrice(), buyOrder.getSz());
-            saveLog(GridLogType.GRID_FINISHED_PROFIT, grid.getId(), message, gridHistory.getId());
+            saveLog(GridLogType.GRID_FINISHED_PROFIT, grid, message, gridHistory.getId());
         } else {
             gridDao.updateGridActive(grid.getId(), algoId, gridHistory.getId());
             String message = String.format("[%s-%s-%s]委托单成交，网格被激活，止盈策略单已创建", grid.getBuyPrice(), grid.getSellPrice(), buyOrder.getSz());
-            saveLog(GridLogType.GRID_ACTIVE, grid.getId(), message, gridHistory.getId());
+            saveLog(GridLogType.GRID_ACTIVE, grid, message, gridHistory.getId());
         }
     }
 
@@ -289,6 +299,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         GridLog gridLog = GridLog.builder()
                 .type(GridLogType.GRID_FINISHED_PROFIT.getCode())
                 .gridId(grid.getId())
+                .strategyId(grid.getStrategy())
                 .gridHistoryId(gridHistory.getId())
                 .message(String.format("[%s-%s-%s]网格已止盈:%s", grid.getBuyPrice(), grid.getSellPrice(), sellOrder.getSz(), sellOrder.getPnl()))
                 .build();
@@ -303,6 +314,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         GridLog gridLog = GridLog.builder()
                 .type(GridLogType.GRID_BUY_ORDER_CANCEL.getCode())
                 .gridId(grid.getId())
+                .strategyId(grid.getStrategy())
                 .message(String.format("[%s-%s-%s]网格委托买单撤销", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
                 .build();
         gridLogDao.save(gridLog);
@@ -324,10 +336,11 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         exchanger.createOrder(order);
     }
 
-    private void saveLog(GridLogType gridLogType, Integer gridId, String logMessage, Long historyId) {
+    private void saveLog(GridLogType gridLogType, Grid grid, String logMessage, Long historyId) {
         GridLog gridLog = GridLog.builder()
                 .type(gridLogType.getCode())
-                .gridId(gridId)
+                .gridId(grid.getId())
+                .strategyId(grid.getStrategy())
                 .gridHistoryId(historyId)
                 .message(logMessage)
                 .build();

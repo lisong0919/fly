@@ -13,5 +13,5 @@ public interface GridLogDao {
 
     boolean save(GridLog entity);
 
-    List<GridLog> listRecentLogs(int limit);
+    List<GridLog> listRecentLogs(Integer strategyId, int limit);
 }

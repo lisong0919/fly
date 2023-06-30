@@ -27,16 +27,16 @@ import java.util.List;
  * @author : lisong
  * @date : 2023/4/25
  */
-@SpringBootTest(classes = FlyTestApplication.class)
 public class OKExchangerTest {
 
-    @Autowired
-    private ConfigService configService;
     private OkexExchanger exchanger;
 
     @BeforeEach
     public void init() {
-        Account account = configService.getAccount("account.okex.002");
+        Account account = new Account();
+        account.setAccessKey("0d62d81d-b736-4136-9b16-21a262e5a50b");
+        account.setSecretKey("4EA4B3F8D39EBBA03695C980232A957D");
+        account.setPassphrase("AiqGdD1fBYl981NbGv*TjWWLILINsn0y");
         exchanger = new OkexExchanger(account);
     }
 

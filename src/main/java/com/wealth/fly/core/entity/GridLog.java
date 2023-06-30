@@ -25,6 +25,8 @@ public class GridLog {
 
     private Integer gridId;
 
+    private Integer strategyId;
+
     private Long gridHistoryId;
 
     private String message;
