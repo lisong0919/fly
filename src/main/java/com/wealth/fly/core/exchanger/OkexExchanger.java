@@ -44,17 +44,30 @@ public class OkexExchanger implements Exchanger {
         this.account = account;
     }
 
+    public List<KLine> getHistoryKlineData(String instId, Date startTime, Date endTime,
+                                           DataGranularity dataGranularity) {
+        String url =
+                host + "/api/v5/market/history-candles?instId=" + instId + "&bar=" + dataGranularity.getKey() + "&limit=300";
+        return internalGetKlineData(url, startTime, endTime, dataGranularity);
+    }
+
     public List<KLine> getKlineData(String instId, Date startTime, Date endTime,
                                     DataGranularity dataGranularity) {
+        String url =
+                host + KLINE_PATH + "?instId=" + instId + "&bar=" + dataGranularity.getKey() + "&limit=300";
+        return internalGetKlineData(url, startTime, endTime, dataGranularity);
+    }
+
+
+    private List<KLine> internalGetKlineData(String url, Date startTime, Date endTime,
+                                             DataGranularity dataGranularity) {
         try {
-            String url =
-                    host + KLINE_PATH + "?instId=" + instId + "&bar=" + dataGranularity.getKey() + "&limit=300";
 
             if (startTime != null) {
-                url += "&before=" + startTime.getTime();
+                url += "&before=" + startTime.getTime() ;
             }
             if (endTime != null) {
-                url += "&after=" + endTime.getTime();
+                url += "&after=" + endTime.getTime() ;
             }
             String jsonResponse = HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
@@ -92,6 +105,7 @@ public class OkexExchanger implements Exchanger {
             throw new RuntimeException("获取k线数据失败");
         }
     }
+
 
     @Override
     public MarkPrice getMarkPriceByInstId(String instId) throws IOException {

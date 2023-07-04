@@ -30,6 +30,12 @@ public class DateUtil {
         return DateUtils.addSeconds(date, dataGranularity.getSeconds());
     }
 
+    public static Long getNextKlineDataTime(Long dataTime, DataGranularity dataGranularity) {
+        Date nextKlineDate = getNextKlineDate(dataTime, dataGranularity);
+
+        return parseToDataTime(nextKlineDate);
+    }
+
 
     public static Long getPreKLineDataTime(long dateTime, DataGranularity dataGranularity) {
         Date date = null;
@@ -57,7 +63,13 @@ public class DateUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(getLatestKLineDataTime(new Date(), DataGranularity.FIFTEEN_MINUTES));
+        System.out.println(getNextKlineDataTime(20230101000000L, DataGranularity.FIFTEEN_MINUTES));
+    }
+
+    public static Long parseToDataTime(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat(CommonConstants.SYSTEM_DATE_FORMAT);
+
+        return Long.valueOf(sdf.format(date));
     }
 
     public static Date parseStandardTime(long time) {

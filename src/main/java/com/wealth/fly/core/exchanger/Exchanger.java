@@ -17,6 +17,9 @@ public interface Exchanger {
 
     List<KLine> getKlineData(String currency, Date startTime, Date endTime, DataGranularity dataGranularity);
 
+    List<KLine> getHistoryKlineData(String instId, Date startTime, Date endTime,
+                                    DataGranularity dataGranularity);
+
     MarkPrice getMarkPriceByInstId(String instId) throws IOException;
 
     String createOrder(Order order) throws IOException;
