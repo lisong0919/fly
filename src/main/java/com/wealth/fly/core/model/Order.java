@@ -171,4 +171,30 @@ public class Order {
      */
     private Long fillTime;
 
+    /**
+     * 下单附带止盈止损时，客户自定义的策略订单ID
+     * 字母（区分大小写）与数字的组合，可以是纯字母、纯数字且长度要在1-32位之间。
+     * 订单完全成交，下止盈止损委托单时，该值会传给algoClOrdId
+     */
+    private String attachAlgoClOrdId;
+
+    /**
+     * 止损触发价，如果填写此参数，必须填写 止损委托价
+     */
+    private String slTriggerPx;
+
+    /**
+     * 止损委托价，如果填写此参数，必须填写 止损触发价
+     * 委托价格为-1时，执行市价止损
+     */
+    private String slOrdPx;
+    /**
+     * 止损触发价类型
+     * last：最新价格
+     * index：指数价格
+     * mark：标记价格
+     * 默认为last
+     */
+    private String slTriggerPxType;
+
 }

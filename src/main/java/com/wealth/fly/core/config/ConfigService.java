@@ -1,6 +1,7 @@
 package com.wealth.fly.core.config;
 
 import com.wealth.fly.core.model.Account;
+import com.wealth.fly.core.model.GoldForkStrategy;
 import com.wealth.fly.core.model.GridStrategy;
 
 import java.util.List;
@@ -12,7 +13,11 @@ import java.util.List;
 public interface ConfigService {
     List<Integer> getActiveGridStrategies();
 
+    List<GoldForkStrategy> getActiveGoldForkStrategies();
+
     Account getAccount(String accountId);
 
     GridStrategy getGridStrategy(Integer strategyId);
+
+    GoldForkStrategy getGoldForkStrategy(String strategyId);
 }

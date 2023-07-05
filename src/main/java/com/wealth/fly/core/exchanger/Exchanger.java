@@ -2,9 +2,11 @@ package com.wealth.fly.core.exchanger;
 
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridStatus;
+import com.wealth.fly.core.constants.TradeMode;
 import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.model.InstrumentInfo;
 import com.wealth.fly.core.model.MarkPrice;
+import com.wealth.fly.core.model.MaxOpenSize;
 import com.wealth.fly.core.model.Order;
 
 import java.io.IOException;
@@ -15,7 +17,7 @@ import java.util.List;
 
 public interface Exchanger {
 
-    List<KLine> getKlineData(String currency, Date startTime, Date endTime, DataGranularity dataGranularity);
+    List<KLine> getKlineData(String instId, Date startTime, Date endTime, DataGranularity dataGranularity);
 
     List<KLine> getHistoryKlineData(String instId, Date startTime, Date endTime,
                                     DataGranularity dataGranularity);
@@ -57,6 +59,14 @@ public interface Exchanger {
      */
     Order getAlgoOrder(String algoId) throws IOException;
 
+    /**
+     * 查策略委托单信息
+     *
+     * @param customerAlgoId
+     * @return
+     * @throws IOException
+     */
+    Order getAlgoOrderByCustomerId(String customerAlgoId) throws IOException;
 
     /**
      * 查询强平价格
@@ -76,4 +86,15 @@ public interface Exchanger {
      * @throws IOException
      */
     List<InstrumentInfo> listInstrumentInfo(String instType, String instFamily) throws IOException;
+
+    /**
+     * 获取最大可开仓信息
+     *
+     * @param instId
+     * @param tdMode
+     * @return
+     */
+    MaxOpenSize getMaxOpenSize(String instId, TradeMode tdMode) throws IOException;
+
+
 }

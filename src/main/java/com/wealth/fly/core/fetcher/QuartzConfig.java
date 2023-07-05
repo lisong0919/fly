@@ -13,6 +13,23 @@ import org.springframework.scheduling.quartz.JobDetailFactoryBean;
 public class QuartzConfig {
 
     @Bean
+    public JobDetailFactoryBean tradeStatusFetcherJobDetail() {
+        JobDetailFactoryBean jobDetail = new JobDetailFactoryBean();
+        jobDetail.setJobClass(TradeStatusFetcher.class);
+        jobDetail.setName("tradeStatusFetcher");
+        jobDetail.setDurability(true);
+        return jobDetail;
+    }
+
+    @Bean
+    public CronTriggerFactoryBean tradeStatusFetcherTrigger() {
+        CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
+        trigger.setJobDetail(tradeStatusFetcherJobDetail().getObject());
+        trigger.setCronExpression("*/10 * * * * ?");
+        return trigger;
+    }
+
+    @Bean
     public CronTriggerFactoryBean KlineDataFetcherTrigger() {
         CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
         trigger.setJobDetail(KlineDataFetcherJobDetail().getObject());
@@ -64,4 +81,6 @@ public class QuartzConfig {
         jobDetail.setDurability(true);
         return jobDetail;
     }
+
+
 }

@@ -8,6 +8,7 @@ import com.wealth.fly.common.HttpClientUtil;
 import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.constants.CommonConstants;
 import com.wealth.fly.core.constants.DataGranularity;
+import com.wealth.fly.core.constants.TradeMode;
 import com.wealth.fly.core.entity.KLine;
 
 import java.io.IOException;
@@ -64,10 +65,10 @@ public class OkexExchanger implements Exchanger {
         try {
 
             if (startTime != null) {
-                url += "&before=" + startTime.getTime() ;
+                url += "&before=" + startTime.getTime();
             }
             if (endTime != null) {
-                url += "&after=" + endTime.getTime() ;
+                url += "&after=" + endTime.getTime();
             }
             String jsonResponse = HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
@@ -195,6 +196,16 @@ public class OkexExchanger implements Exchanger {
         return JsonUtil.getEntity("/data/0", jsonNode, Order.class);
     }
 
+    public Order getAlgoOrderByCustomerId(String customerAlgoId) throws IOException {
+        String requestPath = "/api/v5/trade/order-algo?algoClOrdId=" + customerAlgoId;
+
+        String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查策略委托单信息");
+
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response, host + requestPath, null);
+        return JsonUtil.getEntity("/data/0", jsonNode, Order.class);
+    }
+
     @Override
     public Order getAlgoOrder(String algoId) throws IOException {
         String requestPath = "/api/v5/trade/order-algo?algoId=" + algoId;
@@ -239,6 +250,16 @@ public class OkexExchanger implements Exchanger {
         checkCode(jsonNode, response, host + requestPath, null);
 
         return JsonUtil.getEntityList("/data", jsonNode, InstrumentInfo.class);
+    }
+
+    @Override
+    public MaxOpenSize getMaxOpenSize(String instId, TradeMode tdMode) throws IOException {
+        String requestPath = "/api/v5/account/max-size?instId=" + instId + "&tdMode=" + tdMode.name();
+        String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "获取最大可开仓数量");
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response, host + requestPath, null);
+
+        return JsonUtil.getEntity("/data/0", jsonNode, MaxOpenSize.class);
     }
 
     private Map<String, String> getGetAuthHeaders(String requestPath) {

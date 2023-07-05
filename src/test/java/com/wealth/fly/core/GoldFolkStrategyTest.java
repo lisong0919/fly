@@ -75,7 +75,7 @@ public class GoldFolkStrategyTest {
                     boolean isGoldFork = prePreKline.getMacd().compareTo(new BigDecimal("0")) < 0 && preKline.getMacd().compareTo(new BigDecimal("0")) > 0;
 
                     if (isGoldFork) {
-                        if (isMACDFilterPass(now, DataGranularity.ONE_HOUR, true) && isMACDFilterPass(now, DataGranularity.FOUR_HOUR, false)) {
+                        if (isMACDFilterPass(now, DataGranularity.ONE_HOUR, true) && isMACDFilterPass(now, DataGranularity.FOUR_HOUR, true)) {
                             TriggerResult triggerResult = goldFork(kLine, profitPercent, dataGranularity);
                             triggerResults.add(triggerResult);
                         }

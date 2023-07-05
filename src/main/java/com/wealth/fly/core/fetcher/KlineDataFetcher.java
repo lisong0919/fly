@@ -38,7 +38,7 @@ public class KlineDataFetcher extends QuartzJobBean {
     private static List<KLineListener> kLineListenerList = new ArrayList<>();
 
 
-    public void registerKLineListener(KLineListener listener) {
+    public static void registerKLineListener(KLineListener listener) {
         kLineListenerList.add(listener);
     }
 
