@@ -21,12 +21,15 @@ import com.wealth.fly.core.model.Order;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -42,12 +45,16 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     private ConfigService configService;
     @Resource
     private TradeDao tradeDao;
+    @Resource
+    private KlineDataFetcher klineDataFetcher;
+    @Resource
+    private TradeStatusFetcher tradeStatusFetcher;
 
 
     @PostConstruct
     public void init() {
-        KlineDataFetcher.registerKLineListener(this);
-        TradeStatusFetcher.registerTradeStatusChangeListener(this);
+        klineDataFetcher.registerKLineListener(this);
+        tradeStatusFetcher.registerTradeStatusChangeListener(this);
     }
 
     @Override
@@ -58,6 +65,12 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
         }
 
         Date now = new Date();
+//        Date now = null;
+//        try {
+//            now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2023-06-14 08:01:00");
+//        } catch (ParseException e) {
+//            e.printStackTrace();
+//        }
         Long latestKLineDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), latestKLineDataTime);
 
@@ -112,6 +125,7 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
                     .ordType("limit")
                     .sz(maxOpenSize.getMaxBuy())
                     .px(getExpectOpenPrice(exchanger, strategy.getInstId(), dataGranularity, kLineDataTime).toPlainString())
+//                    .px(exchanger.getMarkPriceByInstId(strategy.getInstId()).getMarkPx())
                     .clOrdId(customerOrderId)
                     .attachAlgoClOrdId(UUID.randomUUID().toString().replaceAll("-", ""))
                     .build();
@@ -154,8 +168,10 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     }
 
     private BigDecimal getExpectOpenPrice(Exchanger exchanger, String instId, DataGranularity dataGranularity, long kLineDataTime) {
-        Date start = DateUtil.parseStandardTime(kLineDataTime - 1);
-        Date end = DateUtil.parseStandardTime(kLineDataTime + 1);
+        Date now = new Date();
+        Date latestKLineTime = DateUtil.getLatestKLineTime(now, dataGranularity);
+        Date start = DateUtils.addSeconds(latestKLineTime, -1);
+        Date end = DateUtils.addSeconds(latestKLineTime, +1);
         List<KLine> kLineList = exchanger.getKlineData(instId, start, end, dataGranularity);
         if (CollectionUtils.isEmpty(kLineList)) {
             log.error("k线返回为空，未获取到开仓价格");
@@ -165,10 +181,10 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
             log.error("k线数据有多条，未获取到开仓价格");
             return null;
         }
-        if (kLineList.get(0).getDataTime() != kLineDataTime) {
-            log.error("指定时间k线不存在，未获取到开仓价格");
-            return null;
-        }
+//        if (kLineList.get(0).getDataTime() != kLineDataTime) {
+//            log.error("指定时间k线不存在，未获取到开仓价格");
+//            return null;
+//        }
 
         return kLineList.get(0).getClose();
     }
@@ -232,6 +248,7 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     @Override
     public void onCancel(Trade trade) {
         trade.setCancelTime(new Date());
+        trade.setStatus(TradeStatus.CANCEL.getCode());
         tradeDao.updateById(trade);
         log.info("交易已成功取消,交易id:{}", trade.getId());
     }

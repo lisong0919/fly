@@ -189,9 +189,9 @@ public class GoldFolkStrategyTest {
     @Test
     public void fillKlineData() throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date startTime = sdf.parse("2023-01-01 03:59:00");
-        Date endTime = sdf.parse("2023-06-11 20:00:00");
-        DataGranularity dataGranularity = DataGranularity.FOUR_HOUR;
+        Date startTime = sdf.parse("2023-06-16 14:01:00");
+        Date endTime = sdf.parse("2023-07-05 20:00:00");
+        DataGranularity dataGranularity = DataGranularity.ONE_HOUR;
 
         while (startTime.getTime() <= endTime.getTime()) {
             Date nextDay = DateUtils.addDays(startTime, 1);

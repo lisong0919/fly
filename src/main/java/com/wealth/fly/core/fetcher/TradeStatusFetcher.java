@@ -35,7 +35,7 @@ public class TradeStatusFetcher extends QuartzJobBean {
 
     private static List<TradeStatusChangeListener> tradeStatusChangeListeners = new ArrayList<>();
 
-    public static void registerTradeStatusChangeListener(TradeStatusChangeListener listener) {
+    public void registerTradeStatusChangeListener(TradeStatusChangeListener listener) {
         tradeStatusChangeListeners.add(listener);
     }
 
@@ -118,11 +118,23 @@ public class TradeStatusFetcher extends QuartzJobBean {
                 return;
             }
 
-            for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
-                try {
-                    listener.onOpen(trade, order);
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+            if (OkexOrderState.CANCELED.equals(order.getState())) {
+                for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
+                    try {
+                        listener.onCancel(trade);
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            }
+
+            if (OkexOrderState.FILLED.equals(order.getState())) {
+                for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
+                    try {
+                        listener.onOpen(trade, order);
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
                 }
             }
         }

@@ -15,6 +15,7 @@ import com.wealth.fly.core.entity.KLine;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.exchanger.ExchangerManager;
 import com.wealth.fly.core.model.GridStrategy;
+import com.wealth.fly.core.strategy.GoldForkStrategyHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,11 +42,14 @@ public class TestController {
     private KLineDao kLineDao;
     @Resource
     private ConfigService configService;
+    @Resource
+    private GoldForkStrategyHandler goldForkStrategyHandler;
 
 
     @RequestMapping("/test")
     public Object proxyOkex() {
-
+//        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.FIFTEEN_MINUTES.name(), 20230614080000L);
+//        goldForkStrategyHandler.onNewKLine(kLine);
         return "test ok...";
     }
 
@@ -139,7 +143,7 @@ public class TestController {
         KLine prePreKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
         KLine preKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
 
-        sb.append("macd >>>" + dataGranularity.name() + " " + (prePreKLine == null ? "" : prePreKLine.getMacd()) + "=>" + (preKLine == null ? "" : preKLine.getMacd())+"</br>");
+        sb.append("macd >>>" + dataGranularity.name() + " " + (prePreKLine == null ? "" : prePreKLine.getMacd()) + "=>" + (preKLine == null ? "" : preKLine.getMacd()) + "</br>");
     }
 
 
