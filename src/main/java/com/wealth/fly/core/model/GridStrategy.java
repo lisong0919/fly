@@ -16,4 +16,5 @@ public class GridStrategy {
     private String minForceClosePrice;
     private String account;
     private ExchangerEnum exchangerType;
+    private String watchInstId;
 }

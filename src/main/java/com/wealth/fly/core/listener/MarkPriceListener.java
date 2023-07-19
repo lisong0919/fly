@@ -8,5 +8,5 @@ import com.wealth.fly.core.model.MarkPrice;
  * @date : 2023/4/24
  */
 public interface MarkPriceListener {
-    void onNewMarkPrice(MarkPrice markPrice, GridStrategy strategy);
+    void onNewMarkPrice(MarkPrice markPrice);
 }

@@ -11,9 +11,9 @@ public interface KLineDao {
 
     int updateByPrimaryKey(KLine record);
 
-    List<KLine> getLastKLineByGranularity(@Param("granularity") String dataGranularity, @Param("limit") int limit);
+    List<KLine> getLastKLineByGranularity(@Param("instId") String instId, @Param("granularity") String dataGranularity, @Param("limit") int limit);
 
-    List<KLine> getLastKLineGTDataTime(@Param("granularity") String dataGranularity,@Param("dataTime") Long dataTime , @Param("limit") int limit);
+    List<KLine> getLastKLineGTDataTime(@Param("instId") String instId, @Param("granularity") String dataGranularity, @Param("dataTime") Long dataTime, @Param("limit") int limit);
 
-    KLine getKlineByDataTime(@Param("granularity") String dataGranularity,@Param("dataTime") Long dataTime);
+    KLine getKlineByDataTime(@Param("instId") String instId, @Param("granularity") String dataGranularity, @Param("dataTime") Long dataTime);
 }

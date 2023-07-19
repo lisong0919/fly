@@ -8,6 +8,7 @@ import com.wealth.fly.core.model.MarkPrice;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.listener.MarkPriceListener;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author : lisong
@@ -27,6 +29,10 @@ public class MarkPriceFetcher extends QuartzJobBean {
 
     @Resource
     private ConfigService configService;
+
+    @Value("${okex.account.default}")
+    private String defaultAccount;
+
 
     private static List<MarkPriceListener> markPriceListeners = new ArrayList<>();
 
@@ -42,23 +48,27 @@ public class MarkPriceFetcher extends QuartzJobBean {
             return;
         }
 
-        List<Integer> activeGridStrategies = configService.getActiveGridStrategies();
+        List<GridStrategy> activeGridStrategies = configService.getActiveGridStrategies();
+        if (CollectionUtils.isEmpty(activeGridStrategies)) {
+            return;
+        }
+        Set<String> instSet = activeGridStrategies.stream()
+                .map(GridStrategy::getInstId).collect(Collectors.toSet());
 
-        for (Integer activeGridStrategy : activeGridStrategies) {
+        for (String instId : instSet) {
             try {
                 MarkPrice markPrice = null;
-                GridStrategy strategy = configService.getGridStrategy(activeGridStrategy);
-                Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(activeGridStrategy);
+                Exchanger exchanger = ExchangerManager.getExchangerByAccountId(defaultAccount);
 
                 try {
-                    markPrice = exchanger.getMarkPriceByInstId(strategy.getInstId());
+                    markPrice = exchanger.getMarkPriceByInstId(instId);
                 } catch (Exception e) {
                     log.error("获取标记价格出错, detailMsg: " + e.getMessage(), e);
                 }
 
                 for (MarkPriceListener listener : markPriceListeners) {
                     try {
-                        listener.onNewMarkPrice(markPrice, strategy);
+                        listener.onNewMarkPrice(markPrice);
                     } catch (Exception e) {
                         log.error("MarkPrice监听器处理出错,detailMsg:" + e.getMessage(), e);
                     }

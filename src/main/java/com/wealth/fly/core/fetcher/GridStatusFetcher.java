@@ -48,7 +48,7 @@ public class GridStatusFetcher extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        List<Integer> activeGridStrategies = configService.getActiveGridStrategies();
+        List<Integer> activeGridStrategies = configService.getActiveGridStrategyIds();
 
         for (Integer activeGridStrategy : activeGridStrategies) {
             try {

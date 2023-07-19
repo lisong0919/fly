@@ -11,7 +11,7 @@ import java.util.List;
  * @date : 2023/5/11
  */
 public interface ConfigService {
-    List<Integer> getActiveGridStrategies();
+    List<Integer> getActiveGridStrategyIds();
 
     List<GoldForkStrategy> getActiveGoldForkStrategies();
 
@@ -20,4 +20,6 @@ public interface ConfigService {
     GridStrategy getGridStrategy(Integer strategyId);
 
     GoldForkStrategy getGoldForkStrategy(String strategyId);
+
+    List<GridStrategy> getActiveGridStrategies();
 }

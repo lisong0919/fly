@@ -8,7 +8,6 @@ import com.wealth.fly.core.entity.KLine;
 
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.annotation.Resource;
 
@@ -35,22 +34,50 @@ public class KlineDataFetcher extends QuartzJobBean {
     @Value("${okex.account.default}")
     private String defaultAccount;
 
+    @Value("${fetcher.inst}")
+    private String instIds;
+
     private static List<KLineListener> kLineListenerList = new ArrayList<>();
+
+
+    @Override
+    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
+        fetchAll();
+    }
+
+    private void fetchAll() {
+        List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
+
+        for (String instId : instIds.split(",")) {
+            for (DataGranularity dataGranularity : granularities) {
+                try {
+                    fetch(instId, dataGranularity);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                    continue;
+                }
+            }
+        }
+    }
 
 
     public void registerKLineListener(KLineListener listener) {
         kLineListenerList.add(listener);
     }
 
-    private void notifyKLineListenerNewLine(KLine kLine) {
+    private void notifyKLineListenerNewLine(String instId, KLine kLine) {
         for (KLineListener listener : kLineListenerList) {
-            listener.onNewKLine(kLine);
+            try {
+                listener.onNewKLine(instId, kLine);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
 
-    private void fetch(DataGranularity dataGranularity) throws ParseException {
-        List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(dataGranularity.name(), 1);
+    private void fetch(String instId, DataGranularity dataGranularity) throws ParseException {
+        List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(instId, dataGranularity.name(), 1);
 
         Date fetchMinTime = null;
         Date fetchMaxTime = null;
@@ -75,7 +102,7 @@ public class KlineDataFetcher extends QuartzJobBean {
         log.debug("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
         //取数据的起始时间未设置的情况下，取回所有能取的数据
         List<KLine> kLineList = ExchangerManager.getExchangerByAccountId(defaultAccount)
-                .getKlineData("ETH-USDT-SWAP", fetchMinTime, fetchMaxTime, dataGranularity);
+                .getKlineData(instId, fetchMinTime, fetchMaxTime, dataGranularity);
 
         log.debug("[{}] fetch kline data from exchanger success.", dataGranularity);
 
@@ -92,6 +119,7 @@ public class KlineDataFetcher extends QuartzJobBean {
         for (KLine kLine : kLineList) {
             kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
             kLine.setCurrencyId(1);
+            kLine.setInstId(instId);
 
             if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
                 macdHandler.setMACD(kLine);
@@ -99,7 +127,7 @@ public class KlineDataFetcher extends QuartzJobBean {
             }
 
             if (!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                notifyKLineListenerNewLine(kLine);
+                notifyKLineListenerNewLine(instId, kLine);
             }
         }
         if (CollectionUtils.isNotEmpty(kLineList)) {
@@ -149,21 +177,5 @@ public class KlineDataFetcher extends QuartzJobBean {
         return result;
     }
 
-    @Override
-    protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        fetchAll();
-    }
 
-    private void fetchAll() {
-        List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
-
-        for (DataGranularity dataGranularity : granularities) {
-            try {
-                fetch(dataGranularity);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                continue;
-            }
-        }
-    }
 }

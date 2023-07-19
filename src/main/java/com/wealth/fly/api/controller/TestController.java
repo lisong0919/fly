@@ -96,9 +96,9 @@ public class TestController {
         sb.append("最近激活点>>>>").append(CollectionUtils.isEmpty(pendingGridList) ? "无" : pendingGridList.get(0).getBuyPrice()).append("<br/>");
 
         Date now = new Date();
-        printMacd(now, DataGranularity.FIFTEEN_MINUTES, sb);
-        printMacd(now, DataGranularity.ONE_HOUR, sb);
-        printMacd(now, DataGranularity.FOUR_HOUR, sb);
+        printMacd(gridStrategy.getWatchInstId(), now, DataGranularity.FIFTEEN_MINUTES, sb);
+        printMacd(gridStrategy.getWatchInstId(), now, DataGranularity.ONE_HOUR, sb);
+        printMacd(gridStrategy.getWatchInstId(), now, DataGranularity.FOUR_HOUR, sb);
 
         sb.append("stopAll>>>>").append(Monitor.stopAll).append("<br/>");
         sb.append("gridStatusLastFetchTime>>>>").append(Monitor.gridStatusLastFetchTime == null ? "无" : sdf.format(Monitor.gridStatusLastFetchTime)).append("<br/>");
@@ -136,12 +136,12 @@ public class TestController {
     }
 
 
-    private void printMacd(Date now, DataGranularity dataGranularity, StringBuilder sb) {
+    private void printMacd(String instId, Date now, DataGranularity dataGranularity, StringBuilder sb) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
-        KLine prePreKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
-        KLine preKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+        KLine prePreKLine = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
+        KLine preKLine = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), preDataTime);
 
         sb.append("macd >>>" + dataGranularity.name() + " " + (prePreKLine == null ? "" : prePreKLine.getMacd()) + "=>" + (preKLine == null ? "" : preKLine.getMacd()) + "</br>");
     }

@@ -27,7 +27,20 @@ public class ConfigServiceImpl implements ConfigService {
     private ConfigDao configDao;
 
     @Override
-    public List<Integer> getActiveGridStrategies() {
+    public List<GridStrategy> getActiveGridStrategies() {
+
+        Config config = configDao.getConfigByKey("grid.active.strategies");
+        if (StringUtils.isBlank(config.getValue())) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(config.getValue().split(","))
+                .map(id -> getGridStrategy(Integer.valueOf(id)))
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<Integer> getActiveGridStrategyIds() {
         Config config = configDao.getConfigByKey("grid.active.strategies");
         if (StringUtils.isBlank(config.getValue())) {
             return Collections.emptyList();

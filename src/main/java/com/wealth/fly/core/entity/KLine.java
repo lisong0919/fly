@@ -15,6 +15,7 @@ public class KLine {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
     private Integer currencyId;
+    private String instId;
     private Long dataTime;
     private BigDecimal open;
     private BigDecimal close;

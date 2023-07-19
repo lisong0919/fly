@@ -35,7 +35,7 @@ public class StatisticStrategyAction implements Action {
 
         Long nextDataTime = kLine.getDataTime();
         while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), nextDataTime, 10);
+            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(null,CommonConstants.DEFAULT_DATA_GRANULARITY.name(), nextDataTime, 10);
             if (kLineList == null || kLineList.isEmpty()) {
                 return;
             }

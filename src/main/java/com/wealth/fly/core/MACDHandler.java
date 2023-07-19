@@ -26,7 +26,7 @@ public class MACDHandler {
 
     public void setMACD(KLine kLine) {
         Long preKlineDataTime = DateUtil.getPreKLineDataTime(kLine.getDataTime(), DataGranularity.valueOf(kLine.getGranularity()));
-        KLine prevKLine = kLineDao.getKlineByDataTime(kLine.getGranularity(), preKlineDataTime);
+        KLine prevKLine = kLineDao.getKlineByDataTime(kLine.getInstId(), kLine.getGranularity(), preKlineDataTime);
 
         double ema12 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 12, prevKLine.getEma12().doubleValue());
         double ema26 = MathUtil.calculateEMA(kLine.getClose().doubleValue(), 26, prevKLine.getEma26().doubleValue());

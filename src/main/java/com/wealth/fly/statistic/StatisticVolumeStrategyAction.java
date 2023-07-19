@@ -34,7 +34,7 @@ public class StatisticVolumeStrategyAction implements Action {
 
         Long nextDataTime = kLine.getDataTime();
         while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(DataGranularity.ONE_MINUTE.name(), nextDataTime, 10);
+            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(null, DataGranularity.ONE_MINUTE.name(), nextDataTime, 10);
             if (kLineList == null || kLineList.isEmpty()) {
                 return;
             }

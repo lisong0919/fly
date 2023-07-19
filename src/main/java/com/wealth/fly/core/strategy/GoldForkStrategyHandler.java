@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author : lisong
@@ -58,7 +59,7 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     }
 
     @Override
-    public void onNewKLine(KLine kLine) {
+    public void onNewKLine(String instId, KLine kLine) {
         DataGranularity dataGranularity = DataGranularity.FIFTEEN_MINUTES;
         if (!dataGranularity.name().equals(kLine.getGranularity())) {
             return;
@@ -72,35 +73,46 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
 //            e.printStackTrace();
 //        }
         Long latestKLineDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
-        KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), latestKLineDataTime);
+        KLine preKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), latestKLineDataTime);
 
         Long prePreDataTime = DateUtil.getPreKLineDataTime(latestKLineDataTime, dataGranularity);
-        KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
+        KLine prePreKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
 
         BigDecimal zero = new BigDecimal("0");
         boolean isGoldFork = prePreKline.getMacd().compareTo(zero) < 0 && preKline.getMacd().compareTo(zero) > 0;
-        if (isGoldFork) {
-            log.info("检测到15分钟金叉{}-{}", prePreDataTime, latestKLineDataTime);
-            if (!isMACDFilterPass(now, DataGranularity.ONE_HOUR, true) || !isMACDFilterPass(now, DataGranularity.FOUR_HOUR, false)) {
-                return;
-            }
+        if (!isGoldFork) {
+            log.info("非金叉");
+            return;
+        }
 
-            List<GoldForkStrategy> strategyList = configService.getActiveGoldForkStrategies();
-            if (strategyList == null) {
-                log.info("未配置gold-fork策略");
-                return;
-            }
-            for (GoldForkStrategy strategy : strategyList) {
-                try {
-                    if (tradeDao.getProcessingTrade(strategy.getId()) != null) {
-                        log.info("已有进行中交易，不开单");
-                        return;
-                    }
-                    createOrder(strategy, dataGranularity, kLine.getDataTime());
-                    log.info("gold-fork下单成功");
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
+        log.info("检测到15分钟金叉{}-{}", prePreDataTime, latestKLineDataTime);
+        if (!isMACDFilterPass(instId, now, DataGranularity.ONE_HOUR, true) || !isMACDFilterPass(instId, now, DataGranularity.FOUR_HOUR, false)) {
+            return;
+        }
+
+        List<GoldForkStrategy> strategyList = configService.getActiveGoldForkStrategies();
+        if (strategyList == null) {
+            log.info("未配置gold-fork策略");
+            return;
+        }
+
+        strategyList = strategyList.stream().filter(s -> s.getWatchInstId().equals(instId)).collect(Collectors.toList());
+        if (strategyList == null) {
+            log.info("未配置gold-fork策略");
+            return;
+        }
+
+
+        for (GoldForkStrategy strategy : strategyList) {
+            try {
+                if (tradeDao.getProcessingTrade(strategy.getId()) != null) {
+                    log.info("已有进行中交易，不开单");
+                    return;
                 }
+                createOrder(strategy, dataGranularity, kLine.getDataTime());
+                log.info("gold-fork下单成功");
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
             }
         }
     }
@@ -189,29 +201,29 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
         return kLineList.get(0).getClose();
     }
 
-    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, boolean isStrict) {
+    private boolean isMACDFilterPass(String instId, Date now, DataGranularity dataGranularity, boolean isStrict) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
-        KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
-        KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+        KLine prePreKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
+        KLine preKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), preDataTime);
         if (preKline == null) {
-            log.info("k线不存在，macd滤网不通过 {}", preDataTime);
+            log.info("gold-fork k线不存在，macd滤网不通过 {}", preDataTime);
             return false;
         }
         if (prePreKline == null) {
-            log.info("k线不存在，macd滤网不通过 {}", prePreDataTime);
+            log.info("gold-fork k线不存在，macd滤网不通过 {}", prePreDataTime);
             return false;
         }
         if (isStrict && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
-            log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
+            log.info("gold-fork macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
 
         //非严格模式下，MACD小于零且递减才不通过
         if (!isStrict && preKline.getMacd().compareTo(new BigDecimal("0")) < 0
                 && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
-            log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
+            log.info("gold-fork macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
 

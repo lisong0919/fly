@@ -14,4 +14,5 @@ public class GoldForkStrategy {
     private String account;
     private String instId;
     private BigDecimal profitPercent;
+    private String watchInstId;
 }

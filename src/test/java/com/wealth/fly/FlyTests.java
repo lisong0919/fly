@@ -88,7 +88,7 @@ class FlyTests {
 
     @Test
     public void statistics() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
+        List<KLine> kLineList = kLineDao.getLastKLineByGranularity("", CommonConstants.DEFAULT_DATA_GRANULARITY.name(), 100000);
 
         for (int i = kLineList.size(); i >= 1; i--) {
             KLine kLine = kLineList.get(i - 1);
@@ -110,13 +110,14 @@ class FlyTests {
     @Test
     public void fillMACD() throws ParseException {
 
+        String instId = "BTC-USDT-SWAP";
         String min = "20230609010000";
         DataGranularity dataGranularity = DataGranularity.FIFTEEN_MINUTES;
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
         Long preKlineDataTime = DateUtil.getPreKLineDataTime(Long.parseLong(min), dataGranularity);
-        KLine prevKLine = kLineDao.getKlineByDataTime(dataGranularity.name(), preKlineDataTime);
-        KLine kLine = kLineDao.getKlineByDataTime(dataGranularity.name(), Long.parseLong(min));
+        KLine prevKLine = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), preKlineDataTime);
+        KLine kLine = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), Long.parseLong(min));
 
         while (true) {
             //计算macd并设置
@@ -134,7 +135,7 @@ class FlyTests {
             prevKLine = kLine;
             Date date = DateUtils.addMinutes(simpleDateFormat.parse(min), 5);
             min = simpleDateFormat.format(date);
-            kLine = kLineDao.getKlineByDataTime(DataGranularity.ONE_HOUR.name(), Long.parseLong(min));
+            kLine = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), Long.parseLong(min));
             System.out.println(">>>>>>>>>" + min);
             if (kLine == null) {
                 System.out.println("not found" + min);

@@ -27,8 +27,9 @@ public class KLineDaoImpl extends ServiceImpl<KLineMapper, KLine> implements KLi
     }
 
     @Override
-    public List<KLine> getLastKLineByGranularity(String dataGranularity, int limit) {
+    public List<KLine> getLastKLineByGranularity(String instId,String dataGranularity, int limit) {
         LambdaQueryWrapper<KLine> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(KLine::getInstId,instId);
         wrapper.eq(KLine::getGranularity, dataGranularity);
         wrapper.orderByDesc(KLine::getDataTime);
         wrapper.last("limit " + limit);
@@ -37,8 +38,9 @@ public class KLineDaoImpl extends ServiceImpl<KLineMapper, KLine> implements KLi
     }
 
     @Override
-    public List<KLine> getLastKLineGTDataTime(String dataGranularity, Long dataTime, int limit) {
+    public List<KLine> getLastKLineGTDataTime(String instId,String dataGranularity, Long dataTime, int limit) {
         LambdaQueryWrapper<KLine> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(KLine::getInstId,instId);
         wrapper.eq(KLine::getGranularity, dataGranularity);
         wrapper.gt(KLine::getDataTime, dataTime);
         wrapper.orderByAsc(KLine::getDataTime);
@@ -48,10 +50,12 @@ public class KLineDaoImpl extends ServiceImpl<KLineMapper, KLine> implements KLi
     }
 
     @Override
-    public KLine getKlineByDataTime(String dataGranularity, Long dataTime) {
+    public KLine getKlineByDataTime(String instId,String dataGranularity, Long dataTime) {
         LambdaQueryWrapper<KLine> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(KLine::getInstId,instId);
         wrapper.eq(KLine::getGranularity, dataGranularity);
         wrapper.eq(KLine::getDataTime, dataTime);
+
 
         return baseMapper.selectOne(wrapper);
     }

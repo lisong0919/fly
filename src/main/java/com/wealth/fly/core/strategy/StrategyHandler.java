@@ -54,7 +54,7 @@ public class StrategyHandler implements KLineListener {
 
     @PostConstruct
     public void init() {
-        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(CommonConstants.DEFAULT_DATA_GRANULARITY.toString(), 30);
+        List<KLine> kLineList = kLineDao.getLastKLineByGranularity(null, CommonConstants.DEFAULT_DATA_GRANULARITY.toString(), 30);
 
         if (kLineList == null || kLineList.isEmpty()) {
             return;
@@ -88,7 +88,6 @@ public class StrategyHandler implements KLineListener {
 //        klineDataFetcher.registerKLineListener(this);
     }
 
-    @Override
     public void onNewKLine(KLine kLine) {
         if (!CommonConstants.DEFAULT_DATA_GRANULARITY.name().equals(kLine.getGranularity())) {
             return;
@@ -136,9 +135,9 @@ public class StrategyHandler implements KLineListener {
             if (match) {
                 strategy.getAction().doAction(strategy, kLine, priceMA, null);
                 //目前的短信参数不能有特殊符号
-                String priceStr= kLine.getClose().toPlainString();
-                if(priceStr.contains(".")){
-                    priceStr=priceStr.substring(0,priceStr.indexOf("."));
+                String priceStr = kLine.getClose().toPlainString();
+                if (priceStr.contains(".")) {
+                    priceStr = priceStr.substring(0, priceStr.indexOf("."));
                 }
                 SmsUtil.sendOpenStockSms(priceStr);
                 LOGGER.info("send sms success");
@@ -332,7 +331,6 @@ public class StrategyHandler implements KLineListener {
         LastNKlineCriteria lc2 = new LastNKlineCriteria(CommonConstants.DEFAULT_LAST_LINE_SIZE, cc2, LastNKlineCriteria.MatchType.ONE_MATCH);
 
 
-
         SimpleCriteria simpleCriteria5 = new SimpleCriteria();
         simpleCriteria5.setSource(new Sector(Sector.SectorType.KLINE_PRICE_CLOSE));
         simpleCriteria5.setCondition(new Condition(Condition.ConditionType.LESS_THAN, Condition.ConditionValueType.ANY, null));
@@ -430,4 +428,8 @@ public class StrategyHandler implements KLineListener {
     }
 
 
+    @Override
+    public void onNewKLine(String instId, KLine kLine) {
+
+    }
 }

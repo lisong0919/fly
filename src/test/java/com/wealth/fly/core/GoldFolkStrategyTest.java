@@ -55,12 +55,13 @@ public class GoldFolkStrategyTest {
     public void testStrategy() {
         DataGranularity dataGranularity = DataGranularity.FIFTEEN_MINUTES;
         long greatThan = 20230101010000L;
-        long lessThan = 20230616140000L;
+        long lessThan = 20230705200000L;
+        String instId = "ETH-USDT-SWAP";
         BigDecimal profitPercent = new BigDecimal("0.003");
         List<TriggerResult> triggerResults = new ArrayList<>();
 
         while (true) {
-            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(dataGranularity.name(), greatThan, 100);
+            List<KLine> kLineList = kLineDao.getLastKLineGTDataTime(instId, dataGranularity.name(), greatThan, 100);
             if (CollectionUtils.isEmpty(kLineList)) {
                 break;
             }
@@ -68,23 +69,37 @@ public class GoldFolkStrategyTest {
                 try {
                     Long preDataTime = DateUtil.getPreKLineDataTime(kLine.getDataTime(), dataGranularity);
                     Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
-                    KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
-                    KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
+                    KLine preKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), preDataTime);
+                    KLine prePreKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
 
+                    BigDecimal zero = new BigDecimal("0");
                     Date now = DateUtil.parseStandardTime(kLine.getDataTime() + 1);
-                    boolean isGoldFork = prePreKline.getMacd().compareTo(new BigDecimal("0")) < 0 && preKline.getMacd().compareTo(new BigDecimal("0")) > 0;
+                    boolean isGoldFork = prePreKline.getMacd().compareTo(zero) < 0 && preKline.getMacd().compareTo(new BigDecimal("0")) > 0;
 
                     if (isGoldFork) {
-                        if (isMACDFilterPass(now, DataGranularity.ONE_HOUR, true) && isMACDFilterPass(now, DataGranularity.FOUR_HOUR, true)) {
+//                        long pre = DateUtil.getPreKLineDataTime(prePreDataTime, dataGranularity);
+//                        long prePre = DateUtil.getPreKLineDataTime(pre, dataGranularity);
+//                        if (kLineDao.getKlineByDataTime(dataGranularity.name(), pre).getMacd().compareTo(zero) >= 0) {
+//                            log.info("=============前置红k太少: ", kLine.getDataTime());
+//                            continue;
+//                        }
+//                        if (kLineDao.getKlineByDataTime(dataGranularity.name(), prePre).getMacd().compareTo(zero) >= 0) {
+//                            log.info("=============前置红k太少: ", kLine.getDataTime());
+//                            continue;
+//                        }
+
+
+                        if (isMACDFilterPass(instId, now, DataGranularity.ONE_HOUR, true) && isMACDFilterPass(instId, now, DataGranularity.FOUR_HOUR, false)) {
                             TriggerResult triggerResult = goldFork(kLine, profitPercent, dataGranularity);
                             triggerResults.add(triggerResult);
                         }
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
+                } finally {
+                    greatThan = kLine.getDataTime();
                 }
 
-                greatThan = kLine.getDataTime();
                 if (greatThan >= lessThan) {
                     break;
                 }
@@ -124,7 +139,7 @@ public class GoldFolkStrategyTest {
             while (true) {
                 try {
                     Long nextDataTime = DateUtil.getNextKlineDataTime(dataTime, dataGranularity);
-                    KLine nextKline = kLineDao.getKlineByDataTime(dataGranularity.name(), nextDataTime);
+                    KLine nextKline = kLineDao.getKlineByDataTime(kLine.getInstId(), dataGranularity.name(), nextDataTime);
                     if (nextKline == null) {
                         break;
                     }
@@ -216,12 +231,12 @@ public class GoldFolkStrategyTest {
         log.info("全部数据初始化完成");
     }
 
-    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, boolean isStrict) {
+    private boolean isMACDFilterPass(String instId, Date now, DataGranularity dataGranularity, boolean isStrict) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
-        KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
-        KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+        KLine prePreKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
+        KLine preKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), preDataTime);
         if (preKline == null) {
             log.info("k线不存在，macd滤网不通过 {}", preDataTime);
             return false;
@@ -241,6 +256,12 @@ public class GoldFolkStrategyTest {
             log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
+
+        //非严格模式下macd大于零就行
+//        if (!isStrict && preKline.getMacd().compareTo(new BigDecimal("0")) < 0) {
+//            log.info("macd递减趋势，滤网不通过 {} {}-{}", dataGranularity, prePreDataTime, preDataTime);
+//            return false;
+//        }
 
         return true;
     }

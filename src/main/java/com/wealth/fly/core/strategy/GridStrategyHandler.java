@@ -57,6 +57,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     private GridLogDao gridLogDao;
     @Resource
     private KLineDao kLineDao;
+    @Resource
+    private ConfigService configService;
 
 
     private volatile boolean createOrderLock = false;
@@ -69,6 +71,28 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     }
 
     @Override
+    public void onNewMarkPrice(MarkPrice markPrice) {
+        List<GridStrategy> gridStrategies = configService.getActiveGridStrategies();
+        if (CollectionUtils.isEmpty(gridStrategies)) {
+            return;
+        }
+
+        // 过滤出markPrice对应产品的策略
+        gridStrategies = gridStrategies.stream().filter(s -> s.getInstId().equals(markPrice.getInstId())).collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(gridStrategies)) {
+            return;
+        }
+
+        for (GridStrategy gridStrategy : gridStrategies) {
+            try {
+                onNewMarkPrice(markPrice, gridStrategy);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
     public void onNewMarkPrice(MarkPrice markPrice, GridStrategy strategy) {
         Exchanger exchanger = ExchangerManager.getExchangerByAccountId(strategy.getAccount());
 
@@ -99,6 +123,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
     }
 
+
     private boolean isMACDFilterPass(GridStrategy strategy) {
         Date now = new Date();
         return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy, true)
@@ -110,8 +135,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
-        KLine prePreKline = kLineDao.getKlineByDataTime(dataGranularity.name(), prePreDataTime);
-        KLine preKline = kLineDao.getKlineByDataTime(dataGranularity.name(), preDataTime);
+        KLine prePreKline = kLineDao.getKlineByDataTime(strategy.getWatchInstId(), dataGranularity.name(), prePreDataTime);
+        KLine preKline = kLineDao.getKlineByDataTime(strategy.getWatchInstId(), dataGranularity.name(), preDataTime);
         if (preKline == null) {
             log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), preDataTime);
             return false;
