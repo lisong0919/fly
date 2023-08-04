@@ -103,7 +103,7 @@ public class OKExchangerTest {
         Date startTime = sdf.parse("2023-07-19 10:00:00");
         Date endTime = sdf.parse("2023-07-19 20:00:00");
 
-        List<KLine> kLineList = exchanger.getHistoryKlineData("BTC-USDT-SWAP", startTime, endTime, DataGranularity.FOUR_HOUR);
+        List<KLine> kLineList = exchanger.getHistoryKlineData("BTC-USD-230929", startTime, endTime, DataGranularity.FOUR_HOUR);
         System.out.println(JsonUtil.toJSONString(kLineList));
     }
 

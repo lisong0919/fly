@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,6 +64,38 @@ public class TestController {
     public void open() {
         log.info(">>>>> openAll");
         Monitor.stopAll = false;
+    }
+
+    @RequestMapping("/init_grid")
+    public void initGrid(HttpServletRequest request) {
+        BigDecimal flag = new BigDecimal(request.getParameter("start_price"));
+        String instId = request.getParameter("inst_id");
+        String num = request.getParameter("num");
+        Integer strategy = Integer.valueOf(request.getParameter("strategy"));
+
+        String weight = "0.003";
+
+        for (int i = 0; i < 300; i++) {
+            String buyPrice = flag.toPlainString();
+            flag = flag.add(flag.multiply(new BigDecimal(weight)));
+            flag = flag.setScale(2, RoundingMode.HALF_UP);
+            String sellPrice = flag.toPlainString();
+
+            System.out.println(buyPrice + "-" + sellPrice);
+
+            Grid grid = Grid.builder()
+                    .instId(instId)
+                    .strategy(strategy)
+                    .strategyDesc("")
+                    .weight(weight)
+                    .buyPrice(buyPrice)
+                    .sellPrice(sellPrice)
+                    .num(num)
+                    .build();
+            gridDao.save(grid);
+        }
+
+        log.info(">>>>>>>>>网格初始化成功");
     }
 
     @RequestMapping("/preview")

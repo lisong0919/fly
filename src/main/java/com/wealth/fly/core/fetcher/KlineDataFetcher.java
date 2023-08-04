@@ -46,7 +46,7 @@ public class KlineDataFetcher extends QuartzJobBean {
     }
 
     private void fetchAll() {
-        List<DataGranularity> granularities = Arrays.asList(DataGranularity.FIFTEEN_MINUTES, DataGranularity.ONE_HOUR, DataGranularity.FOUR_HOUR);
+        List<DataGranularity> granularities = Arrays.asList(DataGranularity.FOUR_HOUR, DataGranularity.ONE_HOUR, DataGranularity.FIFTEEN_MINUTES);
 
         for (String instId : instIds.split(",")) {
             for (DataGranularity dataGranularity : granularities) {
