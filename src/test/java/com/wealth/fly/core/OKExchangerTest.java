@@ -100,10 +100,10 @@ public class OKExchangerTest {
     @Test
     public void testGetKLineData() throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date startTime = sdf.parse("2023-07-19 10:00:00");
-        Date endTime = sdf.parse("2023-07-19 20:00:00");
+        Date startTime = sdf.parse("2021-12-30 00:00:00");
+        Date endTime = sdf.parse("2021-12-30 00:00:00");
 
-        List<KLine> kLineList = exchanger.getHistoryKlineData("BTC-USD-230929", startTime, endTime, DataGranularity.FOUR_HOUR);
+        List<KLine> kLineList = exchanger.getHistoryKlineData("ETH-USDT-SWAP", startTime, endTime, DataGranularity.FOUR_HOUR);
         System.out.println(JsonUtil.toJSONString(kLineList));
     }
 

@@ -33,7 +33,7 @@ public class QuartzConfig {
     public CronTriggerFactoryBean KlineDataFetcherTrigger() {
         CronTriggerFactoryBean trigger = new CronTriggerFactoryBean();
         trigger.setJobDetail(KlineDataFetcherJobDetail().getObject());
-        trigger.setCronExpression("1 */1 * * * ?");
+        trigger.setCronExpression("*/10 * * * * ?");
         return trigger;
     }
 

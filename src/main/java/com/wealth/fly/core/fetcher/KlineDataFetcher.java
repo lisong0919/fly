@@ -6,8 +6,6 @@ import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 
-
-import java.text.ParseException;
 import java.util.*;
 import javax.annotation.Resource;
 
@@ -19,8 +17,10 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 import org.springframework.stereotype.Component;
+
 
 @Component
 @Slf4j
@@ -36,6 +36,9 @@ public class KlineDataFetcher extends QuartzJobBean {
 
     @Value("${fetcher.inst}")
     private String instIds;
+
+    @Resource
+    private Environment env;
 
     private static List<KLineListener> kLineListenerList = new ArrayList<>();
 
@@ -76,38 +79,57 @@ public class KlineDataFetcher extends QuartzJobBean {
     }
 
 
-    private void fetch(String instId, DataGranularity dataGranularity) throws ParseException {
+    private void fetch(String instId, DataGranularity dataGranularity) {
         List<KLine> lastKLines = kLineDao.getLastKLineByGranularity(instId, dataGranularity.name(), 1);
 
-        Date fetchMinTime = null;
-        Date fetchMaxTime = null;
-
-        if (lastKLines != null && lastKLines.size() > 0) {
-            Date now = Calendar.getInstance(Locale.CHINA).getTime();
-//            Date lastLineDate = DateUtil.parseStandardTime(lastKLines.get(0).getDataTime());
-
-            Date[] timeRange = getDateFetchRang(lastKLines.get(0).getDataTime(), now, dataGranularity);
-            //最后一条数据的时间，距离当前时间，是否超过数据粒度对应的时间间隔
-            if (timeRange != null) {
-                fetchMinTime = timeRange[0];
-                fetchMaxTime = timeRange[1];
-            } else {
-                log.debug("[{}] data is uptodate", dataGranularity);
-                return;
-            }
-        } else {
-            log.info("[{}] no data in db,fetch all.", dataGranularity);
+        if (lastKLines == null || lastKLines.isEmpty()) {
+            log.error("数据库无初始化Kline，无法获取后续K线, instId:{},dataGranularity:{}", instId, dataGranularity);
+            return;
         }
 
-        log.debug("[{}] start to fetch kline data from {} to {}", dataGranularity, fetchMinTime, fetchMaxTime);
+        Long fetchTimeStart = DateUtil.getNextKlineDataTime(lastKLines.get(0).getDataTime(), dataGranularity);
+        Long fetchTimeEnd = fetchTimeStart;
+        Long fetchTimeMax = DateUtil.getLatestKLineDataTime(new Date(), dataGranularity);
+
+        if (lastKLines.get(0).getDataTime() == fetchTimeMax.longValue()) {
+            log.debug("[{}] [{}] k线是最新数据", instId, dataGranularity);
+            return;
+        }
+
+        for (int i = 0; i < 99; i++) {
+            fetchTimeEnd = DateUtil.getNextKlineDataTime(fetchTimeEnd, dataGranularity);
+            if (fetchTimeEnd >= fetchTimeMax) {
+                //一次最多取100条
+                break;
+            }
+        }
+
+        log.info("[{}] [{}] start to fetch kline data from {} to {}", instId, dataGranularity, fetchTimeStart, fetchTimeEnd);
+
         //取数据的起始时间未设置的情况下，取回所有能取的数据
-        List<KLine> kLineList = ExchangerManager.getExchangerByAccountId(defaultAccount)
-                .getKlineData(instId, fetchMinTime, fetchMaxTime, dataGranularity);
+        List<KLine> kLineList = null;
+        Date fetchStart = DateUtil.parseStandardTime(fetchTimeStart);
 
-        log.debug("[{}] fetch kline data from exchanger success.", dataGranularity);
+        //起始时间非今天，取历史数据
+        if (DateUtils.isSameDay(fetchStart, new Date())) {
+            kLineList = ExchangerManager.getExchangerByAccountId(defaultAccount)
+                    .getKlineData(instId, fetchStart, DateUtil.parseStandardTime(fetchTimeEnd), dataGranularity);
+        } else {
+            kLineList = ExchangerManager.getExchangerByAccountId(defaultAccount)
+                    .getHistoryKlineData(instId, fetchStart, DateUtil.parseStandardTime(fetchTimeEnd), dataGranularity);
+        }
 
-        if (CollectionUtils.isNotEmpty(kLineList)) {
-            kLineList.sort((o1, o2) -> {
+        afterFetch(instId, dataGranularity, kLineList, lastKLines);
+        if (fetchTimeEnd < fetchTimeMax) {
+            fetch(instId, dataGranularity);
+        }
+
+        log.debug("[{}] [{}] fetch kline data from exchanger success.", instId, dataGranularity);
+    }
+
+    private void afterFetch(String instId, DataGranularity dataGranularity, List<KLine> newKLineList, List<KLine> lastKLines) {
+        if (CollectionUtils.isNotEmpty(newKLineList)) {
+            newKLineList.sort((o1, o2) -> {
                 if (o1.getDataTime().equals(o2.getDataTime())) {
                     return 0;
                 }
@@ -115,37 +137,20 @@ public class KlineDataFetcher extends QuartzJobBean {
             });
         }
 
-        boolean isDBEmpty = lastKLines == null || lastKLines.isEmpty();
-        for (KLine kLine : kLineList) {
-            kLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
-            kLine.setCurrencyId(1);
-            kLine.setInstId(instId);
+        for (KLine newKLine : newKLineList) {
+            newKLine.setCreateTime(Calendar.getInstance(Locale.CHINA).getTime());
+            newKLine.setCurrencyId(1);
+            newKLine.setInstId(instId);
 
-            if (isDBEmpty || kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                macdHandler.setMACD(kLine);
-                kLineDao.insert(kLine);
-            }
-
-            if (!isDBEmpty && kLine.getDataTime() > lastKLines.get(0).getDataTime()) {
-                notifyKLineListenerNewLine(instId, kLine);
+            if (newKLine.getDataTime() > lastKLines.get(0).getDataTime()) {
+                macdHandler.setMACD(newKLine);
+                kLineDao.insert(newKLine);
+                notifyKLineListenerNewLine(instId, newKLine);
             }
         }
-        if (CollectionUtils.isNotEmpty(kLineList)) {
+        if (CollectionUtils.isNotEmpty(newKLineList)) {
             log.info("[{}] save kline data to db success,", dataGranularity);
         }
-    }
-
-    protected Date[] getDateFetchRang(Long lastLineTime, Date now, DataGranularity dataGranularity) {
-        Date[] result = new Date[2];
-
-        result[0] = DateUtils.addSeconds(DateUtil.parseStandardTime(lastLineTime), 1);
-        result[1] = now;
-
-        //不到最新数据的形成时间
-        if (result[1].getTime() - result[0].getTime() < 0) {
-            return null;
-        }
-        return result;
     }
 
 

@@ -65,10 +65,10 @@ public class OkexExchanger implements Exchanger {
         try {
 
             if (startTime != null) {
-                url += "&before=" + startTime.getTime();
+                url += "&before=" + (startTime.getTime() - 1000);
             }
             if (endTime != null) {
-                url += "&after=" + endTime.getTime();
+                url += "&after=" + (endTime.getTime() + 1000);
             }
             String jsonResponse = HttpClientUtil.get(url);
             if (StringUtils.isEmpty(jsonResponse)) {
@@ -96,7 +96,7 @@ public class OkexExchanger implements Exchanger {
                 kLine.setLow(new BigDecimal((String) data.get(3)));
                 kLine.setClose(new BigDecimal((String) data.get(4)));
                 kLine.setVolume(Long.parseLong((String) data.get(5)));
-                kLine.setCurrencyVolume(new BigDecimal((String) data.get(4)));
+                kLine.setCurrencyVolume(new BigDecimal((String) data.get(6)));
                 kLine.setGranularity(dataGranularity.name());
                 kLineList.add(kLine);
             }

@@ -1,6 +1,7 @@
 package com.wealth.fly.core.strategy;
 
 import com.wealth.fly.common.DateUtil;
+import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.TradeMode;
@@ -22,14 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,6 +50,8 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     private KlineDataFetcher klineDataFetcher;
     @Resource
     private TradeStatusFetcher tradeStatusFetcher;
+    @Resource
+    private Environment env;
 
 
     @PostConstruct
@@ -66,17 +68,12 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
         }
 
         Date now = new Date();
-//        Date now = null;
-//        try {
-//            now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2023-06-14 08:01:00");
-//        } catch (ParseException e) {
-//            e.printStackTrace();
-//        }
         Long latestKLineDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         KLine preKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), latestKLineDataTime);
 
         Long prePreDataTime = DateUtil.getPreKLineDataTime(latestKLineDataTime, dataGranularity);
         KLine prePreKline = kLineDao.getKlineByDataTime(instId, dataGranularity.name(), prePreDataTime);
+
 
         BigDecimal zero = new BigDecimal("0");
         boolean isGoldFork = prePreKline.getMacd().compareTo(zero) < 0 && preKline.getMacd().compareTo(zero) > 0;
@@ -118,7 +115,6 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
     }
 
     private void createOrder(GoldForkStrategy strategy, DataGranularity dataGranularity, long kLineDataTime) throws IOException {
-
         Exchanger exchanger = ExchangerManager.getExchangerByAccountId(strategy.getAccount());
 
         String customerOrderId = UUID.randomUUID().toString().replaceAll("-", "");
@@ -152,6 +148,7 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
             order.setSlTriggerPxType("mark");
 
             orderId = exchanger.createOrder(order);
+
         } catch (Exception e) {
             log.error("下单出错 " + e.getMessage(), e);
 
