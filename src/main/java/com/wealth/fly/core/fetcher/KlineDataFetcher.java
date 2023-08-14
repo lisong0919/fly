@@ -7,6 +7,7 @@ import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.KLine;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 
 import com.wealth.fly.core.exchanger.ExchangerManager;
@@ -149,7 +150,8 @@ public class KlineDataFetcher extends QuartzJobBean {
             }
         }
         if (CollectionUtils.isNotEmpty(newKLineList)) {
-            log.info("[{}] save kline data to db success,", dataGranularity);
+            List<Long> dataTimeList = newKLineList.stream().map(KLine::getDataTime).collect(Collectors.toList());
+            log.info("[{}] [{}] save kline data to db success {}", dataGranularity, instId, dataTimeList);
         }
     }
 
