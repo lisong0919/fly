@@ -10,6 +10,7 @@ import lombok.Data;
 public class Account {
 
     private String id;
+    private String type;
     private String secretKey;
     private String accessKey;
     private String passphrase;

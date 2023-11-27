@@ -4,7 +4,7 @@ import com.wealth.fly.core.Monitor;
 import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.constants.OkexAlgoOrderState;
-import com.wealth.fly.core.constants.OkexOrderState;
+import com.wealth.fly.core.constants.OrderStatus;
 import com.wealth.fly.core.dao.GridDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
@@ -117,7 +117,7 @@ public class GridStatusFetcher extends QuartzJobBean {
         if (OkexAlgoOrderState.LIVE.equals(algoOrder.getState()) || OkexAlgoOrderState.PARTIALLY_EFFECTIVE.equals(algoOrder.getState())) {
             return;
         } else if (OkexAlgoOrderState.EFFECTIVE.equals(algoOrder.getState())) {
-            if (sellOrder != null && OkexOrderState.FILLED.equals(sellOrder.getState())) {
+            if (sellOrder != null && OrderStatus.FILLED.equals(sellOrder.getState())) {
                 for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
                     statusChangeListener.onFinished(grid, algoOrder, sellOrder);
                 }
@@ -151,11 +151,11 @@ public class GridStatusFetcher extends QuartzJobBean {
                 continue;
             }
 
-            if (OkexOrderState.FILLED.equals(order.getState())) {
+            if (OrderStatus.FILLED.equals(order.getState())) {
                 for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
                     statusChangeListener.onActive(grid, order);
                 }
-            } else if (OkexOrderState.CANCELED.equals(order.getState())) {
+            } else if (OrderStatus.CANCELED.equals(order.getState())) {
                 for (GridStatusChangeListener statusChangeListener : statusChangeListeners) {
                     statusChangeListener.onCancel(grid);
                 }

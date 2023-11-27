@@ -12,9 +12,12 @@ import com.wealth.fly.core.dao.KLineDao;
 import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.exchanger.BinanceExchanger;
 import com.wealth.fly.core.exchanger.Exchanger;
 import com.wealth.fly.core.exchanger.ExchangerManager;
+import com.wealth.fly.core.model.Account;
 import com.wealth.fly.core.model.GridStrategy;
+import com.wealth.fly.core.model.Order;
 import com.wealth.fly.core.strategy.GoldForkStrategyHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -48,9 +51,25 @@ public class TestController {
 
 
     @RequestMapping("/test")
-    public Object proxyOkex() {
-//        KLine kLine = kLineDao.getKlineByDataTime(DataGranularity.FIFTEEN_MINUTES.name(), 20230614080000L);
-//        goldForkStrategyHandler.onNewKLine(kLine);
+    public Object proxyOkex() throws IOException {
+        Account account = new Account();
+        account.setType("binance");
+        account.setAccessKey("D3v8nDdedqHDB7N2g5UvAjC0Mq8rkQjXR3oYZpeSFKT3To8vu2VRF6dbjLC3pWv0");
+        account.setSecretKey("neGGfdhPVOehafjM4MeZ8bIHKy5Lxva46PYGDUytRsx2hWYGd0b1uMFAzXreZgGm");
+
+        BinanceExchanger exchanger = new BinanceExchanger(account);
+        //下单
+        Order order = Order.builder()
+                .instId("BTCUSD_200925")
+                .tdMode("cross")
+                .side("buy")
+                .posSide("long")
+                .ordType("limit")
+                .sz("0.01")
+                .px("30000")
+                .build();
+
+        exchanger.createOrder(order);
         return "test ok...";
     }
 

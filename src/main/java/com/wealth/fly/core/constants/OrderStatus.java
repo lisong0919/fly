@@ -4,7 +4,7 @@ package com.wealth.fly.core.constants;
  * @author : lisong
  * @date : 2023/4/25
  */
-public class OkexOrderState {
+public class OrderStatus {
     /**
      * 订单状态
      * canceled：撤单成功
@@ -17,7 +17,6 @@ public class OkexOrderState {
     public static final String LIVE = "live";
     public static final String PARTIALLY_FILLED = "partially_filled";
     public static final String FILLED = "filled";
-
 
 
 }

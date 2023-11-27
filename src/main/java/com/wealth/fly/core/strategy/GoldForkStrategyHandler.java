@@ -86,6 +86,7 @@ public class GoldForkStrategyHandler implements KLineListener, TradeStatusChange
         if (!isMACDFilterPass(instId, now, DataGranularity.ONE_HOUR, true) || !isMACDFilterPass(instId, now, DataGranularity.FOUR_HOUR, false)) {
             return;
         }
+        log.info("[{}] 金叉滤网通过{}-{}", instId, prePreDataTime, latestKLineDataTime);
 
         List<GoldForkStrategy> strategyList = configService.getActiveGoldForkStrategies();
         if (strategyList == null) {

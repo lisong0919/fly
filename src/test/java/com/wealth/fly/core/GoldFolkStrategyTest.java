@@ -55,8 +55,8 @@ public class GoldFolkStrategyTest {
     public void testStrategy() {
         DataGranularity dataGranularity = DataGranularity.FIFTEEN_MINUTES;
         long greatThan = 20230101010000L;
-        long lessThan = 20230811200000L;
-        String instId = "BTC-USDT-SWAP";
+        long lessThan = 20231017200000L;
+        String instId = "ETH-USDT-SWAP";
         BigDecimal profitPercent = new BigDecimal("0.005");
         List<TriggerResult> triggerResults = new ArrayList<>();
 

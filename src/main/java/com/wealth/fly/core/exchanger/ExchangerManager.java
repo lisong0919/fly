@@ -31,8 +31,13 @@ public class ExchangerManager {
         if (exchanger == null) {
             synchronized (accountId) {
                 Account account = getConfigService().getAccount(accountId);
-                exchanger = new OkexExchanger(account);
+                if ("binance".equals(account.getType())) {
+                    exchanger = new BinanceExchanger(account);
+                } else {
+                    exchanger = new OkexExchanger(account);
+                }
             }
+            exchangerMap.put(accountId, exchanger);
         }
         return exchanger;
     }

@@ -1,7 +1,7 @@
 package com.wealth.fly.core.fetcher;
 
 import com.wealth.fly.core.constants.OkexAlgoOrderState;
-import com.wealth.fly.core.constants.OkexOrderState;
+import com.wealth.fly.core.constants.OrderStatus;
 import com.wealth.fly.core.constants.TradeStatus;
 import com.wealth.fly.core.dao.TradeDao;
 import com.wealth.fly.core.entity.Trade;
@@ -86,7 +86,7 @@ public class TradeStatusFetcher extends QuartzJobBean {
         if (OkexAlgoOrderState.LIVE.equals(algoOrder.getState()) || OkexAlgoOrderState.PARTIALLY_EFFECTIVE.equals(algoOrder.getState())) {
             return;
         } else if (OkexAlgoOrderState.EFFECTIVE.equals(algoOrder.getState())) {
-            if (closeOrder != null && OkexOrderState.FILLED.equals(closeOrder.getState())) {
+            if (closeOrder != null && OrderStatus.FILLED.equals(closeOrder.getState())) {
                 for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
                     listener.onClose(trade, algoOrder, closeOrder);
                 }
@@ -118,7 +118,7 @@ public class TradeStatusFetcher extends QuartzJobBean {
                 return;
             }
 
-            if (OkexOrderState.CANCELED.equals(order.getState())) {
+            if (OrderStatus.CANCELED.equals(order.getState())) {
                 for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
                     try {
                         listener.onCancel(trade);
@@ -128,7 +128,7 @@ public class TradeStatusFetcher extends QuartzJobBean {
                 }
             }
 
-            if (OkexOrderState.FILLED.equals(order.getState())) {
+            if (OrderStatus.FILLED.equals(order.getState())) {
                 for (TradeStatusChangeListener listener : tradeStatusChangeListeners) {
                     try {
                         listener.onOpen(trade, order);

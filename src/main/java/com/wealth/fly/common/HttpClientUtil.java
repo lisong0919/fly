@@ -63,7 +63,6 @@ public class HttpClientUtil {
         }
     }
 
-
     public static String postBody(String url, String content, String apiDesc) throws IOException {
         return postBody(url, content, null, apiDesc);
     }
@@ -144,7 +143,7 @@ public class HttpClientUtil {
 
     private static void setHeaders(AbstractHttpMessage httpMessage, Map<String, String> headersMap) {
         httpMessage.setHeader("accept", "*/*");
-        httpMessage.setHeader("Content-Type", "application/json");
+//        httpMessage.setHeader("Content-Type", "application/json");
         httpMessage.setHeader("Connection", "Keep-Alive");
         httpMessage.setHeader("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
         if (headersMap == null || headersMap.isEmpty()) {

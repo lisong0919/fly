@@ -28,11 +28,6 @@ public class Order {
     private String tdMode;
 
     /**
-     * 保证金币种，仅适用于单币种保证金模式下的全仓币币杠杆订单
-     */
-    private String ccy;
-
-    /**
      * 订单方向
      * buy：买， sell：卖
      */
@@ -110,11 +105,6 @@ public class Order {
     private String state;
 
     /**
-     * 杠杆倍数，0.01到125之间的数值，仅适用于 币币杠杆/交割/永续
-     */
-    private String lever;
-
-    /**
      * 止盈触发价，如果填写此参数，必须填写 止盈委托价
      */
     private String tpTriggerPx;
@@ -149,24 +139,6 @@ public class Order {
     private String fee;
 
     /**
-     * 订单状态更新时间，Unix时间戳的毫秒数格式，如：1597026383085
-     */
-    private Long uTime;
-
-    /**
-     * 订单创建时间，Unix时间戳的毫秒数格式， 如 ：1597026383085
-     */
-    private Long cTime;
-
-
-    private String tag;
-
-    /**
-     * 策略委托单ID，策略订单触发时有值，否则为""
-     */
-    private String algoId;
-
-    /**
      * 最新成交时间
      */
     private Long fillTime;
@@ -196,5 +168,7 @@ public class Order {
      * 默认为last
      */
     private String slTriggerPxType;
+
+    private String tag;
 
 }
