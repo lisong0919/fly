@@ -105,7 +105,7 @@ public class GridStatusFetcher extends QuartzJobBean {
         Order sellOrder = null;
         try {
             Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(grid.getStrategy());
-            algoOrder = exchanger.getAlgoOrder(grid.getAlgoOrderId());
+            algoOrder = exchanger.getAlgoOrder(grid.getInstId(), grid.getAlgoOrderId());
             if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
                 sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
             }

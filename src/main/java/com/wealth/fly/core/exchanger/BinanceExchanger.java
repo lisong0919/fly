@@ -79,6 +79,7 @@ public class BinanceExchanger implements Exchanger {
         request.put("newClientOrderId", order.getClOrdId());
         request.put("workingType", "MARK_PRICE");
         request.put("timeInForce", "GTC");
+        request.put("positionSide", order.getPosSide().toUpperCase());
         if (stopPrice != null) {
             request.put("stopPrice", stopPrice);
         }
@@ -106,6 +107,13 @@ public class BinanceExchanger implements Exchanger {
         return HttpClientUtil.get(url + "?" + signedRequest, headers, desc);
     }
 
+    private String signAndDeleteRequest(String url, String params, String desc) throws IOException {
+
+        String signedRequest = generateSignedRequest(params);
+
+        return HttpClientUtil.delete(url + "?" + signedRequest, headers, desc);
+    }
+
     private String generateSignedRequest(LinkedHashMap<String, Object> request) {
         StringBuilder paramStr = new StringBuilder();
         for (String key : request.keySet()) {
@@ -130,19 +138,33 @@ public class BinanceExchanger implements Exchanger {
 
     @Override
     public void cancelOrder(String instId, String orderId) throws IOException {
+        String url = "/dapi/v1/order";
+        String params = "symbol=" + instId + "&orderId=" + orderId + "&timestamp=" + System.currentTimeMillis();
 
+        signAndDeleteRequest(url, params, "取消订单");
     }
 
     @Override
     public String createAlgoOrder(Order order) throws IOException {
         //TODO 这里写死了止盈限价
+        order.setPx(order.getTpOrdPx());
         return createOrder(order, "TAKE_PROFIT", order.getTpTriggerPx());
     }
 
     @Override
     public Order getOrder(String instId, String orderId) throws IOException {
-        String url = "/dapi/v1/order";
-        String param = "symbol=" + instId + "&orderId=" + orderId + "&timestamp=" + System.currentTimeMillis();
+        return getOrder(instId, orderId, null);
+    }
+
+    private Order getOrder(String instId, String orderId, String customerOrderId) throws IOException {
+        String url = HOST + "/dapi/v1/order";
+        String param = "symbol=" + instId + "&timestamp=" + System.currentTimeMillis();
+        if (orderId != null) {
+            param += "&orderId=" + orderId;
+        } else {
+            param += "&origClientOrderId=" + customerOrderId;
+        }
+
         String response = signAndGetRequest(url, param, "查询订单");
 
         JsonNode jsonNode = JsonUtil.readValue(response);
@@ -172,12 +194,18 @@ public class BinanceExchanger implements Exchanger {
 
     @Override
     public Order getOrderByCustomerOrderId(String instId, String customerOrderId) throws IOException {
-        return null;
+        return getOrder(instId, null, customerOrderId);
     }
 
     @Override
-    public Order getAlgoOrder(String algoId) throws IOException {
-        return null;
+    public Order getAlgoOrder(String instId, String algoId) throws IOException {
+        Order order = getOrder(instId, algoId, null);
+        if (order.getState().equals(OrderStatus.FILLED.toUpperCase())) {
+            //TODO 兼容ok策略单 待重构
+            order.setState("effective");
+        }
+
+        return order;
     }
 
     @Override

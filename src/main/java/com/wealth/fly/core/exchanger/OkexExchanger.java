@@ -207,7 +207,7 @@ public class OkexExchanger implements Exchanger {
     }
 
     @Override
-    public Order getAlgoOrder(String algoId) throws IOException {
+    public Order getAlgoOrder(String instId, String algoId) throws IOException {
         String requestPath = "/api/v5/trade/order-algo?algoId=" + algoId;
 
         String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查策略委托单信息");

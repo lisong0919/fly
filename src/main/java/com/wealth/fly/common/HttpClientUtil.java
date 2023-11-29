@@ -15,6 +15,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpClientConnectionManager;
@@ -88,6 +89,19 @@ public class HttpClientUtil {
 
     public static String get(String url, String apiDesc) throws IOException {
         return get(url, null, apiDesc);
+    }
+
+    public static String delete(String url, Map<String, String> headers, String apiDesc) throws IOException {
+        HttpDelete httpDelete = new HttpDelete(url);
+        httpDelete.setConfig(requestConfig);
+        setHeaders(httpDelete, headers);
+        CloseableHttpResponse httpResponse = client.execute(httpDelete);
+
+        HttpEntity responseEntity = httpResponse.getEntity();
+        String result = EntityUtils.toString(responseEntity, "utf-8");
+        EntityUtils.consume(httpResponse.getEntity());
+        log.debug("delete请求响应-{} {} {} ", apiDesc == null ? "" : apiDesc, url, result);
+        return result;
     }
 
     public static String get(String url, Map<String, String> headers, String apiDesc) throws IOException {

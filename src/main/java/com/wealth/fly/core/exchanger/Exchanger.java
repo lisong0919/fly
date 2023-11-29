@@ -53,11 +53,12 @@ public interface Exchanger {
     /**
      * 查策略委托单信息
      *
+     * @param instId
      * @param algoId
      * @return
      * @throws IOException
      */
-    Order getAlgoOrder(String algoId) throws IOException;
+    Order getAlgoOrder(String instId, String algoId) throws IOException;
 
     /**
      * 查策略委托单信息

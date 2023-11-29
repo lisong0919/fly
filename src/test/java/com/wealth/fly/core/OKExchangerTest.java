@@ -47,7 +47,7 @@ public class OKExchangerTest {
 
     @Test
     public void testGetAlgoOrder() throws IOException {
-        System.out.println(exchanger.getAlgoOrder("583643121104691203"));
+        System.out.println(exchanger.getAlgoOrder(null, "583643121104691203"));
     }
 
     @Test
