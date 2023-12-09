@@ -30,9 +30,6 @@ public class MarkPriceFetcher extends QuartzJobBean {
     @Resource
     private ConfigService configService;
 
-    @Value("${okex.account.default}")
-    private String defaultAccount;
-
 
     private static List<MarkPriceListener> markPriceListeners = new ArrayList<>();
 
@@ -52,16 +49,14 @@ public class MarkPriceFetcher extends QuartzJobBean {
         if (CollectionUtils.isEmpty(activeGridStrategies)) {
             return;
         }
-        Set<String> instSet = activeGridStrategies.stream()
-                .map(GridStrategy::getInstId).collect(Collectors.toSet());
 
-        for (String instId : instSet) {
+        for (GridStrategy activeGridStrategy : activeGridStrategies) {
             try {
                 MarkPrice markPrice = null;
-                Exchanger exchanger = ExchangerManager.getExchangerByAccountId(defaultAccount);
+                Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(activeGridStrategy.getId());
 
                 try {
-                    markPrice = exchanger.getMarkPriceByInstId(instId);
+                    markPrice = exchanger.getMarkPriceByInstId(activeGridStrategy.getInstId());
                 } catch (Exception e) {
                     log.error("获取标记价格出错, detailMsg: " + e.getMessage(), e);
                 }
@@ -77,7 +72,7 @@ public class MarkPriceFetcher extends QuartzJobBean {
                 log.error(e.getMessage(), e);
             }
         }
-
+                
         Monitor.markPriceLastFetchTime = new Date();
     }
 }

@@ -138,7 +138,7 @@ public class BinanceExchanger implements Exchanger {
 
     @Override
     public void cancelOrder(String instId, String orderId) throws IOException {
-        String url = "/dapi/v1/order";
+        String url = HOST + "/dapi/v1/order";
         String params = "symbol=" + instId + "&orderId=" + orderId + "&timestamp=" + System.currentTimeMillis();
 
         signAndDeleteRequest(url, params, "取消订单");
@@ -200,7 +200,7 @@ public class BinanceExchanger implements Exchanger {
     @Override
     public Order getAlgoOrder(String instId, String algoId) throws IOException {
         Order order = getOrder(instId, algoId, null);
-        if (order.getState().equals(OrderStatus.FILLED.toUpperCase())) {
+        if (order.getState().equals(OrderStatus.FILLED)) {
             //TODO 兼容ok策略单 待重构
             order.setState("effective");
         }

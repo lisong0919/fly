@@ -54,8 +54,6 @@ public class TestController {
     public Object proxyOkex() throws IOException {
         Account account = new Account();
         account.setType("binance");
-        account.setAccessKey("D3v8nDdedqHDB7N2g5UvAjC0Mq8rkQjXR3oYZpeSFKT3To8vu2VRF6dbjLC3pWv0");
-        account.setSecretKey("neGGfdhPVOehafjM4MeZ8bIHKy5Lxva46PYGDUytRsx2hWYGd0b1uMFAzXreZgGm");
 
         BinanceExchanger exchanger = new BinanceExchanger(account);
         //下单

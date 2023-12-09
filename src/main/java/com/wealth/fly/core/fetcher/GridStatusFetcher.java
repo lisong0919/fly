@@ -169,7 +169,7 @@ public class GridStatusFetcher extends QuartzJobBean {
     private void cancelUnnecessaryGrids(Integer strategyId) {
         List<Grid> gridList = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategyId, 100);
         BigDecimal markPrice = null;
-        Exchanger exchanger = ExchangerManager.getExchangerByAccountId(defaultAccount);
+        Exchanger exchanger = ExchangerManager.getExchangerByGridStrategy(strategyId);
 
         GridStrategy strategy = configService.getGridStrategy(strategyId);
         try {

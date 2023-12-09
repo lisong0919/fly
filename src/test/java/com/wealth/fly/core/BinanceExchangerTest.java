@@ -22,6 +22,8 @@ public class BinanceExchangerTest {
     public void init() {
         Account account = new Account();
         account.setType("binance");
+        account.setAccessKey("D3v8nDdedqHDB7N2g5UvAjC0Mq8rkQjXR3oYZpeSFKT3To8vu2VRF6dbjLC3pWv0");
+        account.setSecretKey("neGGfdhPVOehafjM4MeZ8bIHKy5Lxva46PYGDUytRsx2hWYGd0b1uMFAzXreZgGm");
 
         exchanger = new BinanceExchanger(account);
     }
@@ -48,8 +50,13 @@ public class BinanceExchangerTest {
 
     @Test
     public void getOrderTest() throws IOException {
-        Order order = exchanger.getOrderByCustomerOrderId("ETHUSD_231229", "g061gh8SCo2VEk1meTWtG9");
+        Order order = exchanger.getAlgoOrder("ETHUSD_231229", "1117277842");
         System.out.println(JsonUtil.toJSONString(order));
+    }
+
+    @Test
+    public void cancelOrderTest() throws IOException {
+        exchanger.cancelOrder("ETHUSD_231229", "1117277842");
     }
 
     @Test
