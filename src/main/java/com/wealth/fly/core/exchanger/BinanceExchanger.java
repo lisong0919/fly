@@ -25,7 +25,6 @@ import java.util.*;
 public class BinanceExchanger implements Exchanger {
 
     private static final String HOST = "https://dapi.binance.com";
-//    private static final String HOST = "https://testnet.binancefuture.com";
 
     private Account account;
     private Map<String, String> headers = new HashMap<>();
@@ -68,7 +67,6 @@ public class BinanceExchanger implements Exchanger {
 
 
     private String createOrder(Order order, String orderType, String stopPrice) throws IOException {
-        //        String url = HOST + "/dapi/v1/order/test";
         String url = HOST + "/dapi/v1/order";
         LinkedHashMap<String, Object> request = new LinkedHashMap<>();
         request.put("symbol", order.getInstId());
@@ -87,6 +85,7 @@ public class BinanceExchanger implements Exchanger {
         request.put("timestamp", String.valueOf(System.currentTimeMillis()));
 
         String response = signAndPostRequest(url, request, "下单");
+        log.info("binance下单返回结果：" + response);
         JsonNode jsonNode = JsonUtil.readValue(response);
         return JsonUtil.getString("/orderId", jsonNode);
     }
