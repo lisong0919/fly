@@ -82,21 +82,21 @@ public class BinanceExchanger implements Exchanger {
             request.put("stopPrice", stopPrice);
         }
         request.put("recvWindow", 10000);
-        String param = "timestamp=" + System.currentTimeMillis();
+        request.put("timestamp", String.valueOf(System.currentTimeMillis()));
 
-        String response = signAndPostRequest(url, param, request, "下单");
+        String response = signAndPostRequest(url, request, "下单");
         log.info("binance下单返回结果：" + response);
         JsonNode jsonNode = JsonUtil.readValue(response);
         return JsonUtil.getString("/orderId", jsonNode);
     }
 
 
-    private String signAndPostRequest(String url, String param, LinkedHashMap<String, Object> request, String desc) throws IOException {
-        String signedRequest = generateSignedRequest(param, request);
+    private String signAndPostRequest(String url, LinkedHashMap<String, Object> request, String desc) throws IOException {
+        String signedRequest = generateSignedRequest(request);
 
         String cmd = "curl -H \"X-MBX-APIKEY: D3v8nDdedqHDB7N2g5UvAjC0Mq8rkQjXR3oYZpeSFKT3To8vu2VRF6dbjLC3pWv0\" -X POST 'https://dapi.binance.com/dapi/v1/order' -d '" + signedRequest + "'";
         System.out.println(cmd);
-        return HttpClientUtil.postBody(url + "?" + param, signedRequest, headers, desc);
+        return HttpClientUtil.postBody(url, signedRequest, headers, desc);
     }
 
     private String signAndGetRequest(String url, String params, String desc) throws IOException {
@@ -113,21 +113,18 @@ public class BinanceExchanger implements Exchanger {
         return HttpClientUtil.delete(url + "?" + signedRequest, headers, desc);
     }
 
-    private String generateSignedRequest(String param, LinkedHashMap<String, Object> request) {
-        StringBuilder toBeSign = new StringBuilder();
+    private String generateSignedRequest(LinkedHashMap<String, Object> request) {
+        StringBuilder paramStr = new StringBuilder();
         for (String key : request.keySet()) {
             Object value = request.get(key);
             if (value == null) {
                 continue;
             }
-            toBeSign.append("&").append(key).append("=").append(value);
+            paramStr.append("&").append(key).append("=").append(value);
         }
-        String tobeSignStr = toBeSign.substring(1, toBeSign.length());
-        if (param != null) {
-            tobeSignStr = param + tobeSignStr;
-        }
+        String tobeSign = paramStr.substring(1, paramStr.length());
 
-        return generateSignedRequest(tobeSignStr);
+        return generateSignedRequest(tobeSign);
     }
 
     private String generateSignedRequest(String tobeSign) {
