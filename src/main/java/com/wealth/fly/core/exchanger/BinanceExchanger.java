@@ -32,6 +32,7 @@ public class BinanceExchanger implements Exchanger {
     public BinanceExchanger(Account account) {
         this.account = account;
         headers.put("X-MBX-APIKEY", account.getAccessKey());
+        headers.put("Content-Type", "application/x-www-form-urlencoded");
     }
 
     @Override

@@ -51,7 +51,7 @@ public class HttpClientUtil {
         RequestConfig.Builder requestConfigBuilder = RequestConfig.custom()
                 .setStaleConnectionCheckEnabled(true).setConnectionRequestTimeout(CONNECT_REQUEST_TIMEOUT)
                 .setConnectTimeout(CONNECT_TIMEOUT_IN_SECONDS).setSocketTimeout(READ_TIMEOUT_IN_SECONDS);
-        //requestConfigBuilder.setProxy(new HttpHost("127.0.0.1", 8001, "http"));
+//        requestConfigBuilder.setProxy(new HttpHost("127.0.0.1", 8001, "http"));
         requestConfig = requestConfigBuilder.build();
 
         IdleConnectionMonitorThread idleConnectionMonitorThread = new IdleConnectionMonitorThread(
@@ -157,11 +157,13 @@ public class HttpClientUtil {
 
     private static void setHeaders(AbstractHttpMessage httpMessage, Map<String, String> headersMap) {
         httpMessage.setHeader("accept", "*/*");
-        httpMessage.setHeader("Content-Type", "application/json");
         httpMessage.setHeader("Connection", "Keep-Alive");
         httpMessage.setHeader("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
         if (headersMap == null || headersMap.isEmpty()) {
             return;
+        }
+        if (!headersMap.containsKey("Content-Type")) {
+            httpMessage.setHeader("Content-Type", "application/json");
         }
         for (String headerName : headersMap.keySet()) {
             httpMessage.setHeader(headerName, headersMap.get(headerName));
