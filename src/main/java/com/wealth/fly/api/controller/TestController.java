@@ -21,6 +21,7 @@ import com.wealth.fly.core.model.Order;
 import com.wealth.fly.core.strategy.GoldForkStrategyHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -89,13 +90,17 @@ public class TestController {
         String instId = request.getParameter("inst_id");
         String num = request.getParameter("num");
         Integer strategy = Integer.valueOf(request.getParameter("strategy"));
+        int scale = 2;
+        if (StringUtils.isNotBlank(request.getParameter("scale"))) {
+            scale = Integer.parseInt(request.getParameter("scale"));
+        }
 
         String weight = "0.003";
 
         for (int i = 0; i < 300; i++) {
             String buyPrice = flag.toPlainString();
             flag = flag.add(flag.multiply(new BigDecimal(weight)));
-            flag = flag.setScale(2, RoundingMode.HALF_UP);
+            flag = flag.setScale(scale, RoundingMode.HALF_UP);
             String sellPrice = flag.toPlainString();
 
             System.out.println(buyPrice + "-" + sellPrice);
