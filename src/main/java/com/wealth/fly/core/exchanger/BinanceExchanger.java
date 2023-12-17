@@ -95,8 +95,6 @@ public class BinanceExchanger implements Exchanger {
     private String signAndPostRequest(String url, LinkedHashMap<String, Object> request, String desc) throws IOException {
         String signedRequest = generateSignedRequest(request);
 
-        String cmd = "curl -H \"X-MBX-APIKEY: D3v8nDdedqHDB7N2g5UvAjC0Mq8rkQjXR3oYZpeSFKT3To8vu2VRF6dbjLC3pWv0\" -X POST 'https://dapi.binance.com/dapi/v1/order' -d '" + signedRequest + "'";
-        System.out.println(cmd);
         return HttpClientUtil.postBody(url, signedRequest, headers, desc);
     }
 
@@ -129,7 +127,6 @@ public class BinanceExchanger implements Exchanger {
     }
 
     private String generateSignedRequest(String tobeSign) {
-        log.info("toBeSign:{}", tobeSign);
         String sign = new HmacUtils(HmacAlgorithms.HMAC_SHA_256, account.getSecretKey()).hmacHex(tobeSign.getBytes(StandardCharsets.UTF_8));
 
         return tobeSign + "&signature=" + sign;
