@@ -138,22 +138,22 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         KLine prePreKline = kLineDao.getKlineByDataTime(strategy.getWatchInstId(), dataGranularity.name(), prePreDataTime);
         KLine preKline = kLineDao.getKlineByDataTime(strategy.getWatchInstId(), dataGranularity.name(), preDataTime);
         if (preKline == null) {
-            log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), preDataTime);
+            log.info("[{}-{}] k线不存在，macd滤网不通过 {}", strategy.getId(), strategy.getInstId(), preDataTime);
             return false;
         }
         if (prePreKline == null) {
-            log.info("[{}] k线不存在，macd滤网不通过 {}", strategy.getId(), prePreDataTime);
+            log.info("[{}-{}] k线不存在，macd滤网不通过 {}", strategy.getId(), strategy.getInstId(), prePreDataTime);
             return false;
         }
         if (isStrict && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
-            log.info("[{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), dataGranularity, prePreDataTime, preDataTime);
+            log.info("[{}-{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), strategy.getInstId(), dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
 
         //非严格模式下，MACD小于零且递减才不通过
         if (!isStrict && preKline.getMacd().compareTo(new BigDecimal("0")) < 0
                 && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
-            log.info("[{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), dataGranularity, prePreDataTime, preDataTime);
+            log.info("[{}-{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), strategy.getInstId(), dataGranularity, prePreDataTime, preDataTime);
             return false;
         }
 
@@ -193,7 +193,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                 try {
                     orderId = exchanger.createOrder(order);
                 } catch (InsufficientBalanceException e) {
-                    log.debug("[{}-{}-{}]余额不足，无法下单", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                    log.debug("[{}-{}-{}-{}]余额不足，无法下单", strategy.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                     return;
                 } catch (Exception e) {
                     log.error("下单出错 " + e.getMessage(), e);
@@ -201,7 +201,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                     //有些特殊情况，下单报错，但是可能由于read timeout等原因，实际交易所订单成功
                     order = exchanger.getOrderByCustomerOrderId(grid.getInstId(), customerOrderId);
                     if (order != null && StringUtils.isNotBlank(order.getOrdId())) {
-                        log.info("[{}-{}-{}]下单出错，但实际交易所订单成功，订单id:{}", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), orderId);
+                        log.info("[{}-{}-{}-{}]下单出错，但实际交易所订单成功，订单id:{}", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum(), orderId);
                         orderId = order.getOrdId();
                     } else {
                         continue;
@@ -220,7 +220,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
                         .message(String.format("[%s-%s-%s]网格委托下单成功", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum()))
                         .build();
                 gridLogDao.save(gridLog);
-                log.info("[{}-{}-{}]网格委托下单成功", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                log.info("[{}-{}-{}-{}]网格委托下单成功", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -229,7 +229,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onActive(Grid grid, Order buyOrder) {
-        log.info("[{}-{}-{}]网格挂单已成交,网格已被激活", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+        log.info("[{}-{}-{}-{}]网格挂单已成交,网格已被激活", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
         //下止盈策略单
         Order order = Order.builder()
                 .instId(grid.getInstId())
@@ -254,7 +254,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             //价格波动太大的情况直接市价平仓
             try {
                 closeLongOrder(grid);
-                log.info("[{}-{}-{}]委托单的止盈点低于现价，可能是价格波动太大，直接市价平仓", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+                log.info("[{}-{}-{}-{}]委托单的止盈点低于现价，可能是价格波动太大，直接市价平仓", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
                 closeDirectly = true;
             } catch (IOException ioException) {
                 log.error("市价平仓失败 " + e.getMessage(), e);
@@ -298,7 +298,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onFinished(Grid grid, Order algoOrder, Order sellOrder) {
-        log.info("[{}-{}-{}]收到网格已完成通知", grid.getBuyPrice(), grid.getSellPrice(), sellOrder.getSz());
+        log.info("[{}-{}-{}-{}]收到网格已完成通知", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), sellOrder.getSz());
         gridDao.updateGridFinished(grid.getId());
 
         GridHistory gridHistory = GridHistory.builder()
@@ -333,7 +333,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     @Override
     public void onCancel(Grid grid) {
-        log.info("[{}-{}-{}]收到网格委托买单撤销通知", grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
+        log.info("[{}-{}-{}-{}]收到网格委托买单撤销通知", grid.getInstId(), grid.getBuyPrice(), grid.getSellPrice(), grid.getNum());
         gridDao.updateGridFinished(grid.getId());
 
         GridLog gridLog = GridLog.builder()
