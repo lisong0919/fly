@@ -95,7 +95,8 @@ public class OkexExchanger implements Exchanger {
                 kLine.setHigh(new BigDecimal((String) data.get(2)));
                 kLine.setLow(new BigDecimal((String) data.get(3)));
                 kLine.setClose(new BigDecimal((String) data.get(4)));
-                kLine.setVolume(Long.parseLong((String) data.get(5)));
+                kLine.setVolume(new BigDecimal((String) data.get(5)).longValue());
+
                 kLine.setCurrencyVolume(new BigDecimal((String) data.get(6)));
                 kLine.setGranularity(dataGranularity.name());
                 kLineList.add(kLine);
@@ -106,6 +107,7 @@ public class OkexExchanger implements Exchanger {
             throw new RuntimeException("获取k线数据失败");
         }
     }
+
 
 
     @Override
