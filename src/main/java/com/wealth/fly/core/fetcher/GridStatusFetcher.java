@@ -109,8 +109,8 @@ public class GridStatusFetcher extends QuartzJobBean {
             if (!StringUtils.isEmpty(algoOrder.getOrdId()) && !"0".equals(algoOrder.getOrdId())) {
                 sellOrder = exchanger.getOrder(grid.getInstId(), algoOrder.getOrdId());
             }
-        } catch (IOException e) {
-            log.error("查策略委托单信息报错 " + e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("查策略委托单信息报错 gridId "+grid.getId()+" " + e.getMessage(), e);
             return;
         }
 
