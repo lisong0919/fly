@@ -5,10 +5,13 @@ import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.exchanger.BinanceExchanger;
 import com.wealth.fly.core.model.Account;
 import com.wealth.fly.core.model.Order;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.util.Date;
 
 /**
  * @author : lisong
@@ -74,6 +77,14 @@ public class BinanceExchangerTest {
                 .tpOrdPx("2100")
                 .build();
         exchanger.createAlgoOrder(order);
+    }
+
+    @Test
+    public void testListFundingRateHistory() throws IOException, ParseException {
+        Date starTime= DateUtils.parseDate("2024-05-23 00:00:00","yyyy-MM-dd HH:mm:ss");
+        Date endTime= DateUtils.parseDate("2024-05-26 00:00:00","yyyy-MM-dd HH:mm:ss");
+
+        System.out.println(exchanger.listFundingRateHistory("BTCUSD_PERP",starTime,endTime,1000));
     }
 
 }

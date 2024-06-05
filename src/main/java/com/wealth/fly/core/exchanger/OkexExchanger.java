@@ -264,6 +264,12 @@ public class OkexExchanger implements Exchanger {
         return JsonUtil.getEntity("/data/0", jsonNode, MaxOpenSize.class);
     }
 
+    @Override
+    public List<FundingRate> listFundingRateHistory(String symbol, Date startTime, Date endTime, Integer limit) throws IOException {
+        return null;
+    }
+
+
     private Map<String, String> getGetAuthHeaders(String requestPath) {
         return getAuthHeaders("GET", requestPath, "");
     }

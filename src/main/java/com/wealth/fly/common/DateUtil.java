@@ -63,7 +63,7 @@ public class DateUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(getNextKlineDataTime(20230101000000L, DataGranularity.FIFTEEN_MINUTES));
+        System.out.println(parseStandardTime(1698768000000L));
     }
 
     public static Long parseToDataTime(Date date) {

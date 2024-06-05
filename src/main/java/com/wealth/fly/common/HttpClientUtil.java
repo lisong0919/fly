@@ -51,7 +51,7 @@ public class HttpClientUtil {
         RequestConfig.Builder requestConfigBuilder = RequestConfig.custom()
                 .setStaleConnectionCheckEnabled(true).setConnectionRequestTimeout(CONNECT_REQUEST_TIMEOUT)
                 .setConnectTimeout(CONNECT_TIMEOUT_IN_SECONDS).setSocketTimeout(READ_TIMEOUT_IN_SECONDS);
-//        requestConfigBuilder.setProxy(new HttpHost("127.0.0.1", 8001, "http"));
+        requestConfigBuilder.setProxy(new HttpHost("127.0.0.1", 8031, "http"));
         requestConfig = requestConfigBuilder.build();
 
         IdleConnectionMonitorThread idleConnectionMonitorThread = new IdleConnectionMonitorThread(

@@ -4,10 +4,7 @@ import com.wealth.fly.core.constants.DataGranularity;
 import com.wealth.fly.core.constants.GridStatus;
 import com.wealth.fly.core.constants.TradeMode;
 import com.wealth.fly.core.entity.KLine;
-import com.wealth.fly.core.model.InstrumentInfo;
-import com.wealth.fly.core.model.MarkPrice;
-import com.wealth.fly.core.model.MaxOpenSize;
-import com.wealth.fly.core.model.Order;
+import com.wealth.fly.core.model.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -97,5 +94,7 @@ public interface Exchanger {
      */
     MaxOpenSize getMaxOpenSize(String instId, TradeMode tdMode) throws IOException;
 
+
+    List<FundingRate> listFundingRateHistory(String symbol, Date startTime, Date endTime, Integer limit) throws IOException;
 
 }
