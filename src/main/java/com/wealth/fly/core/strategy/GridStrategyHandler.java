@@ -98,7 +98,10 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
         try {
             BigDecimal currentForceClosePrice = exchanger.getForceClosePrice(markPrice.getInstId());
-            if (currentForceClosePrice != null && currentForceClosePrice.compareTo(new BigDecimal(strategy.getMinForceClosePrice())) >= 0) {
+            if (currentForceClosePrice != null
+                    && currentForceClosePrice.compareTo(new BigDecimal(strategy.getMinForceClosePrice())) >= 0
+                    && currentForceClosePrice.compareTo(new BigDecimal(markPrice.getMarkPx())) < 0
+            ) {
                 log.error("持仓强平价格{}大于{}，不能继续开仓", currentForceClosePrice, strategy.getMinForceClosePrice());
                 return;
             }
