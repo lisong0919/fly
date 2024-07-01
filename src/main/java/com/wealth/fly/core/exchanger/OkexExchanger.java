@@ -109,7 +109,6 @@ public class OkexExchanger implements Exchanger {
     }
 
 
-
     @Override
     public MarkPrice getMarkPriceByInstId(String instId) throws IOException {
         String url = host + MARK_PRICE_PATH + "?instId=" + instId;
@@ -267,6 +266,11 @@ public class OkexExchanger implements Exchanger {
     @Override
     public List<FundingRate> listFundingRateHistory(String symbol, Date startTime, Date endTime, Integer limit) throws IOException {
         return null;
+    }
+
+    @Override
+    public String getExchangerKey() {
+        return "ok";
     }
 
 

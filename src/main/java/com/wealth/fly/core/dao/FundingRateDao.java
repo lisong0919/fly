@@ -8,4 +8,6 @@ import com.wealth.fly.core.model.FundingRate;
  */
 public interface FundingRateDao {
     void save(FundingRate fundingRate);
+
+    FundingRate getLatestOne(String exchanger,String symbol);
 }

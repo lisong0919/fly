@@ -97,4 +97,5 @@ public interface Exchanger {
 
     List<FundingRate> listFundingRateHistory(String symbol, Date startTime, Date endTime, Integer limit) throws IOException;
 
+    String getExchangerKey();
 }

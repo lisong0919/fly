@@ -12,6 +12,7 @@ import java.util.Date;
 @Data
 public class FundingRate {
     private String symbol;
+    private String exchanger;
     private Long fundingTime;
     private BigDecimal fundingRate;
     private BigDecimal markPrice;

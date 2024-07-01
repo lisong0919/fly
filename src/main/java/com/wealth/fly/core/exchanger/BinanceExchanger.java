@@ -264,6 +264,7 @@ public class BinanceExchanger implements Exchanger {
         while (jsonNodeIt.hasNext()) {
             JsonNode node = jsonNodeIt.next();
             FundingRate fundingRate = new FundingRate();
+            fundingRate.setExchanger("ba");
             fundingRate.setSymbol(node.get("symbol").asText());
             fundingRate.setFundingTime(DateUtil.parseToDataTime(new Date(node.get("fundingTime").asLong())));
             fundingRate.setFundingRate(new BigDecimal(node.get("fundingRate").asText()));
@@ -271,5 +272,10 @@ public class BinanceExchanger implements Exchanger {
             fundingRates.add(fundingRate);
         }
         return fundingRates;
+    }
+
+    @Override
+    public String getExchangerKey() {
+        return "ba";
     }
 }
