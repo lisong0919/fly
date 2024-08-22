@@ -1,5 +1,6 @@
 package com.wealth.fly.core.strategy;
 
+import com.wealth.fly.common.JsonUtil;
 import com.wealth.fly.core.config.ConfigService;
 import com.wealth.fly.common.DateUtil;
 import com.wealth.fly.core.constants.DataGranularity;
@@ -111,8 +112,10 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
 
         if (!isMACDFilterPass(strategy)) {
-            // 如果1小时MACD未通过，则市价全平
-
+            // 如果1小时MACD未通过，则市价全平止损
+            if (!isMACDFilterPass(new Date(), DataGranularity.ONE_HOUR, strategy, true)) {
+                closeAll(exchanger, strategy.getInstId());
+            }
             return;
         }
 
@@ -125,6 +128,31 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             createOrder(markPrice, strategy);
         } finally {
             createOrderLock = false;
+        }
+    }
+
+    private void closeAll(Exchanger exchanger, String instId) {
+        BigDecimal availPos = null;
+        try {
+            availPos = exchanger.getAvailPos(instId);
+        } catch (IOException e) {
+            log.info("获取可平仓数量失败 {}", instId);
+            log.error(e.getMessage(), e);
+            return;
+        }
+        Order order = new Order();
+        order.setInstId(instId);
+        order.setTdMode("cross");
+        order.setSide("sell");
+        order.setPosSide("long");
+        order.setOrdType("market");
+        order.setSz(String.valueOf(availPos.longValue()));
+
+        try {
+            exchanger.createOrder(order);
+        } catch (IOException e) {
+            log.info("平仓失败 {}", JsonUtil.toJSONString(order));
+            log.error(e.getMessage(), e);
         }
     }
 

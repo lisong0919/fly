@@ -98,4 +98,14 @@ public interface Exchanger {
     MaxOpenSize getMaxOpenSize(String instId, TradeMode tdMode) throws IOException;
 
 
+    /**
+     * 获取最大可平仓信息
+     *
+     * @param instId
+     * @return
+     * @throws IOException
+     */
+    BigDecimal getAvailPos(String instId) throws IOException;
+
+
 }

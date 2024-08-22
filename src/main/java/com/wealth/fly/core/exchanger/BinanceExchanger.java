@@ -244,4 +244,9 @@ public class BinanceExchanger implements Exchanger {
   public MaxOpenSize getMaxOpenSize(String instId, TradeMode tdMode) throws IOException {
     return null;
   }
+
+  @Override
+  public BigDecimal getAvailPos(String instId) throws IOException {
+    return null;
+  }
 }
