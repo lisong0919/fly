@@ -140,6 +140,9 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             log.error(e.getMessage(), e);
             return;
         }
+        if (availPos == null || availPos.intValue() <= 0) {
+            return;
+        }
         Order order = new Order();
         order.setInstId(instId);
         order.setTdMode("cross");
@@ -150,6 +153,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
         try {
             exchanger.createOrder(order);
+            log.info("平仓止损下单成功 {}", order.getInstId());
         } catch (IOException e) {
             log.info("平仓失败 {}", JsonUtil.toJSONString(order));
             log.error(e.getMessage(), e);
