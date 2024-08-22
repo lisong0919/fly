@@ -111,6 +111,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         }
 
         if (!isMACDFilterPass(strategy)) {
+            // 如果1小时MACD未通过，则市价全平
+
             return;
         }
 

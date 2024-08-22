@@ -109,7 +109,6 @@ public class OkexExchanger implements Exchanger {
     }
 
 
-
     @Override
     public MarkPrice getMarkPriceByInstId(String instId) throws IOException {
         String url = host + MARK_PRICE_PATH + "?instId=" + instId;
@@ -238,6 +237,26 @@ public class OkexExchanger implements Exchanger {
             }
         }
 
+        return null;
+    }
+
+    public BigDecimal getAvailPos(String instId) throws IOException {
+        String requestPath = "/api/v5/account/positions?instId=" + instId;
+        String response = HttpClientUtil.get(host + requestPath, getGetAuthHeaders(requestPath), "查看持仓信息");
+
+        JsonNode jsonNode = JsonUtil.readValue(response);
+        checkCode(jsonNode, response, host + requestPath, null);
+
+        List<AccountPosition> accountPositions = JsonUtil.getEntityList("/data", jsonNode, AccountPosition.class);
+
+        if (CollectionUtils.isEmpty(accountPositions)) {
+            return new BigDecimal("0");
+        }
+        for (AccountPosition accountPosition : accountPositions) {
+            if (accountPosition.getPos() > 0) {
+                return new BigDecimal(accountPosition.getAvailPos());
+            }
+        }
         return null;
     }
 

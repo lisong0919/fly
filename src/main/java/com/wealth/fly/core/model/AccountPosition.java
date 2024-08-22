@@ -11,4 +11,9 @@ public class AccountPosition {
     private Integer pos;
 
     private String liqPx;
+
+    /**
+     * 可平仓数量
+     */
+    private String availPos;
 }
