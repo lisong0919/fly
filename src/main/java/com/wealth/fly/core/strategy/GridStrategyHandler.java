@@ -113,7 +113,8 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
         if (!isMACDFilterPass(strategy)) {
             // 如果1小时MACD未通过，则市价全平止损
-            if (!isMACDFilterPass(new Date(), DataGranularity.ONE_HOUR, strategy, true)) {
+            Boolean oneHourPass = isMACDFilterPass(new Date(), DataGranularity.ONE_HOUR, strategy, true);
+            if (oneHourPass != null && !oneHourPass) {
                 closeAll(exchanger, strategy.getInstId());
             }
             return;
@@ -163,12 +164,13 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 
     private boolean isMACDFilterPass(GridStrategy strategy) {
         Date now = new Date();
-        return isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy, true)
-                && isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy, true)
-                && isMACDFilterPass(now, DataGranularity.FOUR_HOUR, strategy, false);
+        Boolean fifteenPass = isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy, true);
+        Boolean oneHourPass = isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy, true);
+        Boolean fourHourPass = isMACDFilterPass(now, DataGranularity.FOUR_HOUR, strategy, false);
+        return fifteenPass != null && fifteenPass && oneHourPass != null && oneHourPass && fourHourPass != null && fourHourPass;
     }
 
-    private boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, GridStrategy strategy, boolean isStrict) {
+    private Boolean isMACDFilterPass(Date now, DataGranularity dataGranularity, GridStrategy strategy, boolean isStrict) {
         Long preDataTime = DateUtil.getLatestKLineDataTime(now, dataGranularity);
         Long prePreDataTime = DateUtil.getPreKLineDataTime(preDataTime, dataGranularity);
 
@@ -176,11 +178,11 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         KLine preKline = kLineDao.getKlineByDataTime(strategy.getWatchInstId(), dataGranularity.name(), preDataTime);
         if (preKline == null) {
             log.info("[{}-{}] k线不存在，macd滤网不通过 {}", strategy.getId(), strategy.getInstId(), preDataTime);
-            return false;
+            return null;
         }
         if (prePreKline == null) {
             log.info("[{}-{}] k线不存在，macd滤网不通过 {}", strategy.getId(), strategy.getInstId(), prePreDataTime);
-            return false;
+            return null;
         }
         if (isStrict && preKline.getMacd().compareTo(prePreKline.getMacd()) < 0) {
             log.info("[{}-{}] macd递减趋势，滤网不通过 {} {}-{}", strategy.getId(), strategy.getInstId(), dataGranularity, prePreDataTime, preDataTime);
