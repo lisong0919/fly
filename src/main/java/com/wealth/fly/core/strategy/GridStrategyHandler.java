@@ -14,6 +14,7 @@ import com.wealth.fly.core.entity.Grid;
 import com.wealth.fly.core.entity.GridHistory;
 import com.wealth.fly.core.entity.GridLog;
 import com.wealth.fly.core.entity.KLine;
+import com.wealth.fly.core.exception.CancelOrderAlreadyFinishedException;
 import com.wealth.fly.core.exception.InsufficientBalanceException;
 import com.wealth.fly.core.exception.TPCannotLowerThanMPException;
 import com.wealth.fly.core.exchanger.Exchanger;
@@ -118,6 +119,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         if (!macdPass) {
             // 如果MACD未通过，则市价全平止损
             closeAll(exchanger, strategy.getInstId());
+            cancelAll(strategy.getId(), exchanger);
             return;
         }
 
@@ -132,6 +134,27 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             createOrderLock = false;
         }
     }
+
+    private void cancelAll(Integer strategyId, Exchanger exchanger) {
+        List<Grid> pendingGrids = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategyId, 100);
+        if (CollectionUtils.isEmpty(pendingGrids)) {
+            return;
+        }
+        for (Grid pendingGrid : pendingGrids) {
+            try {
+                exchanger.cancelOrder(pendingGrid.getInstId(), pendingGrid.getBuyOrderId());
+            } catch (IOException e) {
+                log.error("撤销订单出错 " + e.getMessage(), e);
+                return;
+            } catch (CancelOrderAlreadyFinishedException e) {
+                log.error(e.getMessage(), e);
+                gridDao.updateGridFinished(pendingGrid.getId());
+                return;
+            }
+            this.onCancel(pendingGrid);
+        }
+    }
+
 
     private void closeAll(Exchanger exchanger, String instId) {
         BigDecimal availPos = null;
