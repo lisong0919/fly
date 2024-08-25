@@ -143,6 +143,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         for (Grid pendingGrid : pendingGrids) {
             try {
                 exchanger.cancelOrder(pendingGrid.getInstId(), pendingGrid.getBuyOrderId());
+                log.info("撤销挂单成功 {}", pendingGrid.getInstId());
             } catch (IOException e) {
                 log.error("撤销订单出错 " + e.getMessage(), e);
                 return;
