@@ -191,7 +191,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
         Date now = new Date();
         Boolean fifteenPass = isMACDFilterPass(now, DataGranularity.FIFTEEN_MINUTES, strategy, true);
         Boolean oneHourPass = isMACDFilterPass(now, DataGranularity.ONE_HOUR, strategy, true);
-        Boolean fourHourPass = isMACDFilterPass(now, DataGranularity.FOUR_HOUR, strategy, false);
+        Boolean fourHourPass = isMACDFilterPass(now, DataGranularity.FOUR_HOUR, strategy, true);
         if (fifteenPass == null || oneHourPass == null || fourHourPass == null) {
             return null;
         }
