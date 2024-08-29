@@ -110,6 +110,17 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             return;
         }
 
+        Boolean macdPass = isMACDFilterPass(strategy);
+        if (macdPass == null) {
+            return;
+        }
+        if (!macdPass) {
+            // 如果MACD未通过，则市价全平止损
+            closeAll(exchanger, strategy.getInstId());
+            cancelAll(strategy.getId(), exchanger);
+            return;
+        }
+
         List<Grid> pendingGrids = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategy.getId(), 100);
         if (!CollectionUtils.isEmpty(pendingGrids)) {
             log.info("已达最大开仓仓位，不可再开仓 {}", strategy.getInstId());
@@ -126,18 +137,6 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
 //                closeAll(exchanger, strategy.getInstId());
 //                cancelAll(strategy.getId(), exchanger);
 //            }
-            return;
-        }
-
-
-        Boolean macdPass = isMACDFilterPass(strategy);
-        if (macdPass == null) {
-            return;
-        }
-        if (!macdPass) {
-            // 如果MACD未通过，则市价全平止损
-            closeAll(exchanger, strategy.getInstId());
-            cancelAll(strategy.getId(), exchanger);
             return;
         }
 
