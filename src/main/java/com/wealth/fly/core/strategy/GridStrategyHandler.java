@@ -62,9 +62,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
     @Resource
     private ConfigService configService;
 
-
     private volatile boolean createOrderLock = false;
-
 
     @PostConstruct
     public void init() {
@@ -112,6 +110,26 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             return;
         }
 
+        List<Grid> pendingGrids = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategy.getId(), 100);
+        if (!CollectionUtils.isEmpty(pendingGrids)) {
+            log.info("已达最大开仓仓位，不可再开仓 {}", strategy.getInstId());
+//            BigDecimal minOpenPrice = null;
+//            for (Grid pendingGrid : pendingGrids) {
+//                BigDecimal buyPrice = new BigDecimal(pendingGrid.getBuyPrice());
+//                if (minOpenPrice == null || buyPrice.compareTo(minOpenPrice) < 0) {
+//                    minOpenPrice = buyPrice;
+//                }
+//            }
+//            //已达挂单止损价格，开始止损
+//            if (new BigDecimal(markPrice.getMarkPx()).compareTo(minOpenPrice) < 0) {
+//                //止损
+//                closeAll(exchanger, strategy.getInstId());
+//                cancelAll(strategy.getId(), exchanger);
+//            }
+            return;
+        }
+
+
         Boolean macdPass = isMACDFilterPass(strategy);
         if (macdPass == null) {
             return;
@@ -134,6 +152,7 @@ public class GridStrategyHandler implements MarkPriceListener, GridStatusChangeL
             createOrderLock = false;
         }
     }
+
 
     private void cancelAll(Integer strategyId, Exchanger exchanger) {
         List<Grid> pendingGrids = gridDao.listByStatusOrderByBuyPrice(Collections.singletonList(GridStatus.PENDING.getCode()), strategyId, 100);
